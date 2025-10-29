@@ -1,4 +1,4 @@
-package com.example.lingora_fe.ui.theme
+package com.example.lingora_fe.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

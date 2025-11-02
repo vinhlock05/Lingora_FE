@@ -1,56 +1,226 @@
 package com.example.lingora_fe.user.practice.presentation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PracticeScreen() {
-    Scaffold{ paddingValues ->
-        Box(
+fun PracticeScreen(
+    navController: NavController
+) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            // Luyện phát âm
+            PracticeCard(
+                icon = Icons.Default.Mic,
+                iconColor = Color(0xFF3B82F6), // Blue
+                iconBackgroundColor = Color(0xFFDCECFE),
+                title = "Luyện phát âm",
+                subtitle = "Cải thiện phát âm với AI",
+                onClick = {
+                    navController.navigate("practice/pronunciation")
+                }
+            )
+
+            // Luyện đề thi
+            PracticeCard(
+                icon = Icons.Default.Assignment,
+                iconColor = Color(0xFF9333EA), // Purple
+                iconBackgroundColor = Color(0xFFF3E8FF),
+                title = "Luyện đề thi",
+                subtitle = "IELTS, TOEIC và nhiều hơn",
+                onClick = {
+                    navController.navigate("practice/tests")
+                }
+            )
+
+            // Ôn tập từ vựng
+            PracticeCard(
+                icon = Icons.Default.School,
+                iconColor = Color(0xFF10B981), // Green (using gradient colors)
+                iconBackgroundColor = Color(0xFFD1FAE5),
+                title = "Ôn tập từ vựng",
+                subtitle = "Ôn lại từ đã học theo SRS",
+                badge = "Từ cần ôn hôm nay",
+                onClick = {
+                    navController.navigate("practice/vocabulary_review")
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Statistics Section
+            Text(
+                text = "Thống kê tuần này",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MainText
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatCard(
+                    modifier = Modifier.weight(1f),
+                    value = "5",
+                    label = "Bài luyện",
+                    backgroundColor = Color(0xFFDCECFE)
+                )
+                StatCard(
+                    modifier = Modifier.weight(1f),
+                    value = "3h\n20m",
+                    label = "Thời gian",
+                    backgroundColor = Color(0xFFF3E8FF)
+                )
+                StatCard(
+                    modifier = Modifier.weight(1f),
+                    value = "87%",
+                    label = "Độ chính xác",
+                    backgroundColor = Color(0xFFD1FAE5)
+                )
+            }
+        }
+}
+
+@Composable
+fun PracticeCard(
+    icon: ImageVector,
+    iconColor: Color,
+    iconBackgroundColor: Color,
+    title: String,
+    subtitle: String,
+    badge: String? = null,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Icon
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(
+                        color = iconBackgroundColor,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Default.FitnessCenter,
+                    imageVector = icon,
                     contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(28.dp),
+                    tint = iconColor
+                )
+            }
+
+            // Text Content
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MainText
                 )
                 Text(
-                    text = "Luyện tập",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    text = subtitle,
+                    fontSize = 14.sp,
+                    color = NavBarText
                 )
-                Text(
-                    text = "Placeholder screen - Coming soon",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                
+                if (badge != null) {
+                    Text(
+                        text = badge,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFEA580C), // Orange
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
     }
 }
 
+@Composable
+fun StatCard(
+    modifier: Modifier = Modifier,
+    value: String,
+    label: String,
+    backgroundColor: Color
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = value,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MainText,
+                lineHeight = 24.sp
+            )
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = NavBarText
+            )
+        }
+    }
+}

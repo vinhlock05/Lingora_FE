@@ -28,7 +28,7 @@ import com.example.lingora_fe.user.material.presentation.MaterialsScreen
 import com.example.lingora_fe.user.navigator.components.BottomNavigationBar
 import com.example.lingora_fe.user.navigator.components.UserTopBar
 import com.example.lingora_fe.user.notification.presentation.screen.NotificationScreen
-import com.example.lingora_fe.user.practice.presentation.PracticeScreen
+import com.example.lingora_fe.user.practice.presentation.*
 import com.example.lingora_fe.user.profile.presentation.ProfileScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.CategoryDetailScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.LearnWordScreen
@@ -74,6 +74,11 @@ fun UserNavigator(rootNavController: NavHostController) {
         when {
             route == Route.VocabularyTab.route -> true
             route.startsWith("vocabulary/category/") -> true
+            route == Route.PracticeTab.route -> true
+            route == Route.MaterialsTab.route -> true
+            route == Route.DictionaryTab.route -> true
+            route == Route.ForumTab.route -> true
+            route == Route.ProfileTab.route -> true
             else -> false
         }
     }
@@ -164,7 +169,9 @@ fun UserNavigator(rootNavController: NavHostController) {
         ) {
             // Notification
             composable(Route.Notification.route) {
-                NotificationScreen()
+                NotificationScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
             }
 
             // Vocabulary Tab
@@ -211,7 +218,76 @@ fun UserNavigator(rootNavController: NavHostController) {
 
             // Practice Tab
             composable(Route.PracticeTab.route) {
-                PracticeScreen()
+                PracticeScreen(navController = navController)
+            }
+
+            // Practice nested routes
+            composable(Route.PronunciationPractice.route) {
+                PronunciationPracticeScreen(navController = navController)
+            }
+
+            composable(Route.TestPractice.route) {
+                TestPracticeScreen(navController = navController)
+            }
+
+            composable(Route.VocabularyReview.route) {
+                VocabularyReviewScreen(navController = navController)
+            }
+
+            composable(Route.FlashcardPractice.route) {
+                FlashcardPracticeScreen(navController = navController)
+            }
+
+            composable(Route.QuizPractice.route) {
+                QuizPracticeScreen(navController = navController)
+            }
+
+            composable(
+                route = Route.TestDetail.route,
+                arguments = listOf(
+                    navArgument("testId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val testId = backStackEntry.arguments?.getString("testId") ?: "1"
+                TestDetailScreen(
+                    navController = navController,
+                    testId = testId
+                )
+            }
+
+            composable(
+                route = Route.ListeningPractice.route,
+                arguments = listOf(
+                    navArgument("testId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                ListeningPracticeScreen(navController = navController)
+            }
+
+            composable(
+                route = Route.ReadingPractice.route,
+                arguments = listOf(
+                    navArgument("testId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                ReadingPracticeScreen(navController = navController)
+            }
+
+            composable(
+                route = Route.WritingPractice.route,
+                arguments = listOf(
+                    navArgument("testId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                WritingPracticeScreen(navController = navController)
             }
 
             // Materials Tab

@@ -29,22 +29,32 @@ sealed class Route(
     object Notification : Route("notification")
     
     // Vocabulary Navigation
-    object VocabularyCategories : Route("vocabulary/categories")
     object CategoryDetail : Route("vocabulary/category/{categoryId}")
-    object TopicDetail : Route("vocabulary/topic/{topicId}")
     object LearnWord : Route("vocabulary/learn/{topicId}")
     object Practice : Route("vocabulary/practice/{topicId}")
-    object Quiz : Route("vocabulary/quiz/{topicId}")
-    object QuizCompletion : Route("vocabulary/quiz/{topicId}/completion")
+    
+    // Practice Navigation
+    object PronunciationPractice : Route("practice/pronunciation")
+    object TestPractice : Route("practice/tests")
+    object VocabularyReview : Route("practice/vocabulary_review")
+    object FlashcardPractice : Route("practice/flashcard")
+    object QuizPractice : Route("practice/quiz")
+    object TestDetail : Route("practice/test/{testId}")
+    object ListeningPractice : Route("practice/test/{testId}/listening")
+    object ReadingPractice : Route("practice/test/{testId}/reading")
+    object WritingPractice : Route("practice/test/{testId}/writing")
     
     companion object {
+        // Vocabulary routes
         fun categoryDetail(categoryId: Int) = "vocabulary/category/$categoryId"
-        fun topicDetail(topicId: Int) = "vocabulary/topic/$topicId"
-        fun newLesson(topicId: Int) = "vocabulary/topic/$topicId/new-lesson"
         fun learnWord(topicId: Int) = "vocabulary/learn/$topicId"
         fun practice(topicId: Int) = "vocabulary/practice/$topicId"
-        fun quiz(topicId: Int) = "vocabulary/quiz/$topicId"
-        fun quizCompletion(topicId: Int) = "vocabulary/quiz/$topicId/completion"
+        
+        // Practice routes
+        fun testDetail(testId: String) = "practice/test/$testId"
+        fun listeningPractice(testId: String) = "practice/test/$testId/listening"
+        fun readingPractice(testId: String) = "practice/test/$testId/reading"
+        fun writingPractice(testId: String) = "practice/test/$testId/writing"
     }
 
 }

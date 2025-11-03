@@ -5,9 +5,10 @@ sealed class Route(
 ) {
     // Auth Navigation
     object AuthNavigation : Route("authNavigation")
-    object LoginScreen : Route("loginScreen")
-    object RegisterScreen : Route("registerScreen")
-    object OTPScreen : Route("otpScreen")
+    object AuthScreen : Route("authScreen")
+    object LoginScreen : Route("loginScreen") // Deprecated - use AuthScreen with initialTab = "login"
+    object RegisterScreen : Route("registerScreen") // Deprecated - use AuthScreen with initialTab = "register"
+    object OTPScreen : Route("otpScreen/{email}")
     
     // Admin Navigation
     object AdminNavigation : Route("adminNavigation")
@@ -45,6 +46,9 @@ sealed class Route(
     object WritingPractice : Route("practice/test/{testId}/writing")
     
     companion object {
+        // Auth routes
+        fun otpScreen(email: String) = "otpScreen/$email"
+        
         // Vocabulary routes
         fun categoryDetail(categoryId: Int) = "vocabulary/category/$categoryId"
         fun learnWord(topicId: Int) = "vocabulary/learn/$topicId"

@@ -24,6 +24,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Check if user is already logged in
+        val sharedPreferences = getSharedPreferences("lingora_prefs", MODE_PRIVATE)
+        val accessToken = sharedPreferences.getString("access_token", null)
+        val startDestination = if (accessToken != null) {
+            Route.UserNavigation.route
+        } else {
+            Route.AuthNavigation.route
+        }
+        
         setContent {
             Lingora_FETheme(darkTheme = false) {
                 val isSystemInDarkMode = isSystemInDarkTheme()
@@ -42,7 +52,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavGraph(
                         navController = navController,
-                        startDestination = Route.UserNavigation.route
+                        startDestination = startDestination
                     )
                 }
             }

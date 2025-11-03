@@ -17,7 +17,6 @@ fun AppNavGraph(
     navController: NavHostController,
     startDestination: String
 ) {
-    val mail = "a@gmail.com" // For testing OTP Screen directly
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -25,7 +24,7 @@ fun AppNavGraph(
         // Auth Navigation
         navigation(
             route = Route.AuthNavigation.route,
-            startDestination = otpScreen(mail)
+            startDestination = Route.AuthScreen.route
         ) {
             composable(route = Route.AuthScreen.route) {
                 AuthScreen(navController = navController, initialTab = "login")

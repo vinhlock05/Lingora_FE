@@ -2,9 +2,14 @@ package com.example.lingora_fe.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.example.lingora_fe.auth.presentation.AuthScreen
+import com.example.lingora_fe.auth.presentation.OTPScreen
+import com.example.lingora_fe.navigation.Route.Companion.otpScreen
 import com.example.lingora_fe.user.navigator.UserNavigator
 
 @Composable
@@ -19,15 +24,36 @@ fun AppNavGraph(
         // Auth Navigation
         navigation(
             route = Route.AuthNavigation.route,
-            startDestination = Route.LoginScreen.route // TODO: Update with actual login route
+            startDestination = Route.AuthScreen.route
         ) {
-            // TODO: Add auth screens (Login, Register, OTP, ForgotPassword)
+            composable(route = Route.AuthScreen.route) {
+                AuthScreen(navController = navController, initialTab = "login")
+            }
+            
+            // Deprecated routes - kept for backwards compatibility
+            composable(route = Route.LoginScreen.route) {
+                AuthScreen(navController = navController, initialTab = "login")
+            }
+            
+            composable(route = Route.RegisterScreen.route) {
+                AuthScreen(navController = navController, initialTab = "register")
+            }
+            
+            composable(
+                route = Route.OTPScreen.route,
+                arguments = listOf(
+                    navArgument("email") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val email = backStackEntry.arguments?.getString("email") ?: ""
+                OTPScreen(navController = navController, email = email)
+            }
         }
         
         // Admin Navigation
         navigation(
             route = Route.AdminNavigation.route,
-            startDestination = Route.AdminNavigator.route // TODO: Update with actual admin route
+            startDestination = Route.AdminNavigator.route
         ) {
             // TODO: Add admin screens
         }

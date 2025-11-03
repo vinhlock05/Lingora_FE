@@ -17,7 +17,7 @@ val ArimoFontFamily = FontFamily(
 
 // TitanOne font family
 val TitanOneFontFamily = FontFamily(
-    Font(R.font.titanone_regular, FontWeight.Normal)
+    Font(R.font.titanone_regular, FontWeight.Bold)
 )
 
 // Typography using Arimo for all text styles

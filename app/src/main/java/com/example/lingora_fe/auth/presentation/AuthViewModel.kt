@@ -67,6 +67,7 @@ class AuthViewModel @Inject constructor(
                     )
                 }
                 .onLeft { failure ->
+                    Log.d("AuthViewModel", "Login failed: $failure")
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         error = failure.message

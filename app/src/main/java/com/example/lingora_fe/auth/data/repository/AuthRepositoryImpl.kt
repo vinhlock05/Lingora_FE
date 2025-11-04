@@ -1,5 +1,6 @@
 package com.example.lingora_fe.auth.data.repository
 
+import android.util.Log
 import arrow.core.Either
 import com.example.lingora_fe.auth.data.remote.api.AuthApiService
 import com.example.lingora_fe.auth.data.remote.dto.*

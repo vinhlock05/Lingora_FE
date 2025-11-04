@@ -200,7 +200,7 @@ class AuthViewModel @Inject constructor(
         userRole: String,
         refreshToken: String? = null
     ) {
-        Log.d("AuthViewModel", "Saving auth data - userId: $userId, role: $userRole")
+        Log.d("AuthViewModel", "Saving auth data - userId: $userId, role: $userRole, refreshToken: $refreshToken")
         tokenManager.saveTokens(
             accessToken = token,
             refreshToken = refreshToken ?: "",

@@ -14,6 +14,17 @@ sealed class Route(
     object AdminNavigation : Route("adminNavigation")
     object AdminNavigator : Route("adminNavigator")
     
+    // Admin Routes
+    object AdminDashboard : Route("admin_dashboard")
+    object AdminUserManagement : Route("admin_user_management")
+    object AdminUserCreate : Route("admin_user_management/create")
+    object AdminUserEdit : Route("admin_user_management/edit/{userId}")
+    object AdminUserDetails : Route("admin_user_management/details/{userId}")
+    object AdminContentManagement : Route("admin_content")
+    object AdminForumManagement : Route("admin_forum")
+    object AdminAnalytics : Route("admin_analytics")
+    object AdminSettings : Route("admin_settings")
+    
     // User Navigation
     object UserNavigation : Route("userNavigation")
     object UserNavigator : Route("userNavigator")
@@ -48,6 +59,10 @@ sealed class Route(
     companion object {
         // Auth routes
         fun otpScreen(email: String) = "otpScreen/$email"
+        
+        // Admin routes
+        fun adminUserEdit(userId: Int) = "admin_user_management/edit/$userId"
+        fun adminUserDetails(userId: Int) = "admin_user_management/details/$userId"
         
         // Vocabulary routes
         fun categoryDetail(categoryId: Int) = "vocabulary/category/$categoryId"

@@ -2,10 +2,8 @@ package com.example.lingora_fe.auth.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class RefreshTokenMetaData(
-    @SerializedName("accessToken")
-    val accessToken: String,
+data class LogoutRequest(
     @SerializedName("refreshToken")
-    val refreshToken: String? = null
+    val refreshToken: String
 )
 

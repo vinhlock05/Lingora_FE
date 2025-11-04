@@ -56,10 +56,17 @@ fun AuthScreen(
 
     var registrationEmail by remember { mutableStateOf<String?>(null) }
     
-    LaunchedEffect(authState.isAuthenticated, registrationEmail) {
+    LaunchedEffect(authState.isAuthenticated, registrationEmail, authState.user) {
         if (authState.isAuthenticated && activeTab == "login") {
-            // Login successful - navigate to main app
-            navController.navigate(Route.UserNavigation.route) {
+            // Login successful - navigate based on user role
+            val isAdmin = authState.user?.roles?.any { it.name == "ADMIN" } == true
+            val destination = if (isAdmin) {
+                Route.AdminNavigation.route
+            } else {
+                Route.UserNavigation.route
+            }
+            
+            navController.navigate(destination) {
                 popUpTo(Route.AuthNavigation.route) { inclusive = true }
             }
         } else if (registrationEmail != null) {
@@ -117,21 +124,21 @@ fun AuthScreen(
                         // Welcome Text
                         Text(
                             text = "Chào mừng đến với",
-                            fontSize = 16.sp,
-                            color = NavBarText,
+                            fontSize = 20.sp,
+                            color = Color(0xFF00A63E),
                             fontFamily = ArimoFontFamily
                         )
 
                         // LINGORA Title with Gradient Colors
                         Text(
                             text = "LINGORA",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight(400),
                             fontFamily = TitanOneFontFamily,
                             brush = Brush.linearGradient(
                                 colors = listOf(GradientStart700, GradientEnd700)
                             ),
-                            letterSpacing = 2.sp,
+                            letterSpacing = 3.sp,
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
                     // Tab Buttons with Gradient
@@ -286,7 +293,7 @@ fun LoginContent(
         OutlinedTextField(
             value = identifier,
             onValueChange = onIdentifierChange,
-            label = { Text("Email của bạn", fontFamily = ArimoFontFamily) },
+            label = { Text("Tên đăng nhập", fontFamily = ArimoFontFamily) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
@@ -402,7 +409,7 @@ fun RegisterContent(
         OutlinedTextField(
             value = username,
             onValueChange = onUsernameChange,
-            label = { Text("Họ và tên", fontFamily = ArimoFontFamily) },
+            label = { Text("Tên đăng nhập", fontFamily = ArimoFontFamily) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),

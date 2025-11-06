@@ -201,9 +201,11 @@ class AuthViewModel @Inject constructor(
         refreshToken: String? = null
     ) {
         Log.d("AuthViewModel", "Saving auth data - userId: $userId, role: $userRole, refreshToken: $refreshToken")
+        // Lưu access token và thông tin user
+        // refreshToken sẽ được lưu tự động trong cookie bởi CookieJar, không cần lưu vào SharedPreferences
         tokenManager.saveTokens(
             accessToken = token,
-            refreshToken = refreshToken ?: "",
+            refreshToken = null, // Không lưu refreshToken vào SharedPreferences vì nó đã có trong cookie
             userId = userId,
             userRole = userRole
         )
@@ -217,17 +219,15 @@ class AuthViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
-            val refreshToken = tokenManager.getRefreshToken()
-            if (refreshToken != null) {
-                // Call logout API to invalidate refresh token on backend
-                authRepository.logout(refreshToken)
-                    .onRight {
-                        Log.d("AuthViewModel", "Logout successful on backend")
-                    }
-                    .onLeft { failure ->
-                        Log.e("AuthViewModel", "Logout error: ${failure.message}")
-                    }
-            }
+            // Call logout API to invalidate refresh token on backend
+            // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+            authRepository.logout("")
+                .onRight {
+                    Log.d("AuthViewModel", "Logout successful on backend")
+                }
+                .onLeft { failure ->
+                    Log.e("AuthViewModel", "Logout error: ${failure.message}")
+                }
             // Always clear local data regardless of API result
             clearAuthData()
         }

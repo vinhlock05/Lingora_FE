@@ -56,8 +56,9 @@ fun AuthScreen(
 
     var registrationEmail by remember { mutableStateOf<String?>(null) }
     
-    LaunchedEffect(authState.isAuthenticated, registrationEmail, authState.user) {
-        if (authState.isAuthenticated && activeTab == "login") {
+    LaunchedEffect(authState.isAuthenticated, registrationEmail, authState.user, authState.token) {
+        // Chỉ navigate khi có user, token và đang ở login tab (tránh navigate khi logout)
+        if (authState.isAuthenticated && authState.user != null && authState.token != null && activeTab == "login" && !authState.isLoading) {
             // Login successful - navigate based on user role
             val isAdmin = authState.user?.roles?.any { it.name == "ADMIN" } == true
             val destination = if (isAdmin) {

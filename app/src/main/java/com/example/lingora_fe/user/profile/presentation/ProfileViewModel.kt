@@ -58,26 +58,20 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _profileState.value = _profileState.value.copy(isLoggingOut = true)
             
-            val refreshToken = tokenManager.getRefreshToken()
-            
-            if (refreshToken != null) {
-                authRepository.logout(refreshToken)
-                    .onRight {
-                        Log.d("ProfileViewModel", "Logout successful")
-                        clearLocalData()
-                        onSuccess()
-                    }
-                    .onLeft { failure ->
-                        Log.e("ProfileViewModel", "Logout failed: ${failure.message}")
-                        // Clear local data anyway
-                        clearLocalData()
-                        onSuccess()
-                    }
-            } else {
-                // No refresh token, just clear local data
-                clearLocalData()
-                onSuccess()
-            }
+            // Call logout API to invalidate refresh token on backend
+            // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+            authRepository.logout("")
+                .onRight {
+                    Log.d("ProfileViewModel", "Logout successful")
+                    clearLocalData()
+                    onSuccess()
+                }
+                .onLeft { failure ->
+                    Log.e("ProfileViewModel", "Logout failed: ${failure.message}")
+                    // Clear local data anyway
+                    clearLocalData()
+                    onSuccess()
+                }
         }
     }
 

@@ -46,6 +46,10 @@ fun AdminNavigator(
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route ?: "admin_dashboard"
+    
+    // State for logout confirmation dialog
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    var isLoggingOut by remember { mutableStateOf(false) }
 
     // Get user info
     val userName = authState.user?.username ?: "Admin"
@@ -108,12 +112,8 @@ fun AdminNavigator(
                 onLogout = {
                     scope.launch {
                         drawerState.close()
-                        authViewModel.logout()
-                        // Clear back stack and navigate to auth
-                        rootNavController.navigate(Route.AuthNavigation.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
                     }
+                    showLogoutDialog = true
                 }
             )
         }
@@ -389,6 +389,49 @@ fun AdminNavigator(
                 }
             }
         }
+    }
+    
+    // Logout confirmation dialog
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Xác nhận đăng xuất") },
+            text = { Text("Bạn có chắc chắn muốn đăng xuất?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        if (!isLoggingOut) {
+                            isLoggingOut = true
+                            scope.launch {
+                                try {
+                                    // Gọi logout API (không cần đợi)
+                                    authViewModel.logout()
+                                    // Navigate ngay lập tức sau khi clear data
+                                    rootNavController.navigate(Route.AuthNavigation.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                } finally {
+                                    isLoggingOut = false
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Đăng xuất", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false }
+                ) {
+                    Text("Hủy")
+                }
+            }
+        )
     }
 }
 

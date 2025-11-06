@@ -57,14 +57,18 @@ class AuthRepositoryImpl @Inject constructor(
     
     override suspend fun refreshToken(token: String): Either<AppFailure, String> {
         return Either.catch {
-            val response = authApiService.refreshToken(RefreshTokenRequest(token))
+            // Gọi refresh token endpoint không cần body
+            // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+            val response = authApiService.refreshToken()
             response.metaData?.accessToken ?: throw Exception(response.message)
         }.mapLeft { it.toAppFailure() }
     }
     
     override suspend fun logout(token: String): Either<AppFailure, Unit> {
         return Either.catch {
-            authApiService.logout(LogoutRequest(token))
+            // Gọi logout endpoint không cần body
+            // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+            authApiService.logout()
             Unit
         }.mapLeft { it.toAppFailure() }
     }

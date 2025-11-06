@@ -29,14 +29,10 @@ interface AuthApiService {
     ): ApiResponse<OTPMetaData>
     
     @POST("auth/refresh-token")
-    suspend fun refreshToken(
-        @Body request: RefreshTokenRequest
-    ): ApiResponse<RefreshTokenMetaData>
+    suspend fun refreshToken(): ApiResponse<RefreshTokenMetaData>
     
     @POST("auth/logout")
-    suspend fun logout(
-        @Body request: LogoutRequest
-    ): ApiResponse<Any>
+    suspend fun logout(): ApiResponse<Any>
     
     @GET("auth/me")
     suspend fun getProfile(): ApiResponse<UserDto>

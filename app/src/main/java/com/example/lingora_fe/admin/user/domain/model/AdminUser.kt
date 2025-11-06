@@ -47,6 +47,7 @@ data class UserFilterOptions(
     val search: String? = null,
     val proficiency: String? = null,
     val status: String? = null,
+    val sort: String? = null,
     val page: Int = 1,
     val limit: Int = 20
 )
@@ -68,5 +69,16 @@ enum class ProficiencyLevel(val value: String) {
 enum class UserRoleType(val value: String, val id: Int) {
     ADMIN("ADMIN", 1),
     LEARNER("LEARNER", 2)
+}
+
+enum class SortOption(val displayName: String, val apiValue: String) {
+    ID_DESC("ID (Newest First)", "-id"),
+    ID_ASC("ID (Oldest First)", "+id"),
+    USERNAME_ASC("Username (A-Z)", "+username"),
+    USERNAME_DESC("Username (Z-A)", "-username"),
+    EMAIL_ASC("Email (A-Z)", "+email"),
+    EMAIL_DESC("Email (Z-A)", "-email"),
+    CREATED_AT_DESC("Created Date (Newest)", "-createdAt"),
+    CREATED_AT_ASC("Created Date (Oldest)", "+createdAt")
 }
 

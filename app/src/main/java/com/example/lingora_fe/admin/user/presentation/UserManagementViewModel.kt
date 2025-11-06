@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.admin.user.domain.model.CreateUserData
 import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
+import com.example.lingora_fe.admin.user.domain.model.SortOption
 import com.example.lingora_fe.admin.user.domain.model.UpdateUserData
 import com.example.lingora_fe.admin.user.domain.model.UserFilterOptions
 import com.example.lingora_fe.admin.user.domain.model.UserStatus
@@ -43,6 +44,7 @@ class UserManagementViewModel @Inject constructor(
             is UserManagementEvent.SearchUsers -> searchUsers(event.query)
             is UserManagementEvent.FilterByProficiency -> filterByProficiency(event.proficiency)
             is UserManagementEvent.FilterByStatus -> filterByStatus(event.status)
+            is UserManagementEvent.SortBy -> sortBy(event.sortOption)
             is UserManagementEvent.ClearFilters -> clearFilters()
             is UserManagementEvent.RefreshUsers -> refreshUsers()
             
@@ -91,6 +93,7 @@ class UserManagementViewModel @Inject constructor(
                 search = _state.value.searchQuery.takeIf { it.isNotBlank() },
                 proficiency = _state.value.selectedProficiency?.value,
                 status = _state.value.selectedStatus?.value,
+                sort = _state.value.selectedSort?.apiValue,
                 page = page,
                 limit = 20
             )
@@ -130,11 +133,17 @@ class UserManagementViewModel @Inject constructor(
         loadUsers(page = 1)
     }
 
+    private fun sortBy(sortOption: SortOption?) {
+        _state.value = _state.value.copy(selectedSort = sortOption)
+        loadUsers(page = 1)
+    }
+
     private fun clearFilters() {
         _state.value = _state.value.copy(
             searchQuery = "",
             selectedProficiency = null,
-            selectedStatus = null
+            selectedStatus = null,
+            selectedSort = null
         )
         loadUsers(page = 1)
     }

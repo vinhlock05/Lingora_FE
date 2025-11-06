@@ -22,6 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.user.domain.model.AdminUser
 import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
+import com.example.lingora_fe.admin.user.domain.model.SortOption
 import com.example.lingora_fe.admin.user.domain.model.UserStatus
 import com.example.lingora_fe.admin.user.presentation.UserManagementEvent
 import com.example.lingora_fe.admin.user.presentation.UserManagementViewModel
@@ -35,26 +36,62 @@ fun UserListScreen(
     viewModel: UserManagementViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     var showDeleteDialog by remember { mutableStateOf<Int?>(null) }
     var showFilterDialog by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToCreateUser,
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(Icons.Default.Add, "Create User")
+            }
+        }
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        val bottomPadding = it.calculateBottomPadding()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = bottomPadding)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
 
-            // Search Bar
-            SearchBar(
-                query = state.searchQuery,
-                onQueryChange = { viewModel.onEvent(UserManagementEvent.SearchUsers(it)) },
+            // Search Bar and Actions Row
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SearchBar(
+                    query = state.searchQuery,
+                    onQueryChange = { viewModel.onEvent(UserManagementEvent.SearchUsers(it)) },
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Filter Button
+                FilterButton(
+                    onClick = { showFilterDialog = true },
+                    hasActiveFilters = state.selectedProficiency != null || state.selectedStatus != null
+                )
+                
+                // Sort Button
+                SortButton(
+                    onClick = { showSortMenu = true },
+                    currentSort = state.selectedSort
+                )
+            }
 
-            // Active Filters
-            if (state.selectedProficiency != null || state.selectedStatus != null) {
+            // Active Filters and Sort
+            if (state.selectedProficiency != null || state.selectedStatus != null || state.selectedSort != null) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -74,6 +111,14 @@ fun UserListScreen(
                             selected = true,
                             onClick = { viewModel.onEvent(UserManagementEvent.FilterByStatus(null)) },
                             label = { Text(status.value) },
+                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                        )
+                    }
+                    state.selectedSort?.let { sort ->
+                        FilterChip(
+                            selected = true,
+                            onClick = { viewModel.onEvent(UserManagementEvent.SortBy(null)) },
+                            label = { Text("Sort: ${sort.displayName}") },
                             trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
                         )
                     }
@@ -142,17 +187,6 @@ fun UserListScreen(
                 }
             }
         }
-
-        // Floating Action Button
-        FloatingActionButton(
-            onClick = onNavigateToCreateUser,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary
-        ) {
-            Icon(Icons.Default.Add, "Create User")
-        }
     }
 
     // Dialogs
@@ -173,6 +207,17 @@ fun UserListScreen(
         )
     }
 
+    if (showSortMenu) {
+        SortDialog(
+            selectedSort = state.selectedSort,
+            onDismiss = { showSortMenu = false },
+            onSelectSort = { sort ->
+                viewModel.onEvent(UserManagementEvent.SortBy(sort))
+                showSortMenu = false
+            }
+        )
+    }
+
     showDeleteDialog?.let { userId ->
         DeleteConfirmDialog(
             onConfirm = {
@@ -185,14 +230,22 @@ fun UserListScreen(
 
     // Snackbar Messages
     LaunchedEffect(state.actionSuccess, state.actionError) {
-        state.actionSuccess?.let {
-            // Show success message
+        state.actionSuccess?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
             viewModel.onEvent(UserManagementEvent.ClearActionMessages)
         }
-        state.actionError?.let {
-            // Show error message
+        state.actionError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Long,
+                withDismissAction = true
+            )
             viewModel.onEvent(UserManagementEvent.ClearActionMessages)
         }
+    }
     }
 }
 
@@ -543,6 +596,103 @@ fun DeleteConfirmDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun FilterButton(
+    onClick: () -> Unit,
+    hasActiveFilters: Boolean
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(
+                if (hasActiveFilters) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+    ) {
+        Icon(
+            imageVector = Icons.Default.FilterList,
+            contentDescription = "Filter",
+            tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun SortButton(
+    onClick: () -> Unit,
+    currentSort: SortOption?
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(
+                if (currentSort != null) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+    ) {
+        Icon(
+            imageVector = Icons.Default.Sort,
+            contentDescription = "Sort",
+            tint = if (currentSort != null) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun SortDialog(
+    selectedSort: SortOption?,
+    onDismiss: () -> Unit,
+    onSelectSort: (SortOption?) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sort Users") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SortOption.values().forEach { sortOption ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectSort(sortOption) }
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedSort == sortOption,
+                            onClick = { onSelectSort(sortOption) }
+                        )
+                        Text(
+                            text = sortOption.displayName,
+                            modifier = Modifier.padding(start = 8.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Done")
+            }
+        },
+        dismissButton = {
+            if (selectedSort != null) {
+                TextButton(onClick = { onSelectSort(null) }) {
+                    Text("Clear")
+                }
             }
         }
     )

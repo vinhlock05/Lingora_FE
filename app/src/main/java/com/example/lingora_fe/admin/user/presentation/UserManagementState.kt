@@ -3,6 +3,7 @@ package com.example.lingora_fe.admin.user.presentation
 import android.util.Patterns
 import com.example.lingora_fe.admin.user.domain.model.AdminUser
 import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
+import com.example.lingora_fe.admin.user.domain.model.SortOption
 import com.example.lingora_fe.admin.user.domain.model.UserStatus
 
 // Main UI State
@@ -18,6 +19,7 @@ data class UserManagementState(
     val searchQuery: String = "",
     val selectedProficiency: ProficiencyLevel? = null,
     val selectedStatus: UserStatus? = null,
+    val selectedSort: SortOption? = null,
     
     // Selected user for details/edit
     val selectedUser: AdminUser? = null,
@@ -95,6 +97,7 @@ sealed class UserManagementEvent {
     data class SearchUsers(val query: String) : UserManagementEvent()
     data class FilterByProficiency(val proficiency: ProficiencyLevel?) : UserManagementEvent()
     data class FilterByStatus(val status: UserStatus?) : UserManagementEvent()
+    data class SortBy(val sortOption: SortOption?) : UserManagementEvent()
     object ClearFilters : UserManagementEvent()
     object RefreshUsers : UserManagementEvent()
     

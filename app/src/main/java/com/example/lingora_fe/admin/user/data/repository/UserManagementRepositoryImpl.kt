@@ -28,7 +28,8 @@ class UserManagementRepositoryImpl @Inject constructor(
                 page = filterOptions.page,
                 search = filterOptions.search,
                 proficiency = filterOptions.proficiency,
-                status = filterOptions.status
+                status = filterOptions.status,
+                sort = filterOptions.sort
             )
             response.metaData?.toDomain() ?: throw Exception(response.message)
         }.mapLeft { it.toAppFailure() }

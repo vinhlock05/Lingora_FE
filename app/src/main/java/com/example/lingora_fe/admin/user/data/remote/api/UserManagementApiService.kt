@@ -12,7 +12,8 @@ interface UserManagementApiService {
         @Query("page") page: Int = 1,
         @Query("search") search: String? = null,
         @Query("proficiency") proficiency: String? = null,
-        @Query("status") status: String? = null
+        @Query("status") status: String? = null,
+        @Query("sort") sort: String? = null
     ): ApiResponse<UserListMetaData>
 
     @GET("user/{id}")

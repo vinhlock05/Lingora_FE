@@ -3,6 +3,7 @@ package com.example.lingora_fe.di
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.lingora_fe.core.network.AuthInterceptor
+import com.example.lingora_fe.core.network.PersistentCookieJar
 import com.example.lingora_fe.core.network.TokenAuthenticator
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.di.qualifier.AuthApiClient
@@ -41,15 +42,19 @@ object AppModule {
     }
 
     // OkHttpClient cho refresh token (KHÔNG có authenticator để tránh vòng lặp)
+    // Có CookieJar để tự động lưu và gửi cookies (refreshToken)
     @Provides
     @Singleton
     @RefreshTokenClient
-    fun provideRefreshTokenOkHttpClient(): OkHttpClient {
+    fun provideRefreshTokenOkHttpClient(
+        cookieJar: PersistentCookieJar
+    ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
         return OkHttpClient.Builder()
+            .cookieJar(cookieJar)  // Tự động lưu và gửi cookies
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -73,13 +78,15 @@ object AppModule {
     }
 
     // OkHttpClient cho các API thường (CÓ authenticator và auth interceptor)
+    // Có CookieJar để tự động lưu và gửi cookies (refreshToken)
     @Provides
     @Singleton
     @AuthApiClient
     fun provideAuthOkHttpClient(
         @RefreshTokenClient retrofit: Retrofit,
         tokenManager: TokenManager,
-        authInterceptor: AuthInterceptor
+        authInterceptor: AuthInterceptor,
+        cookieJar: PersistentCookieJar
     ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -95,6 +102,7 @@ object AppModule {
         )
 
         return OkHttpClient.Builder()
+            .cookieJar(cookieJar)  // Tự động lưu và gửi cookies
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)  // Tự động thêm Authorization header
             .authenticator(tokenAuthenticator)  // Tự động refresh token khi 401

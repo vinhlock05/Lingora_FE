@@ -7,7 +7,8 @@ import javax.inject.Singleton
 
 @Singleton
 class TokenManager @Inject constructor(
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    private val cookieJar: PersistentCookieJar
 ) {
     companion object {
         private const val TAG = "TokenManager"
@@ -26,7 +27,7 @@ class TokenManager @Inject constructor(
         userId: Int,
         userRole: String
     ) {
-        Log.d(TAG, "Saving tokens - userId: $userId, role: $userRole")
+        Log.d(TAG, "Saving tokens - userId: $userId, role: $userRole, accessToken length: ${accessToken.length}")
         sharedPreferences.edit().apply {
             putString(KEY_ACCESS_TOKEN, accessToken)
             refreshToken?.let { putString(KEY_REFRESH_TOKEN, it) }
@@ -34,13 +35,18 @@ class TokenManager @Inject constructor(
             putString(KEY_USER_ROLE, userRole)
             apply()
         }
+        // Verify token was saved
+        val savedToken = sharedPreferences.getString(KEY_ACCESS_TOKEN, null)
+        Log.d(TAG, "Token saved successfully: ${savedToken != null}, token length: ${savedToken?.length}")
     }
 
     /**
      * Lấy access token
      */
     fun getAccessToken(): String? {
-        return sharedPreferences.getString(KEY_ACCESS_TOKEN, null)
+        val token = sharedPreferences.getString(KEY_ACCESS_TOKEN, null)
+        Log.d(TAG, "Getting access token: ${if (token != null) "found (length: ${token.length})" else "not found"}")
+        return token
     }
 
     /**
@@ -89,6 +95,7 @@ class TokenManager @Inject constructor(
 
     /**
      * Xóa tất cả token và thông tin user (logout)
+     * Cũng xóa cookies (refreshToken cookie)
      */
     fun clearTokens() {
         Log.d(TAG, "Clearing all tokens and user data")
@@ -98,6 +105,8 @@ class TokenManager @Inject constructor(
             .remove(KEY_USER_ID)
             .remove(KEY_USER_ROLE)
             .apply()
+        // Xóa cookies (refreshToken cookie)
+        cookieJar.clearCookies()
     }
 
     /**

@@ -24,6 +24,27 @@ sealed class DrawerNavItem(
         description = "Manage users and permissions"
     )
     
+    object CategoryManagement : DrawerNavItem(
+        route = "admin_category_management",
+        title = "Category Management",
+        icon = Icons.Default.Category,
+        description = "Manage learning categories"
+    )
+    
+    object TopicManagement : DrawerNavItem(
+        route = "admin_topic_management",
+        title = "Topic Management",
+        icon = Icons.Default.Topic,
+        description = "Manage learning topics"
+    )
+    
+    object WordManagement : DrawerNavItem(
+        route = "admin_word_management",
+        title = "Word Management",
+        icon = Icons.Default.TextFields,
+        description = "Manage words"
+    )
+    
     object ContentManagement : DrawerNavItem(
         route = "admin_content",
         title = "Content Management",
@@ -56,6 +77,9 @@ sealed class DrawerNavItem(
         val items = listOf(
             Dashboard,
             UserManagement,
+            CategoryManagement,
+            TopicManagement,
+            WordManagement,
             ContentManagement,
             ForumManagement,
             Analytics,

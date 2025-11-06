@@ -18,7 +18,9 @@ data class UserDto(
     @SerializedName("proficiency")
     val proficiency: String,
     @SerializedName("created_at")
-    val createdAt: String
+    val createdAt: String?,
+    @SerializedName("deleted_at")
+    val deletedAt: String?
 )
 
 data class RoleDto(

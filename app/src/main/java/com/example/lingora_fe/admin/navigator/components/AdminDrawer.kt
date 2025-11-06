@@ -1,6 +1,8 @@
 package com.example.lingora_fe.admin.navigator.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -30,28 +32,33 @@ fun AdminDrawerContent(
                 .fillMaxSize()
                 .padding(vertical = 16.dp)
         ) {
-            // Header with admin profile
-            AdminDrawerHeader(
-                userName = userName,
-                userEmail = userEmail
-            )
-
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-            // Navigation items
-            DrawerNavItem.items.forEach { item ->
-                DrawerMenuItem(
-                    item = item,
-                    isSelected = currentRoute == item.route,
-                    onClick = { onNavigateToItem(item.route) }
+            // Scrollable content (header + nav items)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Header with admin profile
+                AdminDrawerHeader(
+                    userName = userName,
+                    userEmail = userEmail
                 )
+
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // Navigation items
+                DrawerNavItem.items.forEach { item ->
+                    DrawerMenuItem(
+                        item = item,
+                        isSelected = currentRoute == item.route,
+                        onClick = { onNavigateToItem(item.route) }
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
             Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // Logout button
+            // Logout button (fixed at bottom)
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Logout, contentDescription = null) },
                 label = { Text("Logout") },

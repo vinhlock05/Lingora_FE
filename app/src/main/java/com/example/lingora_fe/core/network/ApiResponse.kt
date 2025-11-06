@@ -1,18 +1,19 @@
-package com.example.lingora_fe.auth.data.remote.dto
+package com.example.lingora_fe.core.network
 
 import com.google.gson.annotations.SerializedName
 
-data class OTPResponse(
+/**
+ * Generic API Response wrapper
+ * Wraps all API responses with consistent structure
+ */
+data class ApiResponse<T>(
     @SerializedName("message")
     val message: String,
+    
     @SerializedName("statusCode")
     val statusCode: Int,
+    
     @SerializedName("metaData")
-    val metaData: OTPMetaData?
-)
-
-data class OTPMetaData(
-    @SerializedName("verified")
-    val verified: Boolean
+    val metaData: T? = null
 )
 

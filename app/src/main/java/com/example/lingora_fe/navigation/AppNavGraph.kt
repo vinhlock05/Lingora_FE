@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.example.lingora_fe.admin.navigator.AdminNavigator
 import com.example.lingora_fe.auth.presentation.AuthScreen
 import com.example.lingora_fe.auth.presentation.OTPScreen
 import com.example.lingora_fe.navigation.Route.Companion.otpScreen
@@ -55,7 +56,9 @@ fun AppNavGraph(
             route = Route.AdminNavigation.route,
             startDestination = Route.AdminNavigator.route
         ) {
-            // TODO: Add admin screens
+            composable(route = Route.AdminNavigator.route) {
+                AdminNavigator(rootNavController = navController)
+            }
         }
         
         // User Navigation

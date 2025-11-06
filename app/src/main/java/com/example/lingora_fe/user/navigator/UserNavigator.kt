@@ -307,7 +307,7 @@ fun UserNavigator(rootNavController: NavHostController) {
 
             // Profile Tab
             composable(Route.ProfileTab.route) {
-                ProfileScreen()
+                ProfileScreen(rootNavController = rootNavController)
             }
         }
     }

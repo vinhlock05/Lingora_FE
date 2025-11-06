@@ -1,13 +1,11 @@
 package com.example.lingora_fe.auth.presentation
 
-import android.content.Context
-import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.lingora_fe.auth.domain.model.AuthResult
+import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.auth.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,33 +15,31 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    @ApplicationContext private val context: Context
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow(AuthState())
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
-
-    private val sharedPreferences: SharedPreferences =
-        context.getSharedPreferences("lingora_prefs", Context.MODE_PRIVATE)
 
     init {
         checkAuthStatus()
     }
 
     private fun checkAuthStatus() {
-        val token = sharedPreferences.getString("access_token", null)
+        val token = tokenManager.getAccessToken()
         if (token != null) {
             viewModelScope.launch {
-                val user = authRepository.getProfile(token)
-                if (user != null) {
-                    _authState.value = _authState.value.copy(
-                        user = user,
-                        token = token,
-                        isAuthenticated = true
-                    )
-                } else {
-                    clearAuthData()
-                }
+                authRepository.getProfile(token)
+                    .onRight { user ->
+                        _authState.value = _authState.value.copy(
+                            user = user,
+                            token = token,
+                            isAuthenticated = true
+                        )
+                    }
+                    .onLeft {
+                        clearAuthData()
+                    }
             }
         }
     }
@@ -52,24 +48,31 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = _authState.value.copy(isLoading = true, error = null)
 
-            when (val result = authRepository.login(identifier, password)) {
-                is AuthResult.Success -> {
-                    saveAuthData(result.token, result.user.id)
+            authRepository.login(identifier, password)
+                .onRight { authData ->
+                    // Determine user role (check if user has ADMIN role)
+                    val userRole = if (authData.user.roles.any { it.name == "ADMIN" }) {
+                        "ADMIN"
+                    } else {
+                        "LEARNER"
+                    }
+                    Log.d("AuthViewModel", "User role determined: $userRole")
+                    saveAuthData(authData.accessToken, authData.user.id, userRole, authData.refreshToken)
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        user = result.user,
-                        token = result.token,
+                        user = authData.user,
+                        token = authData.accessToken,
                         isAuthenticated = true,
                         error = null
                     )
                 }
-                is AuthResult.Error -> {
+                .onLeft { failure ->
+                    Log.d("AuthViewModel", "Login failed: $failure")
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = result.message
+                        error = failure.message
                     )
                 }
-            }
         }
     }
 
@@ -77,35 +80,29 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = _authState.value.copy(isLoading = true, error = null)
 
-            when (val result = authRepository.register(email, username, password)) {
-                is AuthResult.Success -> {
-                    saveAuthData(result.token, result.user.id)
+            authRepository.register(email, username, password)
+                .onRight { authData ->
+                    // Determine user role (check if user has ADMIN role)
+                    val userRole = if (authData.user.roles.any { it.name == "ADMIN" }) {
+                        "ADMIN"
+                    } else {
+                        "LEARNER"
+                    }
+                    saveAuthData(authData.accessToken, authData.user.id, userRole, authData.refreshToken)
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        user = result.user,
-                        token = result.token,
+                        user = authData.user,
+                        token = authData.accessToken,
                         isAuthenticated = true,
                         error = null
                     )
                 }
-                is AuthResult.Error -> {
+                .onLeft { failure ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = result.message
+                        error = failure.message
                     )
                 }
-            }
-        }
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            val token = _authState.value.token
-            if (token != null) {
-                authRepository.logout(token)
-            }
-            clearAuthData()
-            _authState.value = AuthState()
         }
     }
 
@@ -113,14 +110,20 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val currentToken = _authState.value.token
             if (currentToken != null) {
-                val newToken = authRepository.refreshToken(currentToken)
-                if (newToken != null) {
-                    saveAuthData(newToken, _authState.value.user?.id ?: 0)
-                    _authState.value = _authState.value.copy(token = newToken)
-                } else {
-                    clearAuthData()
-                    _authState.value = AuthState()
-                }
+                authRepository.refreshToken(currentToken)
+                    .onRight { newToken ->
+                        val userRole = if (_authState.value.user?.roles?.any { it.name == "ADMIN" } == true) {
+                            "ADMIN"
+                        } else {
+                            "LEARNER"
+                        }
+                        saveAuthData(newToken, _authState.value.user?.id ?: 0, userRole)
+                        _authState.value = _authState.value.copy(token = newToken)
+                    }
+                    .onLeft {
+                        clearAuthData()
+                        _authState.value = AuthState()
+                    }
             }
         }
     }
@@ -130,18 +133,19 @@ class AuthViewModel @Inject constructor(
             val token = _authState.value.token
             if (token != null) {
                 _authState.value = _authState.value.copy(isLoading = true)
-                val user = authRepository.getProfile(token)
-                if (user != null) {
-                    _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        user = user
-                    )
-                } else {
-                    _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        error = "Failed to load profile"
-                    )
-                }
+                authRepository.getProfile(token)
+                    .onRight { user ->
+                        _authState.value = _authState.value.copy(
+                            isLoading = false,
+                            user = user
+                        )
+                    }
+                    .onLeft { failure ->
+                        _authState.value = _authState.value.copy(
+                            isLoading = false,
+                            error = failure.message
+                        )
+                    }
             }
         }
     }
@@ -150,20 +154,19 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = _authState.value.copy(isLoading = true, error = null)
             
-            when (val result = authRepository.verifyOTP(email, otp)) {
-                is AuthResult.Success -> {
+            authRepository.verifyOTP(email, otp)
+                .onRight {
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         error = null
                     )
                 }
-                is AuthResult.Error -> {
+                .onLeft { failure ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = result.message
+                        error = failure.message
                     )
                 }
-            }
         }
     }
     
@@ -171,20 +174,19 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = _authState.value.copy(isLoading = true, error = null)
             
-            when (val result = authRepository.resendOTP(email)) {
-                is AuthResult.Success -> {
+            authRepository.resendOTP(email)
+                .onRight {
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         error = null
                     )
                 }
-                is AuthResult.Error -> {
+                .onLeft { failure ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = result.message
+                        error = failure.message
                     )
                 }
-            }
         }
     }
 
@@ -192,19 +194,42 @@ class AuthViewModel @Inject constructor(
         _authState.value = _authState.value.copy(error = null)
     }
 
-    private fun saveAuthData(token: String, userId: Int) {
-        sharedPreferences.edit().apply {
-            putString("access_token", token)
-            putInt("user_id", userId)
-            apply()
-        }
+    private fun saveAuthData(
+        token: String,
+        userId: Int,
+        userRole: String,
+        refreshToken: String? = null
+    ) {
+        Log.d("AuthViewModel", "Saving auth data - userId: $userId, role: $userRole, refreshToken: $refreshToken")
+        tokenManager.saveTokens(
+            accessToken = token,
+            refreshToken = refreshToken ?: "",
+            userId = userId,
+            userRole = userRole
+        )
     }
 
-    private fun clearAuthData() {
-        sharedPreferences.edit().apply {
-            remove("access_token")
-            remove("user_id")
-            apply()
+    fun clearAuthData() {
+        Log.d("AuthViewModel", "Clearing auth data")
+        tokenManager.clearTokens()
+        _authState.value = AuthState()
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            val refreshToken = tokenManager.getRefreshToken()
+            if (refreshToken != null) {
+                // Call logout API to invalidate refresh token on backend
+                authRepository.logout(refreshToken)
+                    .onRight {
+                        Log.d("AuthViewModel", "Logout successful on backend")
+                    }
+                    .onLeft { failure ->
+                        Log.e("AuthViewModel", "Logout error: ${failure.message}")
+                    }
+            }
+            // Always clear local data regardless of API result
+            clearAuthData()
         }
     }
 }

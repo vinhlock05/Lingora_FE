@@ -405,9 +405,13 @@ fun AdminNavigator(
                             isLoggingOut = true
                             scope.launch {
                                 try {
-                                    // Gọi logout API (không cần đợi)
-                                    authViewModel.logout()
-                                    // Navigate ngay lập tức sau khi clear data
+                                    // Gọi logout API trước để xóa refreshToken trên backend
+                                    // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+                                    // Sau đó mới clear local data (bao gồm cookies)
+                                    authViewModel.logoutAndClear()
+                                    // Đợi một chút để đảm bảo token đã được clear
+                                    kotlinx.coroutines.delay(100)
+                                    // Navigate sau khi clear data
                                     rootNavController.navigate(Route.AuthNavigation.route) {
                                         popUpTo(0) { inclusive = true }
                                     }

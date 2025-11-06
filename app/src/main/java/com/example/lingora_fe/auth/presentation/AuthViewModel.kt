@@ -26,8 +26,10 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun checkAuthStatus() {
+        Log.d("AuthViewModel", "Checking authentication status")
         val token = tokenManager.getAccessToken()
-        if (token != null) {
+        // Chỉ check nếu authState chưa được set (tránh check lại sau khi logout)
+        if (token != null && !_authState.value.isAuthenticated) {
             viewModelScope.launch {
                 authRepository.getProfile(token)
                     .onRight { user ->
@@ -40,6 +42,11 @@ class AuthViewModel @Inject constructor(
                     .onLeft {
                         clearAuthData()
                     }
+            }
+        } else if (token == null) {
+            // Nếu không có token, đảm bảo authState là cleared
+            if (_authState.value.isAuthenticated) {
+                clearAuthData()
             }
         }
     }
@@ -128,28 +135,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun getProfile() {
-        viewModelScope.launch {
-            val token = _authState.value.token
-            if (token != null) {
-                _authState.value = _authState.value.copy(isLoading = true)
-                authRepository.getProfile(token)
-                    .onRight { user ->
-                        _authState.value = _authState.value.copy(
-                            isLoading = false,
-                            user = user
-                        )
-                    }
-                    .onLeft { failure ->
-                        _authState.value = _authState.value.copy(
-                            isLoading = false,
-                            error = failure.message
-                        )
-                    }
-            }
-        }
-    }
-
     fun verifyOTP(email: String, otp: String) {
         viewModelScope.launch {
             _authState.value = _authState.value.copy(isLoading = true, error = null)
@@ -228,9 +213,28 @@ class AuthViewModel @Inject constructor(
                 .onLeft { failure ->
                     Log.e("AuthViewModel", "Logout error: ${failure.message}")
                 }
-            // Always clear local data regardless of API result
-            clearAuthData()
+            // Không clear data ở đây, để caller tự quyết định khi nào clear
+            // (cần đợi logout API hoàn thành trước khi clear cookies)
         }
+    }
+    
+    /**
+     * Logout và clear data - gọi logout API trước, sau đó clear data
+     */
+    suspend fun logoutAndClear() {
+        // Gọi logout API trước để xóa refreshToken trên backend
+        // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+        authRepository.logout("")
+            .onRight {
+                Log.d("AuthViewModel", "Logout successful on backend")
+            }
+            .onLeft { failure ->
+                Log.e("AuthViewModel", "Logout error: ${failure.message}")
+            }
+        // Đợi một chút để đảm bảo logout API đã hoàn thành
+        kotlinx.coroutines.delay(200)
+        // Sau đó mới clear local data (bao gồm cookies)
+        clearAuthData()
     }
 }
 

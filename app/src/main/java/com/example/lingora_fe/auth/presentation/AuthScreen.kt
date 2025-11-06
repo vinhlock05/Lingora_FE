@@ -56,9 +56,18 @@ fun AuthScreen(
 
     var registrationEmail by remember { mutableStateOf<String?>(null) }
     
+    // Track previous auth state to avoid re-navigation
+    var previousAuthState by remember { mutableStateOf(authState.isAuthenticated) }
+    
     LaunchedEffect(authState.isAuthenticated, registrationEmail, authState.user, authState.token) {
         // Chỉ navigate khi có user, token và đang ở login tab (tránh navigate khi logout)
-        if (authState.isAuthenticated && authState.user != null && authState.token != null && activeTab == "login" && !authState.isLoading) {
+        // Và chỉ navigate khi authState thay đổi từ false -> true (tránh navigate lại khi đã ở auth screen)
+        if (authState.isAuthenticated && 
+            authState.user != null && 
+            authState.token != null && 
+            activeTab == "login" && 
+            !authState.isLoading &&
+            !previousAuthState) {  // Chỉ navigate khi chuyển từ not authenticated -> authenticated
             // Login successful - navigate based on user role
             val isAdmin = authState.user?.roles?.any { it.name == "ADMIN" } == true
             val destination = if (isAdmin) {
@@ -67,12 +76,18 @@ fun AuthScreen(
                 Route.UserNavigation.route
             }
             
+            previousAuthState = true
             navController.navigate(destination) {
                 popUpTo(Route.AuthNavigation.route) { inclusive = true }
             }
         } else if (registrationEmail != null) {
             // Registration complete - navigate to OTP screen
             navController.navigate(Route.otpScreen(registrationEmail!!))
+        }
+        
+        // Update previous auth state
+        if (!authState.isAuthenticated) {
+            previousAuthState = false
         }
     }
 

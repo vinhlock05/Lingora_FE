@@ -259,8 +259,23 @@ class TopicManagementViewModel @Inject constructor(
             
             val token = getToken() ?: return@launch
 
+            // Get current topic to preserve name and description
+            val currentTopic = repository.getTopicById(token, topicId).orNull()
+            if (currentTopic == null) {
+                _state.value = _state.value.copy(
+                    isDeleting = false,
+                    actionError = "Topic not found"
+                )
+                return@launch
+            }
+
             // Update topic to set categoryId = null (remove from category)
-            val updateData = UpdateTopicData(categoryId = null)
+            // Keep name and description unchanged
+            val updateData = UpdateTopicData(
+                name = currentTopic.name,
+                description = currentTopic.description,
+                categoryId = null
+            )
             repository.updateTopic(token, topicId, updateData)
                 .onRight {
                     _state.value = _state.value.copy(

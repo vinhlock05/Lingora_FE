@@ -14,10 +14,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.lingora_fe.admin.word.domain.model.Word
 import com.example.lingora_fe.admin.word.presentation.WordManagementEvent
 import com.example.lingora_fe.admin.word.presentation.WordManagementViewModel
 import com.example.lingora_fe.admin.word.presentation.screen.*
@@ -229,57 +234,134 @@ fun WordsInTopicScreen(
     }
 
     if (showAttach) {
-        // Reuse pagination-aware unclassified loader
-        LaunchedEffect(Unit) { viewModel.onEvent(WordManagementEvent.LoadUnclassified()) }
-        AlertDialog(
-            onDismissRequest = { showAttach = false },
-            confirmButton = { TextButton(onClick = { showAttach = false }) { Text("Close") } },
-            title = { Text("Attach existing word") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (state.isLoadingUnclassified) {
-                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                    } else {
-                        if (state.unclassifiedWords.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(360.dp),
-                                contentAlignment = Alignment.Center
+        AddExistingWordDialog(
+            topicId = topicId,
+            unclassifiedWords = state.unclassifiedWords,
+            isLoading = state.isLoadingUnclassified,
+            currentPage = state.unclassifiedCurrentPage,
+            totalPages = state.unclassifiedTotalPages,
+            onDismiss = { showAttach = false },
+            onAttachWord = { wordId ->
+                viewModel.onEvent(WordManagementEvent.AttachExisting(wordId, topicId))
+                showAttach = false
+            },
+            onLoadUnclassified = { page ->
+                viewModel.onEvent(WordManagementEvent.LoadUnclassified(page))
+            }
+        )
+    }
+}
+
+@Composable
+private fun AddExistingWordDialog(
+    topicId: Int,
+    unclassifiedWords: List<Word>,
+    isLoading: Boolean,
+    currentPage: Int,
+    totalPages: Int,
+    onDismiss: () -> Unit,
+    onAttachWord: (Int) -> Unit,
+    onLoadUnclassified: (Int) -> Unit
+) {
+    // Load unclassified words when dialog opens
+    LaunchedEffect(Unit) {
+        onLoadUnclassified(1)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.Link, "Attach Existing Word") },
+        title = { Text("Attach Existing Word") },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Select an unclassified word to add to this topic:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                when {
+                    isLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    unclassifiedWords.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                Icon(
+                                    Icons.Default.TextFields,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                                 Text(
-                                    "No unclassified words available",
+                                    text = "No unclassified words available",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                        } else {
-                            LazyColumn(Modifier.height(360.dp)) {
-                                items(state.unclassifiedWords, key = { it.id }) { w ->
-                                    ListItem(
-                                        headlineContent = { Text(w.word) },
-                                        supportingContent = { Text(w.meaning) },
-                                        trailingContent = {
-                                            TextButton(onClick = {
-                                                viewModel.onEvent(WordManagementEvent.AttachExisting(w.id, topicId))
-                                                showAttach = false
-                                            }) { Text("Attach") }
-                                        }
+                        }
+                    }
+                    else -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(unclassifiedWords, key = { it.id }) { word ->
+                                    WordCardForDialog(
+                                        word = word,
+                                        onClick = { onAttachWord(word.id) }
                                     )
                                 }
-                                item {
-                                    if (state.unclassifiedTotalPages > 1) {
-                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                            TextButton(enabled = state.unclassifiedCurrentPage > 1, onClick = {
-                                                viewModel.onEvent(WordManagementEvent.LoadUnclassified(state.unclassifiedCurrentPage - 1))
-                                            }) { Text("Prev") }
-                                            Spacer(Modifier.width(8.dp))
-                                            Text("${state.unclassifiedCurrentPage}/${state.unclassifiedTotalPages}")
-                                            Spacer(Modifier.width(8.dp))
-                                            TextButton(enabled = state.unclassifiedCurrentPage < state.unclassifiedTotalPages, onClick = {
-                                                viewModel.onEvent(WordManagementEvent.LoadUnclassified(state.unclassifiedCurrentPage + 1))
-                                            }) { Text("Next") }
-                                        }
+                            }
+
+                            // Pagination
+                            if (totalPages > 1) {
+                                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    IconButton(
+                                        onClick = { onLoadUnclassified(currentPage - 1) },
+                                        enabled = currentPage > 1 && !isLoading
+                                    ) {
+                                        Icon(Icons.Default.ChevronLeft, "Previous")
+                                    }
+                                    
+                                    Text(
+                                        text = "Page $currentPage of $totalPages",
+                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    
+                                    IconButton(
+                                        onClick = { onLoadUnclassified(currentPage + 1) },
+                                        enabled = currentPage < totalPages && !isLoading
+                                    ) {
+                                        Icon(Icons.Default.ChevronRight, "Next")
                                     }
                                 }
                             }
@@ -287,6 +369,120 @@ fun WordsInTopicScreen(
                     }
                 }
             }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+private fun WordCardForDialog(
+    word: Word,
+    onClick: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Image or placeholder
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                if (word.imageUrl != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(word.imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = word.word,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.TextFields,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+
+            // Word Info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = word.word,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    // Type
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = word.type,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    // CEFR Level
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = word.cefrLevel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Text(
+                    text = word.meaning,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            // Add Icon
+            Icon(
+                Icons.Default.Add,
+                contentDescription = "Attach",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }

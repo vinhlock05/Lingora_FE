@@ -8,7 +8,8 @@ data class User(
     val avatar: String?,
     val status: String,
     val proficiency: String,
-    val createdAt: String
+    val createdAt: String? = null,
+    val deletedAt: String? = null
 )
 
 data class Role(

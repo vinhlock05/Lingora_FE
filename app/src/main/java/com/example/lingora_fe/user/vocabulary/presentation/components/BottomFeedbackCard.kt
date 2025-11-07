@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
-import com.example.lingora_fe.user.vocabulary.presentation.screen.Word
+import com.example.lingora_fe.user.vocabulary.domain.model.Word
 
 @Composable
 fun BottomFeedbackCard(
@@ -104,9 +104,9 @@ fun BottomFeedbackCard(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    // Meaning
+                    // Word
                     Text(
-                        text = word.meaning,
+                        text = word.word,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = GradientStart
@@ -130,45 +130,57 @@ fun BottomFeedbackCard(
                                 modifier = Modifier.size(16.dp)
                             )
                         }
+                        word.phonetic?.let { phonetic ->
+                            Text(
+                                text = phonetic,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = GradientEnd
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Meaning
+                    word.meaning?.let { meaning ->
                         Text(
-                            text = word.pronunciation,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = GradientEnd
+                            text = meaning,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Translation
-                    Text(
-                        text = word.translation,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     // Example
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(TopBarBorder, shape = RoundedCornerShape(8.dp))
-                            .padding(12.dp)
-                    ) {
-                        Column {
-                            Text(
-                                text = "\"${word.example}\"",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "\"${word.exampleTranslation}\"",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                            )
+                    if (word.example != null || word.exampleTranslation != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(TopBarBorder, shape = RoundedCornerShape(8.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column {
+                                word.example?.let { example ->
+                                    Text(
+                                        text = "\"$example\"",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                word.exampleTranslation?.let { exampleTranslation ->
+                                    if (word.example != null) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                    }
+                                    Text(
+                                        text = "\"$exampleTranslation\"",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                    )
+                                }
+                            }
                         }
                     }
                 }

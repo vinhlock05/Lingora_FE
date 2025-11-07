@@ -1,73 +1,60 @@
 package com.example.lingora_fe.user.vocabulary.data.remote.api
 
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoriesResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoryProgressListResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoryProgressResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoryResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.TopicProgressResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.TopicResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.TopicsResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.UpdateProgressRequest
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.WordResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.WordsResponse
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.PUT
-import retrofit2.http.Path
+import com.example.lingora_fe.user.vocabulary.data.remote.dto.*
+import retrofit2.http.*
 
 interface VocabularyApiService {
-    // Category endpoints
-    @GET("api/vocabulary/categories")
-    suspend fun getCategories(): CategoriesResponse
+    // Word Progress endpoints
+    @POST("progress")
+    suspend fun createWordProgress(
+        @Body request: CreateWordProgressRequest
+    ): CreateWordProgressResponse
 
-    @GET("api/vocabulary/categories/{id}")
-    suspend fun getCategoryById(@Path("id") categoryId: Int): CategoryResponse
+    @PATCH("progress")
+    suspend fun updateWordProgress(
+        @Body request: UpdateWordProgressRequest
+    ): CreateWordProgressResponse
 
-    // Topic endpoints
-    @GET("api/vocabulary/topics")
-    suspend fun getTopics(): TopicsResponse
+    // Categories with progress
+    @GET("progress/categories")
+    suspend fun getCategoriesWithProgress(
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 1,
+        @Query("search") search: String? = null
+    ): CategoryProgressListResponse
 
-    @GET("api/vocabulary/topics/{id}")
-    suspend fun getTopicById(@Path("id") topicId: Int): TopicResponse
+    // Topics in category with progress
+    @GET("progress/categories/{id}/topics")
+    suspend fun getCategoryTopicsWithProgress(
+        @Path("id") categoryId: Int,
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 1,
+        @Query("search") search: String? = null,
+        @Query("sort") sort: String? = null
+    ): CategoryTopicProgressResponse
 
-    @GET("api/vocabulary/categories/{categoryId}/topics")
-    suspend fun getTopicsByCategory(@Path("categoryId") categoryId: Int): TopicsResponse
+    // Words for study
+    @GET("progress/topics/{id}/study")
+    suspend fun getWordsForStudy(
+        @Path("id") topicId: Int,
+        @Query("count") count: Int
+    ): StudyWordsResponse
 
-    // Word endpoints
-    @GET("api/vocabulary/topics/{topicId}/words")
-    suspend fun getWordsByTopic(@Path("topicId") topicId: Int): WordsResponse
+    // Words in topic with progress
+    @GET("progress/topics/{id}/words")
+    suspend fun getTopicWordsWithProgress(
+        @Path("id") topicId: Int,
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 1,
+        @Query("search") search: String? = null,
+        @Query("hasLearned") hasLearned: Boolean? = null
+    ): TopicWordProgressResponse
 
-    @GET("api/vocabulary/words/{id}")
-    suspend fun getWordById(@Path("id") wordId: Int): WordResponse
-
-    // Progress endpoints
-    @GET("api/vocabulary/users/{userId}/category-progress")
-    suspend fun getCategoryProgress(@Path("userId") userId: Int): CategoryProgressListResponse
-
-    @GET("api/vocabulary/users/{userId}/categories/{categoryId}/progress")
-    suspend fun getCategoryProgressById(
-        @Path("userId") userId: Int,
-        @Path("categoryId") categoryId: Int
-    ): CategoryProgressResponse
-
-    @PUT("api/vocabulary/users/{userId}/categories/{categoryId}/progress")
-    suspend fun updateCategoryProgress(
-        @Path("userId") userId: Int,
-        @Path("categoryId") categoryId: Int,
-        @Body request: UpdateProgressRequest
-    ): CategoryProgressResponse
-
-    @GET("api/vocabulary/users/{userId}/topics/{topicId}/progress")
-    suspend fun getTopicProgress(
-        @Path("userId") userId: Int,
-        @Path("topicId") topicId: Int
-    ): TopicProgressResponse
-
-    @PUT("api/vocabulary/users/{userId}/topics/{topicId}/progress")
-    suspend fun updateTopicProgress(
-        @Path("userId") userId: Int,
-        @Path("topicId") topicId: Int,
-        @Body request: UpdateProgressRequest
-    ): TopicProgressResponse
+    // Words for review
+    @GET("progress/review")
+    suspend fun getWordsForReview(
+        @Query("limit") limit: Int = 20,
+        @Query("page") page: Int = 1
+    ): ReviewWordsResponse
 }
 

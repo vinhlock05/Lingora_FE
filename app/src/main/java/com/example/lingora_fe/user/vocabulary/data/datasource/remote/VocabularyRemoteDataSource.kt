@@ -1,79 +1,69 @@
 package com.example.lingora_fe.user.vocabulary.data.datasource.remote
 
 import com.example.lingora_fe.user.vocabulary.data.remote.api.VocabularyApiService
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoriesResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoryProgressListResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoryProgressResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.CategoryResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.TopicProgressResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.TopicResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.TopicsResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.UpdateProgressRequest
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.WordResponse
-import com.example.lingora_fe.user.vocabulary.data.remote.dto.WordsResponse
+import com.example.lingora_fe.user.vocabulary.data.remote.dto.*
 import javax.inject.Inject
 
 class VocabularyRemoteDataSource @Inject constructor(
     private val apiService: VocabularyApiService
 ) {
-    // Category operations
-    suspend fun getCategories(): CategoriesResponse {
-        return apiService.getCategories()
+    // Word Progress operations
+    suspend fun createWordProgress(request: CreateWordProgressRequest): CreateWordProgressResponse {
+        return apiService.createWordProgress(request)
     }
 
-    suspend fun getCategoryById(categoryId: Int): CategoryResponse {
-        return apiService.getCategoryById(categoryId)
+    suspend fun updateWordProgress(request: UpdateWordProgressRequest): CreateWordProgressResponse {
+        return apiService.updateWordProgress(request)
     }
 
-    // Topic operations
-    suspend fun getTopics(): TopicsResponse {
-        return apiService.getTopics()
+    // Categories with progress
+    suspend fun getCategoriesWithProgress(
+        limit: Int = 20,
+        page: Int = 1,
+        search: String? = null
+    ): CategoryProgressListResponse {
+        return apiService.getCategoriesWithProgress(limit, page, search)
     }
 
-    suspend fun getTopicById(topicId: Int): TopicResponse {
-        return apiService.getTopicById(topicId)
-    }
-
-    suspend fun getTopicsByCategory(categoryId: Int): TopicsResponse {
-        return apiService.getTopicsByCategory(categoryId)
-    }
-
-    // Word operations
-    suspend fun getWordsByTopic(topicId: Int): WordsResponse {
-        return apiService.getWordsByTopic(topicId)
-    }
-
-    suspend fun getWordById(wordId: Int): WordResponse {
-        return apiService.getWordById(wordId)
-    }
-
-    // Progress operations
-    suspend fun getCategoryProgress(userId: Int): CategoryProgressListResponse {
-        return apiService.getCategoryProgress(userId)
-    }
-
-    suspend fun getCategoryProgressById(userId: Int, categoryId: Int): CategoryProgressResponse {
-        return apiService.getCategoryProgressById(userId, categoryId)
-    }
-
-    suspend fun updateCategoryProgress(
-        userId: Int,
+    // Topics in category with progress
+    suspend fun getCategoryTopicsWithProgress(
         categoryId: Int,
-        request: UpdateProgressRequest
-    ): CategoryProgressResponse {
-        return apiService.updateCategoryProgress(userId, categoryId, request)
+        limit: Int = 20,
+        page: Int = 1,
+        search: String? = null,
+        sort: String? = null
+    ): CategoryTopicProgressResponse {
+        return apiService.getCategoryTopicsWithProgress(categoryId, limit, page, search, sort)
     }
 
-    suspend fun getTopicProgress(userId: Int, topicId: Int): TopicProgressResponse {
-        return apiService.getTopicProgress(userId, topicId)
+    // Words for study
+    suspend fun getWordsForStudy(topicId: Int, count: Int): StudyWordsResponse {
+        val response = apiService.getWordsForStudy(topicId, count)
+        android.util.Log.d("VocabularyRemoteDataSource", "Raw response: $response")
+        android.util.Log.d("VocabularyRemoteDataSource", "Response metaData: ${response.metaData}")
+        response.metaData?.words?.forEachIndexed { index, word ->
+            android.util.Log.d("VocabularyRemoteDataSource", "Word[$index] DTO: id=${word.id}, word=${word.word}, phonetic=${word.phonetic}, audioUrl=${word.audioUrl}, meaning=${word.meaning}")
+        }
+        return response
     }
 
-    suspend fun updateTopicProgress(
-        userId: Int,
+    // Words in topic with progress
+    suspend fun getTopicWordsWithProgress(
         topicId: Int,
-        request: UpdateProgressRequest
-    ): TopicProgressResponse {
-        return apiService.updateTopicProgress(userId, topicId, request)
+        limit: Int = 20,
+        page: Int = 1,
+        search: String? = null,
+        hasLearned: Boolean? = null
+    ): TopicWordProgressResponse {
+        return apiService.getTopicWordsWithProgress(topicId, limit, page, search, hasLearned)
+    }
+
+    // Words for review
+    suspend fun getWordsForReview(
+        limit: Int = 20,
+        page: Int = 1
+    ): ReviewWordsResponse {
+        return apiService.getWordsForReview(limit, page)
     }
 }
 

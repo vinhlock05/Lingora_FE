@@ -42,7 +42,8 @@ sealed class Route(
     
     // Vocabulary Navigation
     object CategoryDetail : Route("vocabulary/category/{categoryId}")
-    object LearnWord : Route("vocabulary/learn/{topicId}")
+    object TopicDetail : Route("vocabulary/topic/{topicId}")
+    object LearnWord : Route("vocabulary/learn/{topicId}/{wordCount}")
     object Practice : Route("vocabulary/practice/{topicId}")
     
     // Practice Navigation
@@ -66,7 +67,8 @@ sealed class Route(
         
         // Vocabulary routes
         fun categoryDetail(categoryId: Int) = "vocabulary/category/$categoryId"
-        fun learnWord(topicId: Int) = "vocabulary/learn/$topicId"
+        fun topicDetail(topicId: Int) = "vocabulary/topic/$topicId"
+        fun learnWord(topicId: Int, wordCount: Int) = "vocabulary/learn/$topicId/$wordCount"
         fun practice(topicId: Int) = "vocabulary/practice/$topicId"
         
         // Practice routes

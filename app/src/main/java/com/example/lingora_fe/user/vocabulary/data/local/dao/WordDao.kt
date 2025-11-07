@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WordDao {
-    @Query("SELECT * FROM words WHERE topicId = :topicId ORDER BY position")
+    @Query("SELECT * FROM words WHERE topicId = :topicId ORDER BY id")
     fun observeByTopic(topicId: Int): Flow<List<WordEntity>>
 
-    @Query("SELECT * FROM words WHERE topicId = :topicId ORDER BY position")
+    @Query("SELECT * FROM words WHERE topicId = :topicId ORDER BY id")
     suspend fun getByTopic(topicId: Int): List<WordEntity>
 
     @Query("SELECT * FROM words WHERE id = :wordId")

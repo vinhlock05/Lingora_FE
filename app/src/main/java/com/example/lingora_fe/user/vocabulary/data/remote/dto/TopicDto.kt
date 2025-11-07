@@ -11,7 +11,7 @@ data class TopicDto(
     val name: String,
     @SerializedName("description")
     val description: String,
-    @SerializedName("created_at")
+    @SerializedName("createdAt")
     val createdAt: String
 ) {
     fun toDomain(): Topic {

@@ -1,12 +1,20 @@
 package com.example.lingora_fe.user.vocabulary.domain.repository
 
 import arrow.core.Either
-import com.example.lingora_fe.user.vocabulary.domain.model.Category
-import kotlinx.coroutines.flow.Flow
+import com.example.lingora_fe.user.vocabulary.domain.model.CategoryProgress
 
 interface CategoryRepository {
-    suspend fun getCategories(): Either<String, List<Category>>
-    suspend fun getCategoryById(categoryId: Int): Either<String, Category>
-    fun observeCategories(): Flow<List<Category>>
+    // Categories with progress
+    suspend fun getCategoriesWithProgress(
+        limit: Int = 20,
+        page: Int = 1,
+        search: String? = null
+    ): Either<String, Pair<List<CategoryProgress>, PaginationMeta>>
 }
+
+data class PaginationMeta(
+    val currentPage: Int,
+    val totalPages: Int,
+    val total: Int
+)
 

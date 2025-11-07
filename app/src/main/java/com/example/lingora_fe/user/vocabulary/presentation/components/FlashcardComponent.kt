@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.VolumeUp
@@ -36,15 +39,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
-import com.example.lingora_fe.user.vocabulary.presentation.screen.Word
+import com.example.lingora_fe.user.vocabulary.domain.model.Word
 
 @Composable
 fun FlashcardComponent(
@@ -59,8 +64,8 @@ fun FlashcardComponent(
     // Trigger rotation when isRevealed changes
     LaunchedEffect(isRevealed) {
         rotated = isRevealed
-        // TODO: Play flip sound effect here
-        // MediaPlayer or SoundPool implementation
+        // TODO: Add flip sound effect when sound file is available
+        // You can use SoundPool or MediaPlayer here
     }
 
     val rotation by animateFloatAsState(
@@ -92,7 +97,8 @@ fun FlashcardComponent(
 
     Card(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxWidth(0.9f)
+            .height(500.dp)
             .shadow(8.dp, shape = RoundedCornerShape(16.dp))
             .graphicsLayer {
                 rotationY = rotation
@@ -105,12 +111,14 @@ fun FlashcardComponent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight()
                 .background(Color.White)
         ) {
             if (rotation <= 90f) {
                 FlashcardFrontSide(
                     word = word,
-                    alpha = animateFront
+                    alpha = animateFront,
+                    onPronunciationClick = onPronunciationClick
                 )
             } else {
                 FlashcardBackSide(
@@ -130,16 +138,20 @@ fun FlashcardComponent(
 fun FlashcardFrontSide(
     word: Word,
     alpha: Float,
+    onPronunciationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .fillMaxHeight()
             .padding(32.dp)
+            .verticalScroll(scrollState)
             .graphicsLayer { this.alpha = alpha },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Image if available
         if (!word.imageUrl.isNullOrEmpty()) {
             Card(
                 modifier = Modifier
@@ -152,28 +164,55 @@ fun FlashcardFrontSide(
                         .data(word.imageUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = word.translation,
+                    contentDescription = word.word,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
         }
-        
-        // Translation
+
         Text(
-            text = word.translation,
+            text = word.word,
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = GradientStart,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        val hasAudio = !word.audioUrl.isNullOrEmpty()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            IconButton(
+                onClick = onPronunciationClick,
+                enabled = hasAudio,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VolumeUp,
+                    contentDescription = "Pronounce",
+                    tint = if (hasAudio) GradientEnd else GradientEnd.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            word.phonetic?.let { phonetic ->
+                Text(
+                    text = phonetic,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = GradientEnd
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Nhấn để xem từ tiếng Anh",
+            text = "Nhấn để xem nghĩa",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -187,45 +226,25 @@ fun FlashcardBackSide(
     onPronunciationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .fillMaxHeight()
             .padding(32.dp)
+            .verticalScroll(scrollState)
             .graphicsLayer { this.alpha = alpha },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Word
+        val meaningText = word.meaning ?: "Không có nghĩa"
         Text(
-            text = word.meaning,
-            style = MaterialTheme.typography.displayMedium,
+            text = meaningText,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = GradientStart,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            IconButton(
-                onClick = onPronunciationClick,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.VolumeUp,
-                    contentDescription = "Pronounce",
-                    tint = GradientEnd,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Text(
-                text = word.pronunciation,
-                style = MaterialTheme.typography.bodyLarge,
-                color = GradientEnd
-            )
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -239,16 +258,59 @@ fun FlashcardBackSide(
                 .padding(16.dp)
         ) {
             Column {
-                Text(
-                    text = "\"${word.example}\"",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                if (word.example != null || word.exampleTranslation != null) {
+                    word.example?.let { example ->
+                        Text(
+                            text = "\"$example\"",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    word.exampleTranslation?.let { exampleTranslation ->
+                        if (word.example != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        Text(
+                            text = exampleTranslation,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Không có ví dụ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontStyle = FontStyle.Italic
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val hasAudio = !word.audioUrl.isNullOrEmpty()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            IconButton(
+                onClick = onPronunciationClick,
+                enabled = hasAudio,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VolumeUp,
+                    contentDescription = "Pronounce",
+                    tint = if (hasAudio) GradientEnd else GradientEnd.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+            }
+            word.phonetic?.let { phonetic ->
                 Text(
-                    text = word.exampleTranslation,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = phonetic,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = GradientEnd
                 )
             }
         }

@@ -35,8 +35,8 @@ fun CategoryCard(
     title: String,
     description: String,
     topicCount: Int,
-    learnedWords: Int,
-    totalWords: Int,
+    completedTopics: Int = 0,
+    progressPercent: Float = 0f,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -102,7 +102,7 @@ fun CategoryCard(
                         )
                     }
                     
-                    // Word progress pill
+                    // Progress pill
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
@@ -110,11 +110,28 @@ fun CategoryCard(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = "$learnedWords/$totalWords từ",
+                            text = "${String.format("%.1f", progressPercent)}%",
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                    }
+                    
+                    // Completed topics pill
+                    if (completedTopics > 0) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(GradientStart.copy(alpha = 0.15f))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "$completedTopics/$topicCount hoàn thành",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             }

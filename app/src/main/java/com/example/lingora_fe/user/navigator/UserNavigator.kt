@@ -32,6 +32,7 @@ import com.example.lingora_fe.user.practice.presentation.*
 import com.example.lingora_fe.user.profile.presentation.ProfileScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.CategoryDetailScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.LearnWordScreen
+import com.example.lingora_fe.user.vocabulary.presentation.screen.TopicDetailScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.VocabularyCategoriesScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -194,10 +195,28 @@ fun UserNavigator(rootNavController: NavHostController) {
             ) { backStackEntry ->
                 val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: 0
                 CategoryDetailScreen(
-                    categoryName = "Category $categoryId",
+                    categoryId = categoryId,
                     onBackClick = { navController.popBackStack() },
                     onTopicClick = { topicId ->
-                        navController.navigate(Route.learnWord(topicId))
+                        navController.navigate(Route.topicDetail(topicId))
+                    }
+                )
+            }
+
+            composable(
+                route = Route.TopicDetail.route,
+                arguments = listOf(
+                    navArgument("topicId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val topicId = backStackEntry.arguments?.getInt("topicId") ?: 0
+                TopicDetailScreen(
+                    topicId = topicId,
+                    onBackClick = { navController.popBackStack() },
+                    onStartLearning = { topicId, wordCount ->
+                        navController.navigate(Route.learnWord(topicId, wordCount))
                     }
                 )
             }
@@ -207,11 +226,17 @@ fun UserNavigator(rootNavController: NavHostController) {
                 arguments = listOf(
                     navArgument("topicId") {
                         type = NavType.IntType
+                    },
+                    navArgument("wordCount") {
+                        type = NavType.IntType
                     }
                 )
             ) { backStackEntry ->
                 val topicId = backStackEntry.arguments?.getInt("topicId") ?: 0
+                val wordCount = backStackEntry.arguments?.getInt("wordCount") ?: 15
                 LearnWordScreen(
+                    topicId = topicId,
+                    wordCount = wordCount,
                     onBackClick = { navController.popBackStack() }
                 )
             }

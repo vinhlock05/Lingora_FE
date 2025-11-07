@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.vocabulary.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
@@ -174,15 +175,12 @@ class TopicDetailViewModel @Inject constructor(
     fun toggleGameType(gameType: GameType) {
         val currentTypes = _uiState.value.selectedGameTypes
         val newTypes = if (currentTypes.contains(gameType)) {
-            if (currentTypes.size > 2) {
-                currentTypes - gameType
-            } else {
-                currentTypes // Keep at least 2 types
-            }
+            currentTypes - gameType
         } else {
             currentTypes + gameType
         }
         _uiState.value = _uiState.value.copy(selectedGameTypes = newTypes)
+        Log.d("TopicDetailViewModel", "Toggled game type: $gameType, new types: $newTypes")
     }
 
     fun loadNextPage() {

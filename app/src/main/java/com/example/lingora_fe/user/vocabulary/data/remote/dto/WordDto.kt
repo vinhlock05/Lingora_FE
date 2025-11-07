@@ -13,6 +13,8 @@ data class WordDto(
     val phonetic: String?,
     @SerializedName("cefrLevel")
     val cefrLevel: CefrLevel?,
+    @SerializedName("type")
+    val type: String?,
     @SerializedName("word")
     val word: String,
     @SerializedName("meaning")
@@ -32,6 +34,7 @@ data class WordDto(
             topicId = topicId,
             phonetic = phonetic,
             cefrLevel = cefrLevel ?: CefrLevel.A1, // Default to A1 if null
+            type = type,
             word = word,
             meaning = meaning,
             example = example,

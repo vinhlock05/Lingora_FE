@@ -39,7 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
@@ -293,10 +292,7 @@ fun QuizPhaseContent(
         if (isAnswerChecked) {
             BottomFeedbackCard(
                 isCorrect = isCurrentAnswerCorrect,
-                correctAnswer = question.correctAnswer,
                 word = question.word,
-                currentIndex = answeredCount,
-                totalQuestions = totalQuestions,
                 onNextClick = onNextQuestion,
                 onPronunciationClick = onPronunciationClick,
                 modifier = Modifier.align(Alignment.BottomCenter)

@@ -1,12 +1,8 @@
-package com.example.lingora_fe.user.practice.presentation
+package com.example.lingora_fe.user.practice.presentation.screen
 
-import android.content.Context
-import android.media.MediaPlayer
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable

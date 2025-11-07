@@ -1,5 +1,7 @@
 package com.example.lingora_fe.user.vocabulary.presentation.screen
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,12 +13,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -25,7 +29,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.lingora_fe.admin.common.presentation.components.SearchBar
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
+import com.example.lingora_fe.user.vocabulary.presentation.components.QuestionTypeSelector
+import com.example.lingora_fe.user.vocabulary.presentation.components.WordCountSelector
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.TopicDetailUiState
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.TopicDetailViewModel
@@ -35,8 +42,9 @@ import kotlinx.coroutines.delay
 @Composable
 fun TopicDetailScreen(
     topicId: Int,
+    topicName: String,
     onBackClick: () -> Unit,
-    onStartLearning: (Int, Int) -> Unit, // topicId, wordCount
+    onStartLearning: (Int, Int, Set<GameType>) -> Unit, // topicId, wordCount, gameTypes
     viewModel: TopicDetailViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -79,20 +87,11 @@ fun TopicDetailScreen(
             TopAppBar(
                 modifier = Modifier.border(width = 1.dp, color = TopBarBorder),
                 title = {
-                    Column {
                         Text(
                             text = "Topic Detail",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
-                        if (uiState.totalWordsAll > 0) {
-                            Text(
-                                text = "${uiState.learnedCountAll}/${uiState.totalWordsAll} từ đã học",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -130,10 +129,11 @@ fun TopicDetailScreen(
             // Content based on selected tab
             when (selectedTab) {
                 0 -> LearningTab(
+                    topicName = topicName,
                     uiState = uiState,
                     viewModel = viewModel,
                     onStartLearning = { wordCount, gameTypes ->
-                        onStartLearning(topicId, wordCount)
+                        onStartLearning(topicId, wordCount, gameTypes)
                     }
                 )
                 1 -> WordListTab(
@@ -153,6 +153,7 @@ fun TopicDetailScreen(
 
 @Composable
 fun LearningTab(
+    topicName: String,
     uiState: TopicDetailUiState,
     viewModel: TopicDetailViewModel,
     onStartLearning: (Int, Set<GameType>) -> Unit
@@ -163,209 +164,83 @@ fun LearningTab(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            // Topic info
-            Column {
-                Text(
-                    text = "Topic: ${uiState.topicId}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Setup based on your preferences",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        item {
-            // Progress indicator
+            // Header section
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                CircularProgressIndicator(
-                    progress = { uiState.progressPercent / 100f },
-                    modifier = Modifier.size(60.dp),
-                    color = GradientStart,
-                    strokeWidth = ProgressIndicatorDefaults.CircularStrokeWidth,
-                    trackColor = ProgressIndicatorDefaults.circularTrackColor,
-                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Column {
+                // Phần tiêu đề bên trái
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
-                        text = "${uiState.learnedCountAll}/${uiState.totalWordsAll}",
+                        text = "Topic: $topicName",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Learned",
-                        style = MaterialTheme.typography.bodySmall
+                        text = "Điều chỉnh các tùy chọn bên dưới để bắt đầu phiên học từ của bạn.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Progress indicator bên phải
+                Box(
+                    modifier = Modifier.size(80.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Track (nền mờ)
+                    CircularProgressIndicator(
+                        progress = { uiState.progressPercent / 100f },
+                        modifier = Modifier.fillMaxSize(),
+                        color = GradientStart,
+                        trackColor = GradientStart.copy(alpha = 0.2f),
+                        strokeWidth = 6.dp
+                    )
+
+                    // Text giữa vòng tròn
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "${uiState.learnedCountAll}/${uiState.totalWordsAll}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Learned",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
+
         }
 
         item {
-            // Number of words section
-            var showWordCountDialog by remember { mutableStateOf(false) }
-            val wordCountOptions = remember { listOf(3, 5, 10, 15, 20, 25) }
-            
-            Column {
-                Text(
-                    text = "Number of words taken",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showWordCountDialog = true },
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Words taken for each turn",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "${uiState.selectedWordCount} words",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Select word count"
-                            )
-                        }
-                    }
+            WordCountSelector(
+                selectedWordCount = uiState.selectedWordCount,
+                onSelectCount = { count ->
+                    viewModel.setWordCount(count)
                 }
-            }
-            
-            // Word count selection dialog
-            if (showWordCountDialog) {
-                AlertDialog(
-                    onDismissRequest = { showWordCountDialog = false },
-                    title = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Number of words taken")
-                            IconButton(onClick = { showWordCountDialog = false }) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close"
-                                )
-                            }
-                        }
-                    },
-                    text = {
-                        Column {
-                            wordCountOptions.forEach { count ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            viewModel.setWordCount(count)
-                                            showWordCountDialog = false
-                                        }
-                                        .padding(vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "$count words",
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                    RadioButton(
-                                        selected = uiState.selectedWordCount == count,
-                                        onClick = {
-                                            viewModel.setWordCount(count)
-                                            showWordCountDialog = false
-                                        }
-                                    )
-                                }
-                                if (count != wordCountOptions.last()) {
-                                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { showWordCountDialog = false }) {
-                            Text("Đóng")
-                        }
-                    }
-                )
-            }
+            )
         }
 
         item {
             // Type of word games section
-            Column {
-                Text(
-                    text = "Type of word games",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Choose at least 2 word game types",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        GameTypeItem(
-                            title = "Nghe điền từ",
-                            isSelected = uiState.selectedGameTypes.contains(GameType.LISTEN_FILL),
-                            onClick = { viewModel.toggleGameType(GameType.LISTEN_FILL) }
-                        )
-                        GameTypeItem(
-                            title = "Nghe chọn từ",
-                            isSelected = uiState.selectedGameTypes.contains(GameType.LISTEN_CHOOSE),
-                            onClick = { viewModel.toggleGameType(GameType.LISTEN_CHOOSE) }
-                        )
-                        GameTypeItem(
-                            title = "Đúng/Sai",
-                            isSelected = uiState.selectedGameTypes.contains(GameType.TRUE_FALSE),
-                            onClick = { viewModel.toggleGameType(GameType.TRUE_FALSE) }
-                        )
-                        GameTypeItem(
-                            title = "Nhìn từ chọn nghĩa",
-                            isSelected = uiState.selectedGameTypes.contains(GameType.SEE_WORD_CHOOSE_MEANING),
-                            onClick = { viewModel.toggleGameType(GameType.SEE_WORD_CHOOSE_MEANING) }
-                        )
-                        GameTypeItem(
-                            title = "Nhìn nghĩa chọn từ",
-                            isSelected = uiState.selectedGameTypes.contains(GameType.SEE_MEANING_CHOOSE_WORD),
-                            onClick = { viewModel.toggleGameType(GameType.SEE_MEANING_CHOOSE_WORD) }
-                        )
-                    }
-                }
-            }
+            QuestionTypeSelector(
+                selectedTypes = uiState.selectedGameTypes,
+                onToggle = { viewModel.toggleGameType(it) }
+            )
         }
 
         item {
@@ -396,31 +271,6 @@ fun LearningTab(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun GameTypeItem(
-    title: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Switch(
-            checked = isSelected,
-            onCheckedChange = { onClick() }
-        )
     }
 }
 
@@ -562,10 +412,7 @@ fun WordListTab(
                         val word = uiState.words[index]
                         WordListItem(
                             word = word.word,
-                            meaning = word.meaning,
-                            phonetic = word.phonetic,
                             cefrLevel = word.cefrLevel,
-                            type = word.type,
                             hasProgress = word.progress != null,
                             status = word.progress?.status?.value ?: "NEW"
                         )
@@ -589,106 +436,95 @@ fun WordListTab(
         }
     }
 
-    // Filter dialog
     if (showFilterDialog) {
         AlertDialog(
             onDismissRequest = { showFilterDialog = false },
-            title = { Text("Lọc từ") },
+            title = {
+                Text(
+                    text = "Lọc từ vựng",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
-                Column {
-                    TextButton(onClick = {
-                        onFilterHasLearned(null)
-                        showFilterDialog = false
-                    }) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val filterOptions = listOf(
+                        Triple("Tất cả", "Tất cả các từ trong chủ đề này", null),
+                        Triple("Đã học", "Chỉ hiển thị các từ đã học", true),
+                        Triple("Chưa học", "Chỉ hiển thị các từ chưa học", false)
+                    )
+
+                    filterOptions.forEach { (title, subtitle, value) ->
+                        val isSelected = uiState.hasLearnedFilter == value
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    onFilterHasLearned(value)
+                                    showFilterDialog = false
+                                },
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            else
+                                Color.Transparent
                         ) {
-                            Column {
-                                Text("Tất cả")
-                                Text(
-                                    text = "Tất cả các từ trong chủ đề này",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            if (uiState.hasLearnedFilter == null) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                    TextButton(onClick = {
-                        onFilterHasLearned(true)
-                        showFilterDialog = false
-                    }) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text("Đã học")
-                                Text(
-                                    text = "Chỉ hiển thị các từ đã học",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            if (uiState.hasLearnedFilter == true) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                    TextButton(onClick = {
-                        onFilterHasLearned(false)
-                        showFilterDialog = false
-                    }) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text("Chưa học")
-                                Text(
-                                    text = "Chỉ hiển thị các từ chưa học",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            if (uiState.hasLearnedFilter == false) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        ),
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                         }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showFilterDialog = false }) {
+                TextButton(
+                    onClick = { showFilterDialog = false },
+                ) {
                     Text("Đóng")
                 }
-            }
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
+
 }
 
 @Composable
 fun WordListItem(
     word: String,
-    meaning: String?,
-    phonetic: String?,
     cefrLevel: String,
-    type: String,
     hasProgress: Boolean,
     status: String,
     modifier: Modifier = Modifier
@@ -696,10 +532,9 @@ fun WordListItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp) // shadow
     ) {
         Row(
             modifier = Modifier
@@ -708,55 +543,31 @@ fun WordListItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = word,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (phonetic != null) {
-                        Text(
-                            text = phonetic,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                meaning?.let { meaningText ->
-                    Text(
-                        text = meaningText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = cefrLevel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = type,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            // Left: word • CEFR
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = word,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "•",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = cefrLevel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+
+            // Right: status chip (optional)
             if (hasProgress) {
-                Spacer(modifier = Modifier.width(8.dp))
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = when (status) {
@@ -765,11 +576,11 @@ fun WordListItem(
                         "MASTERED" -> Color(0xFF66BB6A)
                         "FORGOTTEN" -> Color(0xFFEF5350)
                         else -> Color(0xFF9E9E9E)
-                    }.copy(alpha = 0.2f)
+                    }.copy(alpha = 0.15f)
                 ) {
                     Text(
                         text = status,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium
                     )
@@ -777,5 +588,6 @@ fun WordListItem(
             }
         }
     }
+
 }
 

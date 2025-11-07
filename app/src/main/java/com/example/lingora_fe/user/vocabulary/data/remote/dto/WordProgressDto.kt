@@ -1,7 +1,9 @@
 package com.example.lingora_fe.user.vocabulary.data.remote.dto
 
+import com.example.lingora_fe.user.vocabulary.domain.model.Word
 import com.example.lingora_fe.user.vocabulary.domain.model.WordProgress
 import com.example.lingora_fe.user.vocabulary.domain.model.WordStatus
+import com.example.lingora_fe.user.vocabulary.domain.model.WordWithProgress
 import com.google.gson.annotations.SerializedName
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -80,7 +82,23 @@ data class WordWithProgressDto(
     val imageUrl: String?,
     @SerializedName("progress")
     val progress: WordProgressDto?
-)
+) {
+    fun toDomain(): WordWithProgress {
+        return WordWithProgress(
+            id = id,
+            word = word,
+            phonetic = phonetic,
+            cefrLevel = cefrLevel,
+            type = type,
+            meaning = meaning,
+            example = example,
+            exampleTranslation = exampleTranslation,
+            audioUrl = audioUrl,
+            imageUrl = imageUrl,
+            progress = progress?.toDomain(id, 0) // userId will be set in
+        )
+    }
+}
 
 data class CreateWordProgressRequest(
     @SerializedName("wordIds")
@@ -125,7 +143,7 @@ data class WordProgressWithWordDto(
     @SerializedName("id")
     val id: Int,
     @SerializedName("word")
-    val word: WordDto,
+    val word: WordDto?, // Can be null if API doesn't return word data
     @SerializedName("status")
     val status: String,
     @SerializedName("srsLevel")
@@ -139,7 +157,10 @@ data class WordProgressWithWordDto(
     @SerializedName("updatedAt")
     val updatedAt: String?
 ) {
-    fun toDomain(userId: Int): WordProgress {
+    fun toDomain(userId: Int): WordProgress? {
+        // Return null if word is null (can't create WordProgress without wordId)
+        val wordId = word?.id ?: return null
+        
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
             timeZone = TimeZone.getTimeZone("UTC")
         }
@@ -156,7 +177,7 @@ data class WordProgressWithWordDto(
         
         return WordProgress(
             id = id,
-            wordId = word.id,
+            wordId = wordId,
             userId = userId,
             status = WordStatus.values().find { it.value == status } ?: WordStatus.NEW,
             srsLevel = srsLevel,

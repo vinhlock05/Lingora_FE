@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.vocabulary.data.datasource.remote
 
+import com.example.lingora_fe.core.network.ApiResponse
 import com.example.lingora_fe.user.vocabulary.data.remote.api.VocabularyApiService
 import com.example.lingora_fe.user.vocabulary.data.remote.dto.*
 import javax.inject.Inject
@@ -12,8 +13,12 @@ class VocabularyRemoteDataSource @Inject constructor(
         return apiService.createWordProgress(request)
     }
 
-    suspend fun updateWordProgress(request: UpdateWordProgressRequest): CreateWordProgressResponse {
+    suspend fun updateWordProgress(request: UpdateWordProgressRequest): ApiResponse<WordProgressMetaData> {
         return apiService.updateWordProgress(request)
+    }
+
+    suspend fun getProgressSummary(): ProgressSummaryResponse {
+        return apiService.getProgressSummary()
     }
 
     // Categories with progress

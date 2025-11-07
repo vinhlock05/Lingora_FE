@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.vocabulary.data.remote.api
 
+import com.example.lingora_fe.core.network.ApiResponse
 import com.example.lingora_fe.user.vocabulary.data.remote.dto.*
 import retrofit2.http.*
 
@@ -13,7 +14,11 @@ interface VocabularyApiService {
     @PATCH("progress")
     suspend fun updateWordProgress(
         @Body request: UpdateWordProgressRequest
-    ): CreateWordProgressResponse
+    ): ApiResponse<WordProgressMetaData>
+
+    // Summary
+    @GET("progress/word-statistics")
+    suspend fun getProgressSummary(): ProgressSummaryResponse
 
     // Categories with progress
     @GET("progress/categories")

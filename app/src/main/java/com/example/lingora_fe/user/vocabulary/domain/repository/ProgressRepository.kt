@@ -9,5 +9,16 @@ interface ProgressRepository {
     suspend fun updateWordProgress(
         wordProgressList: List<Triple<Int, Int, String>>
     ): Either<String, List<WordProgress>> // wordId, wrongCount, reviewedDate
+    suspend fun getProgressSummary(): Either<String, ProgressSummary>
 }
+
+data class ProgressSummary(
+    val totalLearnedWord: Int,
+    val statistics: List<StatisticItem>
+)
+
+data class StatisticItem(
+    val srsLevel: Int,
+    val wordCount: Int
+)
 

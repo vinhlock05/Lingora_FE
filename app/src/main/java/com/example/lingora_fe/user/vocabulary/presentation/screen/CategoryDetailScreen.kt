@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 fun CategoryDetailScreen(
     categoryId: Int,
     onBackClick: () -> Unit,
-    onTopicClick: (Int) -> Unit,
+    onTopicClick: (Int, String) -> Unit,
     viewModel: CategoryDetailViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -139,7 +139,7 @@ fun CategoryDetailScreen(
                                 description = topic.description,
                                 learnedWords = topic.learnedWords,
                                 totalWords = topic.totalWords,
-                                onClick = { onTopicClick(topic.id) }
+                                onClick = { onTopicClick(topic.id, topic.name) }
                             )
                         }
 

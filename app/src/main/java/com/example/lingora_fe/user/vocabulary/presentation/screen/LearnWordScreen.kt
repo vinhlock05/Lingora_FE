@@ -54,6 +54,7 @@ import com.example.lingora_fe.util.AudioPlayerHelper
 fun LearnWordScreen(
     topicId: Int,
     wordCount: Int,
+    gameTypes: Set<com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType>,
     onBackClick: () -> Unit,
     viewModel: TopicDetailViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
@@ -132,9 +133,10 @@ fun LearnWordScreen(
     var lastPlayedLearnWordId by remember { mutableStateOf<Int?>(null) }
     
     // Generate quiz questions - only when words are available
-    val quizQuestions = remember(words, uiState.selectedGameTypes) {
+    // Use gameTypes from navigation arguments instead of ViewModel state
+    val quizQuestions = remember(words, gameTypes) {
         if (words.isNotEmpty()) {
-            generateQuizQuestions(words, uiState.selectedGameTypes)
+            generateQuizQuestions(words, gameTypes)
         } else {
             emptyList()
         }

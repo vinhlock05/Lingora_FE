@@ -1,7 +1,12 @@
 package com.example.lingora_fe.user.vocabulary.data.repository
 
 import arrow.core.Either
+import com.example.lingora_fe.core.error.AppFailure
+import com.example.lingora_fe.core.error.toAppFailure
 import com.example.lingora_fe.user.vocabulary.data.datasource.remote.VocabularyRemoteDataSource
+import com.example.lingora_fe.user.vocabulary.domain.model.Word
+import com.example.lingora_fe.user.vocabulary.domain.model.WordWithProgress
+import com.example.lingora_fe.user.vocabulary.domain.repository.ReviewWordsMeta
 import com.example.lingora_fe.user.vocabulary.domain.repository.WordRepository
 import javax.inject.Inject
 
@@ -90,53 +95,44 @@ class WordRepositoryImpl @Inject constructor(
     override suspend fun getWordsForReview(
         limit: Int,
         page: Int
-    ): Either<String, Pair<com.example.lingora_fe.user.vocabulary.domain.repository.ReviewWordsMeta, List<com.example.lingora_fe.user.vocabulary.domain.model.WordWithProgress>>> {
+    ): Either<AppFailure, List<WordWithProgress>> {
         return try {
             val response = remoteDataSource.getWordsForReview(limit, page)
-            val words = response.words.map { dto ->
-                val progress = dto.progress?.let { progressDto ->
-                    com.example.lingora_fe.user.vocabulary.domain.model.WordProgress(
-                        id = progressDto.id,
-                        wordId = dto.id,
-                        userId = 0, // Will be set from context
-                        status = com.example.lingora_fe.user.vocabulary.domain.model.WordStatus.values().find { it.value == progressDto.status } ?: com.example.lingora_fe.user.vocabulary.domain.model.WordStatus.NEW,
-                        srsLevel = progressDto.srsLevel,
-                        learnedAt = progressDto.learnedAt?.let { parseDate(it) },
-                        nextReviewDay = progressDto.nextReviewDay?.let { parseDate(it) },
-                        wrongCount = progressDto.wrongCount ?: 0,
-                        reviewedDate = progressDto.reviewedDate?.let { parseDate(it) },
-                        createdAt = progressDto.createdAt?.let { parseDate(it) },
-                        updatedAt = progressDto.updatedAt?.let { parseDate(it) }
-                    )
+            
+            // Log for debugging
+            android.util.Log.d("WordRepositoryImpl", "Review response: statusCode=${response.statusCode}")
+            android.util.Log.d("WordRepositoryImpl", "Review words count: ${response.metaData?.words?.size ?: 0}")
+
+            // Convert WordDto to WordWithProgress safely
+            // cefrLevel is enum, need conversion to string
+            val words = (response.metaData?.words ?: emptyList())
+                .filterNotNull() // Filter out null DTOs
+                .mapNotNull { dto ->
+                    try {
+                        WordWithProgress(
+                            id = dto.id,
+                            word = dto.word,
+                            phonetic = dto.phonetic,
+                            cefrLevel = dto.cefrLevel?.name ?: "A1", // Convert enum to string
+                            type = dto.type ?: "noun", // Use type from DTO, default to "noun" if null
+                            meaning = dto.meaning,
+                            example = dto.example,
+                            exampleTranslation = dto.exampleTranslation,
+                            audioUrl = dto.audioUrl,
+                            imageUrl = dto.imageUrl,
+                            progress = null // Review words API doesn't return progress info
+                        )
+                    } catch (e: Exception) {
+                        android.util.Log.e("WordRepositoryImpl", "Error mapping WordDto (id=${dto.id}) to WordWithProgress: ${e.message}", e)
+                        null // Skip invalid words
+                    }
                 }
-                com.example.lingora_fe.user.vocabulary.domain.model.WordWithProgress(
-                    id = dto.id,
-                    word = dto.word,
-                    phonetic = dto.phonetic,
-                    cefrLevel = dto.cefrLevel,
-                    type = dto.type,
-                    meaning = dto.meaning,
-                    example = dto.example,
-                    exampleTranslation = dto.exampleTranslation,
-                    audioUrl = dto.audioUrl,
-                    imageUrl = dto.imageUrl,
-                    progress = progress
-                )
-            }
-            val meta = response.metadata?.let {
-                com.example.lingora_fe.user.vocabulary.domain.repository.ReviewWordsMeta(
-                    page = it.page,
-                    limit = it.limit,
-                    total = it.total
-                )
-            } ?: com.example.lingora_fe.user.vocabulary.domain.repository.ReviewWordsMeta(
-                page = page,
-                limit = limit,
-                total = words.size
-            )
-            Either.Right(Pair(meta, words))
+            
+            android.util.Log.d("WordRepositoryImpl", "Successfully mapped ${words.size} words for review")
+            Either.Right(words)
         } catch (e: Exception) {
-            Either.Left(e.message ?: "Failed to fetch words for review")
+            android.util.Log.e("WordRepositoryImpl", "Error fetching words for review", e)
+            Either.Left(e.toAppFailure())
         }
     }
 

@@ -28,7 +28,15 @@ import com.example.lingora_fe.user.material.presentation.MaterialsScreen
 import com.example.lingora_fe.user.navigator.components.BottomNavigationBar
 import com.example.lingora_fe.user.navigator.components.UserTopBar
 import com.example.lingora_fe.user.notification.presentation.screen.NotificationScreen
-import com.example.lingora_fe.user.practice.presentation.*
+import com.example.lingora_fe.user.practice.presentation.screen.ListeningPracticeScreen
+import com.example.lingora_fe.user.practice.presentation.screen.PracticeScreen
+import com.example.lingora_fe.user.practice.presentation.screen.PronunciationPracticeScreen
+import com.example.lingora_fe.user.practice.presentation.screen.ReadingPracticeScreen
+import com.example.lingora_fe.user.practice.presentation.screen.ReviewScreen
+import com.example.lingora_fe.user.practice.presentation.screen.TestDetailScreen
+import com.example.lingora_fe.user.practice.presentation.screen.TestPracticeScreen
+import com.example.lingora_fe.user.practice.presentation.screen.VocabularyReviewScreen
+import com.example.lingora_fe.user.practice.presentation.screen.WritingPracticeScreen
 import com.example.lingora_fe.user.profile.presentation.ProfileScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.CategoryDetailScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.LearnWordScreen
@@ -197,8 +205,8 @@ fun UserNavigator(rootNavController: NavHostController) {
                 CategoryDetailScreen(
                     categoryId = categoryId,
                     onBackClick = { navController.popBackStack() },
-                    onTopicClick = { topicId ->
-                        navController.navigate(Route.topicDetail(topicId))
+                    onTopicClick = { topicId, topicName ->
+                        navController.navigate(Route.topicDetail(topicId, topicName))
                     }
                 )
             }
@@ -208,15 +216,22 @@ fun UserNavigator(rootNavController: NavHostController) {
                 arguments = listOf(
                     navArgument("topicId") {
                         type = NavType.IntType
+                    },
+                    navArgument("topicName") {
+                        type = NavType.StringType
+                        defaultValue = ""
                     }
                 )
             ) { backStackEntry ->
                 val topicId = backStackEntry.arguments?.getInt("topicId") ?: 0
+                val topicName = backStackEntry.arguments?.getString("topicName")
                 TopicDetailScreen(
                     topicId = topicId,
+                    topicName = topicName!!,
                     onBackClick = { navController.popBackStack() },
-                    onStartLearning = { topicId, wordCount ->
-                        navController.navigate(Route.learnWord(topicId, wordCount))
+                    onStartLearning = { topicId, wordCount, gameTypes ->
+                        val gameTypesString = gameTypes.joinToString(separator = ",") { it.name }
+                        navController.navigate(Route.learnWord(topicId, wordCount, gameTypesString))
                     }
                 )
             }
@@ -229,14 +244,37 @@ fun UserNavigator(rootNavController: NavHostController) {
                     },
                     navArgument("wordCount") {
                         type = NavType.IntType
+                    },
+                    navArgument("gameTypes") {
+                        type = NavType.StringType
+                        defaultValue = ""
                     }
                 )
             ) { backStackEntry ->
                 val topicId = backStackEntry.arguments?.getInt("topicId") ?: 0
                 val wordCount = backStackEntry.arguments?.getInt("wordCount") ?: 15
+                val gameTypesString = backStackEntry.arguments?.getString("gameTypes") ?: ""
+                val gameTypes = if (gameTypesString.isNotEmpty()) {
+                    gameTypesString.split(",").mapNotNull { typeName ->
+                        try {
+                            com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.valueOf(typeName)
+                        } catch (e: IllegalArgumentException) {
+                            null
+                        }
+                    }.toSet()
+                } else {
+                    setOf(
+                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.LISTEN_FILL,
+                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.LISTEN_CHOOSE,
+                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.TRUE_FALSE,
+                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.SEE_WORD_CHOOSE_MEANING,
+                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.SEE_MEANING_CHOOSE_WORD
+                    )
+                }
                 LearnWordScreen(
                     topicId = topicId,
                     wordCount = wordCount,
+                    gameTypes = gameTypes,
                     onBackClick = { navController.popBackStack() }
                 )
             }
@@ -259,12 +297,14 @@ fun UserNavigator(rootNavController: NavHostController) {
                 VocabularyReviewScreen(navController = navController)
             }
 
-            composable(Route.FlashcardPractice.route) {
-                FlashcardPracticeScreen(navController = navController)
-            }
-
-            composable(Route.QuizPractice.route) {
-                QuizPracticeScreen(navController = navController)
+            composable(
+                route = Route.ReviewPractice.route,
+                arguments = listOf(
+                    navArgument("limit") { type = NavType.IntType },
+                    navArgument("types") { type = NavType.StringType }
+                )
+            ) {
+                ReviewScreen(navController = navController)
             }
 
             composable(

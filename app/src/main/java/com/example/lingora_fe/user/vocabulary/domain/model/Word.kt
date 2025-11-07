@@ -7,6 +7,7 @@ data class Word(
     val topicId: Int,
     val cefrLevel: CefrLevel?,
     val phonetic: String?,
+    val type: String?,
     val word: String,
     val meaning: String?,
     val example: String?,

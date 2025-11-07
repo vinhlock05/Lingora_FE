@@ -1,6 +1,8 @@
 package com.example.lingora_fe.user.vocabulary.domain.repository
 
 import arrow.core.Either
+import com.example.lingora_fe.core.error.AppFailure
+import com.example.lingora_fe.user.vocabulary.domain.model.Word
 import com.example.lingora_fe.user.vocabulary.domain.model.WordWithProgress
 
 interface WordRepository {
@@ -17,7 +19,7 @@ interface WordRepository {
     suspend fun getWordsForReview(
         limit: Int = 20,
         page: Int = 1
-    ): Either<String, Pair<ReviewWordsMeta, List<WordWithProgress>>>
+    ): Either<AppFailure, List<WordWithProgress>>
 }
 
 data class TopicWordProgressMeta(

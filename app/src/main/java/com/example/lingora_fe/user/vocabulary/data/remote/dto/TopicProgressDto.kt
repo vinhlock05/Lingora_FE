@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.vocabulary.data.remote.dto
 
+import com.example.lingora_fe.admin.word.domain.model.WordType
 import com.example.lingora_fe.core.network.ApiResponse
 import com.google.gson.annotations.SerializedName
 
@@ -74,16 +75,6 @@ data class StudyWordsMetaData(
     val words: List<WordDto>
 )
 typealias StudyWordsResponse = ApiResponse<StudyWordsMetaData>
-data class ReviewWordsResponse(
-    @SerializedName("message")
-    val message: String,
-    @SerializedName("statusCode")
-    val statusCode: Int,
-    @SerializedName("metadata")
-    val metadata: ReviewWordsMetaData?,
-    @SerializedName("words")
-    val words: List<WordWithProgressDto>
-)
 
 data class ReviewWordsMetaData(
     @SerializedName("page")
@@ -91,6 +82,10 @@ data class ReviewWordsMetaData(
     @SerializedName("limit")
     val limit: Int,
     @SerializedName("total")
-    val total: Int
+    val total: Int,
+    @SerializedName("words")
+    val words: List<WordDto> // Review API returns WordDto, not WordWithProgressDto
 )
+
+typealias ReviewWordsResponse = ApiResponse<ReviewWordsMetaData>
 

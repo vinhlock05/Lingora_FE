@@ -1,8 +1,6 @@
 package com.example.lingora_fe.user.vocabulary.presentation.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,183 +26,129 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.lingora_fe.core.ui.theme.GradientEnd
-import com.example.lingora_fe.core.ui.theme.GradientStart
-import com.example.lingora_fe.core.ui.theme.TopBarBorder
 import com.example.lingora_fe.user.vocabulary.domain.model.Word
 
 @Composable
 fun BottomFeedbackCard(
     isCorrect: Boolean,
-    correctAnswer: String,
     word: Word,
-    currentIndex: Int,
-    totalQuestions: Int,
     onNextClick: () -> Unit,
     onPronunciationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val backgroundColor = if (isCorrect) Color(0xFF4CAF50) else Color(0xFFEF5350) // xanh lá vs đỏ
+    val accentColor = Color.White
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(16.dp, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isCorrect) GradientStart.copy(alpha = 0.95f) else MaterialTheme.colorScheme.error.copy(alpha = 0.95f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+            .shadow(8.dp, shape = RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Status header
+            // 🔹 Từ vựng và loại từ
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = if (isCorrect) Icons.Default.Check else Icons.Default.Close,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-                
-                Text(
-                    text = if (isCorrect) "Chính xác! 🎉" else "Chưa đúng 😔",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-
-            if (!isCorrect) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Đáp án đúng: $correctAnswer",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White.copy(alpha = 0.95f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Word details card
-            Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    // Word
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onPronunciationClick,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VolumeUp,
+                            contentDescription = "Phát âm",
+                            tint = accentColor,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
                     Text(
                         text = word.word,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = GradientStart
+                        color = accentColor
                     )
+                }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "(${word.type ?: "Noun"})",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = accentColor.copy(alpha = 0.9f)
+                )
+            }
 
-                    // Pronunciation with speaker
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        IconButton(
-                            onClick = onPronunciationClick,
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.VolumeUp,
-                                contentDescription = "Pronounce",
-                                tint = GradientEnd,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        word.phonetic?.let { phonetic ->
-                            Text(
-                                text = phonetic,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = GradientEnd
-                            )
-                        }
-                    }
+            // 🔹 Phiên âm
+            word.phonetic?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = accentColor.copy(alpha = 0.9f)
+                )
+            }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+            // 🔹 Nghĩa tiếng Anh
+            word.meaning?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = accentColor
+                )
+            }
 
-                    // Meaning
-                    word.meaning?.let { meaning ->
-                        Text(
-                            text = meaning,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Example
-                    if (word.example != null || word.exampleTranslation != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(TopBarBorder, shape = RoundedCornerShape(8.dp))
-                                .padding(12.dp)
-                        ) {
-                            Column {
-                                word.example?.let { example ->
-                                    Text(
-                                        text = "\"$example\"",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                                word.exampleTranslation?.let { exampleTranslation ->
-                                    if (word.example != null) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                    }
-                                    Text(
-                                        text = "\"$exampleTranslation\"",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                                    )
-                                }
-                            }
-                        }
-                    }
+            // 🔹 Ví dụ & dịch
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                word.example?.let {
+                    Text(
+                        text = "Ví dụ: $it",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = accentColor.copy(alpha = 0.95f)
+                    )
+                }
+                word.exampleTranslation?.let {
+                    Text(
+                        text = "Dịch: $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = accentColor.copy(alpha = 0.8f)
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Next button
+            // 🔹 Nút tiếp tục
             Button(
                 onClick = onNextClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp)
+                )
             ) {
                 Text(
-                    text = if (currentIndex < totalQuestions - 1) "Câu tiếp theo" else "Hoàn thành",
+                    text = "Tiếp tục",
+                    color = backgroundColor,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isCorrect) GradientStart else MaterialTheme.colorScheme.error
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
     }
 }
+
 

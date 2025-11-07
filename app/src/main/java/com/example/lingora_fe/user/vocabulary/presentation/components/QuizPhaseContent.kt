@@ -1,6 +1,5 @@
 package com.example.lingora_fe.user.vocabulary.presentation.components
 
-import android.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,17 +39,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
-import com.example.lingora_fe.user.vocabulary.presentation.screen.QuestionType
-import com.example.lingora_fe.user.vocabulary.presentation.screen.QuizQuestion
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.QuestionType
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.QuizQuestion
 
 @Composable
 fun QuizPhaseContent(
     question: QuizQuestion,
-    currentIndex: Int,
+    answeredCount: Int,
     totalQuestions: Int,
     selectedAnswer: String?,
     typedAnswer: String,
@@ -63,6 +61,13 @@ fun QuizPhaseContent(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
+        val userAnswer = if (question.type == QuestionType.LISTEN_FILL) {
+            typedAnswer.trim()
+        } else {
+            selectedAnswer
+        }
+        val isCurrentAnswerCorrect = userAnswer?.equals(question.correctAnswer, ignoreCase = true) == true
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -71,8 +76,14 @@ fun QuizPhaseContent(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             
+            val displayIndex = if (totalQuestions > 0) {
+                val base = if (isAnswerChecked && isCurrentAnswerCorrect) answeredCount else answeredCount + 1
+                base.coerceIn(1, totalQuestions)
+            } else {
+                0
+            }
             Text(
-                text = "Câu ${currentIndex + 1}/$totalQuestions",
+                text = if (totalQuestions > 0) "Câu $displayIndex/$totalQuestions" else "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -107,9 +118,10 @@ fun QuizPhaseContent(
                         )
                         
                         // Listen button for listening questions
-                        if (question.type == QuestionType.LISTEN_FILL) {
+                        if (question.type == QuestionType.LISTEN_FILL || question.type == QuestionType.LISTEN_CHOOSE) {
                             IconButton(
-                                onClick = onPronunciationClick,
+                            onClick = onPronunciationClick,
+                            enabled = !question.word.audioUrl.isNullOrEmpty(),
                                 modifier = Modifier
                                     .size(40.dp)
                                     .background(GradientEnd.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp))
@@ -117,7 +129,7 @@ fun QuizPhaseContent(
                                 Icon(
                                     imageVector = Icons.Default.VolumeUp,
                                     contentDescription = "Listen",
-                                    tint = GradientEnd,
+                                tint = if (question.word.audioUrl.isNullOrEmpty()) GradientEnd.copy(alpha = 0.3f) else GradientEnd,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -137,7 +149,7 @@ fun QuizPhaseContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Answer options based on question type
-            if (question.type == QuestionType.FILL_WORD) {
+            if (question.type == QuestionType.LISTEN_FILL) {
                 // Text input for fill-word questions
                 OutlinedTextField(
                     value = typedAnswer,
@@ -153,7 +165,7 @@ fun QuizPhaseContent(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     trailingIcon = {
                         if (isAnswerChecked) {
-                            val isCorrect = typedAnswer.trim().equals(question.correctAnswer, ignoreCase = true)
+                            val isCorrect = isCurrentAnswerCorrect
                             Icon(
                                 imageVector = if (isCorrect) Icons.Default.Check else Icons.Default.Close,
                                 contentDescription = null,
@@ -234,7 +246,7 @@ fun QuizPhaseContent(
 
             // Check button (only shown when answer not checked yet)
             if (!isAnswerChecked) {
-                val enabled = if (question.type == QuestionType.FILL_WORD) {
+                val enabled = if (question.type == QuestionType.LISTEN_FILL) {
                     typedAnswer.trim().isNotEmpty()
                 } else {
                     selectedAnswer != null
@@ -278,19 +290,9 @@ fun QuizPhaseContent(
 
         // Bottom feedback card (shown when answer is checked)
         if (isAnswerChecked) {
-            val userAnswer = if (question.type == QuestionType.FILL_WORD) {
-                typedAnswer.trim()
-            } else {
-                selectedAnswer
-            }
-            val isCorrect = userAnswer?.equals(question.correctAnswer, ignoreCase = true) == true
-
             BottomFeedbackCard(
-                isCorrect = isCorrect,
-                correctAnswer = question.correctAnswer,
+                isCorrect = isCurrentAnswerCorrect,
                 word = question.word,
-                currentIndex = currentIndex,
-                totalQuestions = totalQuestions,
                 onNextClick = onNextQuestion,
                 onPronunciationClick = onPronunciationClick,
                 modifier = Modifier.align(Alignment.BottomCenter)
@@ -301,10 +303,11 @@ fun QuizPhaseContent(
 
 private fun getQuestionTypeLabel(type: QuestionType): String {
     return when (type) {
-        QuestionType.CHOOSE_MEANING -> "CHỌN NGHĨA"
-        QuestionType.FILL_WORD -> "ĐIỀN TỪ"
+        QuestionType.LISTEN_FILL -> "NGHE ĐIỀN TỪ"
+        QuestionType.LISTEN_CHOOSE -> "NGHE CHỌN TỪ"
         QuestionType.TRUE_FALSE -> "ĐÚNG/SAI"
-        QuestionType.LISTEN_FILL -> "NGHE VÀ ĐIỀN"
+        QuestionType.SEE_WORD_CHOOSE_MEANING -> "NHÌN TỪ CHỌN NGHĨA"
+        QuestionType.SEE_MEANING_CHOOSE_WORD -> "NHÌN NGHĨA CHỌN TỪ"
     }
 }
 

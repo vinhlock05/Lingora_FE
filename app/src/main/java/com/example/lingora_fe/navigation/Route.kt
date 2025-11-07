@@ -42,7 +42,8 @@ sealed class Route(
     
     // Vocabulary Navigation
     object CategoryDetail : Route("vocabulary/category/{categoryId}")
-    object LearnWord : Route("vocabulary/learn/{topicId}")
+    object TopicDetail : Route("vocabulary/topic/{topicId}?topicName={topicName}")
+    object LearnWord : Route("vocabulary/learn/{topicId}/{wordCount}/{gameTypes}")
     object Practice : Route("vocabulary/practice/{topicId}")
     
     // Practice Navigation
@@ -51,6 +52,7 @@ sealed class Route(
     object VocabularyReview : Route("practice/vocabulary_review")
     object FlashcardPractice : Route("practice/flashcard")
     object QuizPractice : Route("practice/quiz")
+    object ReviewPractice : Route("practice/review/{limit}/{types}")
     object TestDetail : Route("practice/test/{testId}")
     object ListeningPractice : Route("practice/test/{testId}/listening")
     object ReadingPractice : Route("practice/test/{testId}/reading")
@@ -66,7 +68,11 @@ sealed class Route(
         
         // Vocabulary routes
         fun categoryDetail(categoryId: Int) = "vocabulary/category/$categoryId"
-        fun learnWord(topicId: Int) = "vocabulary/learn/$topicId"
+        fun topicDetail(topicId: Int, topicName: String): String {
+            val encodedName = android.net.Uri.encode(topicName)
+            return "vocabulary/topic/$topicId?topicName=$encodedName"
+        }
+        fun learnWord(topicId: Int, wordCount: Int, gameTypes: String) = "vocabulary/learn/$topicId/$wordCount/$gameTypes"
         fun practice(topicId: Int) = "vocabulary/practice/$topicId"
         
         // Practice routes
@@ -74,6 +80,7 @@ sealed class Route(
         fun listeningPractice(testId: String) = "practice/test/$testId/listening"
         fun readingPractice(testId: String) = "practice/test/$testId/reading"
         fun writingPractice(testId: String) = "practice/test/$testId/writing"
+        fun reviewPractice(limit: Int, gameTypes: String) = "practice/review/$limit/$gameTypes"
     }
 
 }

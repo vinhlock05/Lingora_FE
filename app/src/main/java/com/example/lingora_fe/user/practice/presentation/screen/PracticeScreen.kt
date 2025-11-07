@@ -1,4 +1,4 @@
-package com.example.lingora_fe.user.practice.presentation
+package com.example.lingora_fe.user.practice.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,8 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.lingora_fe.core.ui.theme.GradientEnd
-import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
 
@@ -68,45 +66,10 @@ fun PracticeScreen(
                 iconBackgroundColor = Color(0xFFD1FAE5),
                 title = "Ôn tập từ vựng",
                 subtitle = "Ôn lại từ đã học theo SRS",
-                badge = "Từ cần ôn hôm nay",
                 onClick = {
                     navController.navigate("practice/vocabulary_review")
                 }
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Statistics Section
-            Text(
-                text = "Thống kê tuần này",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MainText
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    value = "5",
-                    label = "Bài luyện",
-                    backgroundColor = Color(0xFFDCECFE)
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    value = "3h\n20m",
-                    label = "Thời gian",
-                    backgroundColor = Color(0xFFF3E8FF)
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    value = "87%",
-                    label = "Độ chính xác",
-                    backgroundColor = Color(0xFFD1FAE5)
-                )
-            }
         }
 }
 
@@ -117,7 +80,6 @@ fun PracticeCard(
     iconBackgroundColor: Color,
     title: String,
     subtitle: String,
-    badge: String? = null,
     onClick: () -> Unit
 ) {
     Card(
@@ -173,54 +135,7 @@ fun PracticeCard(
                     fontSize = 14.sp,
                     color = NavBarText
                 )
-                
-                if (badge != null) {
-                    Text(
-                        text = badge,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFFEA580C), // Orange
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
             }
-        }
-    }
-}
-
-@Composable
-fun StatCard(
-    modifier: Modifier = Modifier,
-    value: String,
-    label: String,
-    backgroundColor: Color
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = value,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MainText,
-                lineHeight = 24.sp
-            )
-            Text(
-                text = label,
-                fontSize = 12.sp,
-                color = NavBarText
-            )
         }
     }
 }

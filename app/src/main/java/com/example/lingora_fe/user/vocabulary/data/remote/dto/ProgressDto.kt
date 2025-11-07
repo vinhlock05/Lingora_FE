@@ -7,13 +7,13 @@ import com.google.gson.annotations.SerializedName
 data class UserCategoryProgressDto(
     @SerializedName("id")
     val id: Int,
-    @SerializedName("user_id")
+    @SerializedName("userId")
     val userId: Int,
-    @SerializedName("category_id")
+    @SerializedName("categoryId")
     val categoryId: Int,
-    @SerializedName("total_topics")
+    @SerializedName("totalTopics")
     val totalTopics: Int,
-    @SerializedName("progress_percent")
+    @SerializedName("progressPercent")
     val progressPercent: Float,
     @SerializedName("completed")
     val completed: Boolean
@@ -33,11 +33,11 @@ data class UserCategoryProgressDto(
 data class UserTopicProgressDto(
     @SerializedName("id")
     val id: Int,
-    @SerializedName("user_id")
+    @SerializedName("userId")
     val userId: Int,
-    @SerializedName("topic_id")
+    @SerializedName("topicId")
     val topicId: Int,
-    @SerializedName("total_words")
+    @SerializedName("totalWords")
     val totalWords: Int,
     @SerializedName("completed")
     val completed: Boolean
@@ -58,7 +58,7 @@ data class CategoryProgressResponse(
     val data: UserCategoryProgressDto
 )
 
-data class CategoryProgressListResponse(
+data class UserCategoryProgressListResponse(
     @SerializedName("data")
     val data: List<UserCategoryProgressDto>
 )
@@ -71,7 +71,7 @@ data class TopicProgressResponse(
 data class UpdateProgressRequest(
     @SerializedName("completed")
     val completed: Boolean? = null,
-    @SerializedName("progress_percent")
+    @SerializedName("progressPercent")
     val progressPercent: Float? = null
 )
 

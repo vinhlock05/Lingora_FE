@@ -1,4 +1,4 @@
-package com.example.lingora_fe.user.practice.presentation
+package com.example.lingora_fe.user.practice.presentation.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke

@@ -1,4 +1,4 @@
-package com.example.lingora_fe.user.practice.presentation
+package com.example.lingora_fe.user.practice.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

@@ -3,6 +3,7 @@ package com.example.lingora_fe.user.vocabulary.presentation.screen
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,10 +17,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,142 +34,160 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import android.util.Log
+import androidx.compose.runtime.DisposableEffect
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
+import com.example.lingora_fe.user.vocabulary.presentation.components.FlashcardComponent
 import com.example.lingora_fe.user.vocabulary.presentation.components.LearnPhaseContent
-import com.example.lingora_fe.user.vocabulary.presentation.components.PracticePhaseContent
 import com.example.lingora_fe.user.vocabulary.presentation.components.QuizPhaseContent
-
-// Data class for Word
-data class Word(
-    val meaning: String,
-    val pronunciation: String,
-    val translation: String,
-    val example: String,
-    val exampleTranslation: String,
-    val imageUrl: String? = null,
-    val audioUrl: String? = null
-)
-
-// Learning phases
-enum class LearningPhase {
-    LEARN,      // Learning new words
-    PRACTICE,   // Flashcard practice
-    QUIZ        // Quiz testing
-}
-
-// Quiz question types
-enum class QuestionType {
-    CHOOSE_MEANING,      // Chọn nghĩa đúng
-    FILL_WORD,           // Điền từ
-    TRUE_FALSE,          // Đúng/Sai
-    LISTEN_FILL          // Nghe và điền
-}
-
-// Quiz question data class
-data class QuizQuestion(
-    val type: QuestionType,
-    val question: String,
-    val correctAnswer: String,
-    val options: List<String> = emptyList(),
-    val word: Word
-)
-
-// Learning state
-data class LearningState(
-    val phase: LearningPhase = LearningPhase.LEARN,
-    val currentWordIndex: Int = 0,
-    val isFlashcardRevealed: Boolean = false,
-    val currentQuestionIndex: Int = 0,
-    val selectedAnswer: String? = null,
-    val typedAnswer: String = "",
-    val isAnswerChecked: Boolean = false,
-    val correctAnswers: Int = 0,
-    val showCompletionDialog: Boolean = false,
-    val showExitDialog: Boolean = false
-)
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.LearningPhase
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.LearningState
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.QuestionType
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.QuizQuestion
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.TopicDetailViewModel
+import com.example.lingora_fe.util.AudioPlayerHelper
 
 @Composable
 fun LearnWordScreen(
+    topicId: Int,
+    wordCount: Int,
+    gameTypes: Set<com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType>,
     onBackClick: () -> Unit,
+    viewModel: TopicDetailViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
-    // Sample word list
-    val words = remember {
-        listOf(
-            Word(
-                meaning = "Hello",
-                pronunciation = "/həˈloʊ/",
-                translation = "Xin chào",
-                example = "Hello! How are you today?",
-                exampleTranslation = "Xin chào! Bạn khỏe không?",
-                imageUrl = "https://picsum.photos/200/200?random=1"
-            ),
-            Word(
-                meaning = "Goodbye",
-                pronunciation = "/ɡʊdˈbaɪ/",
-                translation = "Tạm biệt",
-                example = "Goodbye! See you tomorrow.",
-                exampleTranslation = "Tạm biệt! Hẹn gặp lại bạn ngày mai.",
-                imageUrl = "https://picsum.photos/200/200?random=2"
-            ),
-            Word(
-                meaning = "Thank you",
-                pronunciation = "/θæŋk juː/",
-                translation = "Cảm ơn",
-                example = "Thank you for your help!",
-                exampleTranslation = "Cảm ơn sự giúp đỡ của bạn!",
-                imageUrl = "https://picsum.photos/200/200?random=3"
-            ),
-            Word(
-                meaning = "Please",
-                pronunciation = "/pliːz/",
-                translation = "Làm ơn",
-                example = "Please sit down.",
-                exampleTranslation = "Làm ơn ngồi xuống.",
-                imageUrl = "https://picsum.photos/200/200?random=4"
-            ),
-            Word(
-                meaning = "Beautiful",
-                pronunciation = "/ˈbjuːtɪfl/",
-                translation = "Đẹp",
-                example = "What a beautiful day!",
-                exampleTranslation = "Thật là một ngày đẹp trời!",
-                imageUrl = "https://picsum.photos/200/200?random=5"
-            )
-        )
+    val uiState by viewModel.uiState.collectAsState()
+
+    val playAudio: (String?) -> Unit = remember {
+        { audioUrl ->
+            if (!audioUrl.isNullOrEmpty()) {
+                AudioPlayerHelper.playAudio(
+                    audioUrl = audioUrl,
+                    onError = { error ->
+                        Log.e("LearnWordScreen", "Error playing audio", error)
+                    }
+                )
+            }
+        }
+    }
+
+    // Clean up MediaPlayer when composable is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            AudioPlayerHelper.stop()
+        }
+    }
+    
+    // Load words for study when screen opens with user selected word count
+    LaunchedEffect(topicId, wordCount) {
+        viewModel.loadWordsForStudy(topicId, wordCount)
+    }
+    
+    // Use study words directly from domain model
+    val words = remember(uiState.studyWords) {
+        Log.d("LearnWordScreen", "Using studyWords: ${uiState.studyWords.size} words")
+        if (uiState.studyWords.isEmpty()) {
+            Log.w("LearnWordScreen", "studyWords is empty!")
+        }
+        uiState.studyWords
+    }
+
+    // Show loading if words are being loaded
+    if (uiState.isLoadingStudyWords && words.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    // Check if words are loaded
+    if (words.isEmpty() && !uiState.isLoadingStudyWords) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Không có từ nào để học",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Button(onClick = onBackClick) {
+                    Text("Quay lại")
+                }
+            }
+        }
+        return
     }
 
     // Learning state
     var state by remember { mutableStateOf(LearningState()) }
+    var lastPlayedLearnWordId by remember { mutableStateOf<Int?>(null) }
     
-    // Generate quiz questions
-    val quizQuestions = remember(words) {
-        generateQuizQuestions(words)
+    // Generate quiz questions - only when words are available
+    // Use gameTypes from navigation arguments instead of ViewModel state
+    val quizQuestions = remember(words, gameTypes) {
+        if (words.isNotEmpty()) {
+            generateQuizQuestions(words, gameTypes)
+        } else {
+            emptyList()
+        }
+    }
+    val initialQuizCount = remember(quizQuestions) { quizQuestions.size }
+
+    // Track wrong questions to move to end
+    var currentQuizQuestions by remember(quizQuestions) {
+        mutableStateOf(quizQuestions)
     }
 
-    // Calculate progress - Fixed to reach 100% only when last quiz question is completed
-    val totalSteps = words.size + words.size + quizQuestions.size
-    val currentStep = when (state.phase) {
-        LearningPhase.LEARN -> state.currentWordIndex
-        LearningPhase.PRACTICE -> words.size + state.currentWordIndex
-        LearningPhase.QUIZ -> {
-            val baseStep = words.size + words.size + state.currentQuestionIndex
-            // Add 1 only when answer is checked for the last question
-            if (state.currentQuestionIndex == quizQuestions.size - 1 && state.isAnswerChecked) {
-                baseStep + 1
-            } else {
-                baseStep
+    LaunchedEffect(state.phase) {
+        when (state.phase) {
+            LearningPhase.LEARN -> {
+                lastPlayedLearnWordId = null
+            }
+            LearningPhase.QUIZ -> {
+                // No auto play in quiz phase
             }
         }
     }
-    val progressFraction = (currentStep.toFloat() / totalSteps.toFloat()).coerceIn(0f, 1f)
+
+    val currentLearnWordId = words.getOrNull(state.currentWordIndex)?.id
+    LaunchedEffect(state.phase, state.currentWordIndex, currentLearnWordId) {
+        if (state.phase == LearningPhase.LEARN) {
+            val index = state.currentWordIndex
+            val word = words.getOrNull(index)
+            if (word != null && word.id != lastPlayedLearnWordId) {
+                playAudio(word.audioUrl)
+                lastPlayedLearnWordId = word.id
+            }
+        }
+    }
+
+    // Calculate progress based on learned words and correctly answered quiz questions
+    val totalSteps = words.size + initialQuizCount
+    val currentStep = when (state.phase) {
+        LearningPhase.LEARN -> state.currentWordIndex
+        LearningPhase.QUIZ -> {
+            words.size + state.correctAnswers
+        }
+    }
+    val progressFraction = if (totalSteps > 0) {
+        (currentStep.toFloat() / totalSteps.toFloat()).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
 
     // Get phase name
     val phaseName = when (state.phase) {
         LearningPhase.LEARN -> "Học từ mới"
-        LearningPhase.PRACTICE -> "Luyện tập Flashcard"
         LearningPhase.QUIZ -> "Quiz"
     }
 
@@ -200,7 +222,29 @@ fun LearnWordScreen(
 
     // Completion dialog
     if (state.showCompletionDialog) {
-        val accuracy = (state.correctAnswers.toFloat() / quizQuestions.size.toFloat() * 100).toInt()
+        val totalQuestions = initialQuizCount
+        val accuracy = if (totalQuestions > 0) {
+            (state.correctAnswers.toFloat() / totalQuestions.toFloat() * 100).toInt()
+        } else {
+            0
+        }
+        
+        // Create WordProgress after learning is completed
+        LaunchedEffect(Unit) {
+            val wordIds = uiState.studyWords.map { it.id }
+            if (wordIds.isNotEmpty()) {
+                viewModel.createWordProgressAfterLearning(
+                    wordIds = wordIds,
+                    onSuccess = {
+                        // Success - progress created
+                    },
+                    onError = { error ->
+                        // Handle error if needed
+                    }
+                )
+            }
+        }
+        
         AlertDialog(
             onDismissRequest = { },
             title = { 
@@ -224,7 +268,7 @@ fun LearnWordScreen(
                         color = GradientStart
                     )
                     Text(
-                        "${state.correctAnswers}/${quizQuestions.size} câu đúng",
+                        "${state.correctAnswers}/${totalQuestions} câu đúng",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -286,189 +330,266 @@ fun LearnWordScreen(
             // Content based on phase
             when (state.phase) {
                 LearningPhase.LEARN -> {
-                    LearnPhaseContent(
-                        word = words[state.currentWordIndex],
-                        currentIndex = state.currentWordIndex,
-                        totalWords = words.size,
-                        onPronunciationClick = { /* Handle pronunciation */ },
-                        onPreviousClick = {
-                            if (state.currentWordIndex > 0) {
-                                state = state.copy(currentWordIndex = state.currentWordIndex - 1)
+                    if (state.currentWordIndex < words.size) {
+                        LearnPhaseContent(
+                            word = words[state.currentWordIndex],
+                            currentIndex = state.currentWordIndex,
+                            totalWords = words.size,
+                            isRevealed = state.isFlashcardRevealed,
+                            onCardClick = {
+                                state = state.copy(isFlashcardRevealed = !state.isFlashcardRevealed)
+                            },
+                            onPronunciationClick = {
+                                val currentWord = words[state.currentWordIndex]
+                                playAudio(currentWord.audioUrl)
+                            },
+                            onPreviousClick = {
+                                if (state.currentWordIndex > 0) {
+                                    state = state.copy(
+                                        currentWordIndex = state.currentWordIndex - 1,
+                                        isFlashcardRevealed = false
+                                    )
+                                }
+                            },
+                            onNextClick = {
+                                if (state.currentWordIndex < words.size - 1) {
+                                    state = state.copy(
+                                        currentWordIndex = state.currentWordIndex + 1,
+                                        isFlashcardRevealed = false
+                                    )
+                                } else {
+                                    // Move to Quiz phase
+                                    state = state.copy(
+                                        phase = LearningPhase.QUIZ,
+                                        currentQuestionIndex = 0,
+                                        selectedAnswer = null,
+                                        typedAnswer = "",
+                                        isAnswerChecked = false,
+                                        correctAnswers = 0
+                                    )
+                                    // Reset quiz questions
+                                    currentQuizQuestions = quizQuestions
+                                }
                             }
-                        },
-                        onNextClick = {
-                            if (state.currentWordIndex < words.size - 1) {
-                                state = state.copy(currentWordIndex = state.currentWordIndex + 1)
-                            } else {
-                                // Move to Practice phase
-                                state = state.copy(
-                                    phase = LearningPhase.PRACTICE,
-                                    currentWordIndex = 0,
-                                    isFlashcardRevealed = false
-                                )
-                            }
-                        }
-                    )
-                }
-                
-                LearningPhase.PRACTICE -> {
-                    PracticePhaseContent(
-                        word = words[state.currentWordIndex],
-                        currentIndex = state.currentWordIndex,
-                        totalWords = words.size,
-                        isRevealed = state.isFlashcardRevealed,
-                        onCardClick = {
-                            state = state.copy(isFlashcardRevealed = !state.isFlashcardRevealed)
-                        },
-                        onPronunciationClick = { /* Handle pronunciation */ },
-                        onPreviousClick = {
-                            if (state.currentWordIndex > 0) {
-                                state = state.copy(
-                                    currentWordIndex = state.currentWordIndex - 1,
-                                    isFlashcardRevealed = false
-                                )
-                            }
-                        },
-                        onNextClick = {
-                            if (state.currentWordIndex < words.size - 1) {
-                                state = state.copy(
-                                    currentWordIndex = state.currentWordIndex + 1,
-                                    isFlashcardRevealed = false
-                                )
-                            } else {
-                                // Move to Quiz phase
-                                state = state.copy(
-                                    phase = LearningPhase.QUIZ,
-                                    currentQuestionIndex = 0,
-                                    selectedAnswer = null,
-                                    typedAnswer = "",
-                                    isAnswerChecked = false,
-                                    correctAnswers = 0
-                                )
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
                 
                 LearningPhase.QUIZ -> {
-                    QuizPhaseContent(
-                        question = quizQuestions[state.currentQuestionIndex],
-                        currentIndex = state.currentQuestionIndex,
-                        totalQuestions = quizQuestions.size,
-                        selectedAnswer = state.selectedAnswer,
-                        typedAnswer = state.typedAnswer,
-                        isAnswerChecked = state.isAnswerChecked,
-                        onAnswerSelected = { answer ->
-                            if (!state.isAnswerChecked) {
-                                state = state.copy(selectedAnswer = answer)
+                    if (state.currentQuestionIndex < currentQuizQuestions.size) {
+                        QuizPhaseContent(
+                            question = currentQuizQuestions[state.currentQuestionIndex],
+                            answeredCount = state.correctAnswers,
+                            totalQuestions = initialQuizCount,
+                            selectedAnswer = state.selectedAnswer,
+                            typedAnswer = state.typedAnswer,
+                            isAnswerChecked = state.isAnswerChecked,
+                            onAnswerSelected = { answer ->
+                                if (!state.isAnswerChecked) {
+                                    state = state.copy(selectedAnswer = answer)
+                                }
+                            },
+                            onTypedAnswerChanged = { answer ->
+                                if (!state.isAnswerChecked) {
+                                    state = state.copy(typedAnswer = answer)
+                                }
+                            },
+                            onCheckAnswer = {
+                                val currentQuestion = currentQuizQuestions[state.currentQuestionIndex]
+                                val userAnswer = if (currentQuestion.type == QuestionType.LISTEN_FILL) {
+                                    state.typedAnswer.trim()
+                                } else {
+                                    state.selectedAnswer
+                                }
+                                
+                                if (userAnswer != null && userAnswer.isNotEmpty()) {
+                                    val isCorrect = userAnswer.equals(currentQuestion.correctAnswer, ignoreCase = true)
+                                    
+                                    if (isCorrect) {
+                                        // Correct answer - mark as checked
+                                        state = state.copy(
+                                            isAnswerChecked = true,
+                                            correctAnswers = state.correctAnswers + 1
+                                        )
+                                    } else {
+                                        // Wrong answer - mark as checked but don't increment correctAnswers
+                                        state = state.copy(
+                                            isAnswerChecked = true
+                                        )
+                                    }
+                                }
+                            },
+                            onNextQuestion = {
+                                val currentQuestion = currentQuizQuestions[state.currentQuestionIndex]
+                                val userAnswer = if (currentQuestion.type == QuestionType.LISTEN_FILL) {
+                                    state.typedAnswer.trim()
+                                } else {
+                                    state.selectedAnswer
+                                }
+                                val isCorrect = userAnswer?.equals(currentQuestion.correctAnswer, ignoreCase = true) == true
+                                
+                                if (isCorrect) {
+                                    // Correct answer - remove from list
+                                    val remainingQuestions = currentQuizQuestions.filterIndexed { index, _ ->
+                                        index != state.currentQuestionIndex
+                                    }
+                                    currentQuizQuestions = remainingQuestions
+                                    
+                                    if (currentQuizQuestions.isEmpty()) {
+                                        // All questions answered correctly - show completion dialog
+                                        state = state.copy(showCompletionDialog = true)
+                                    } else {
+                                        // Move to next question (stay at same index or go to 0 if at end)
+                                        val nextIndex = if (state.currentQuestionIndex < currentQuizQuestions.size) {
+                                            state.currentQuestionIndex
+                                        } else {
+                                            0
+                                        }
+                                        state = state.copy(
+                                            currentQuestionIndex = nextIndex,
+                                            selectedAnswer = null,
+                                            typedAnswer = "",
+                                            isAnswerChecked = false
+                                        )
+                                    }
+                                } else {
+                                    // Wrong answer - move question to end of list
+                                    val remainingQuestions = currentQuizQuestions.filterIndexed { index, _ ->
+                                        index != state.currentQuestionIndex
+                                    }
+                                    currentQuizQuestions = remainingQuestions + currentQuestion
+                                    
+                                    // Move to next question (stay at same index or go to 0 if at end)
+                                    val nextIndex = if (state.currentQuestionIndex < currentQuizQuestions.size) {
+                                        state.currentQuestionIndex
+                                    } else {
+                                        0
+                                    }
+                                    state = state.copy(
+                                        currentQuestionIndex = nextIndex,
+                                        selectedAnswer = null,
+                                        typedAnswer = "",
+                                        isAnswerChecked = false
+                                    )
+                                }
+                            },
+                            onPronunciationClick = {
+                                val questionWord = currentQuizQuestions.getOrNull(state.currentQuestionIndex)?.word
+                                playAudio(questionWord?.audioUrl)
                             }
-                        },
-                        onTypedAnswerChanged = { answer ->
-                            if (!state.isAnswerChecked) {
-                                state = state.copy(typedAnswer = answer)
-                            }
-                        },
-                        onCheckAnswer = {
-                            val currentQuestion = quizQuestions[state.currentQuestionIndex]
-                            val userAnswer = if (currentQuestion.type == QuestionType.FILL_WORD) {
-                                state.typedAnswer.trim()
-                            } else {
-                                state.selectedAnswer
-                            }
-                            
-                            if (userAnswer != null && userAnswer.isNotEmpty()) {
-                                val isCorrect = userAnswer.equals(currentQuestion.correctAnswer, ignoreCase = true)
-                                state = state.copy(
-                                    isAnswerChecked = true,
-                                    correctAnswers = if (isCorrect) state.correctAnswers + 1 else state.correctAnswers
-                                )
-                            }
-                        },
-                        onNextQuestion = {
-                            if (state.currentQuestionIndex < quizQuestions.size - 1) {
-                                state = state.copy(
-                                    currentQuestionIndex = state.currentQuestionIndex + 1,
-                                    selectedAnswer = null,
-                                    typedAnswer = "",
-                                    isAnswerChecked = false
-                                )
-                            } else {
-                                // Show completion dialog
-                                state = state.copy(showCompletionDialog = true)
-                            }
-                        },
-                        onPronunciationClick = { /* Handle pronunciation */ }
-                    )
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-// Helper function to generate quiz questions
-private fun generateQuizQuestions(words: List<Word>): List<QuizQuestion> {
+// Helper function to generate quiz questions based on selected game types
+private fun generateQuizQuestions(
+    words: List<com.example.lingora_fe.user.vocabulary.domain.model.Word>,
+    selectedGameTypes: Set<com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType>
+): List<QuizQuestion> {
     val questions = mutableListOf<QuizQuestion>()
     
-    words.forEach { word ->
-        // For each word, generate different question types
-        
-        // 1. Choose meaning (Chọn nghĩa đúng)
-        val otherWords = words.filter { it != word }.shuffled().take(3)
-        questions.add(
-            QuizQuestion(
-                type = QuestionType.CHOOSE_MEANING,
-                question = "Nghĩa của từ \"${word.meaning}\" là gì?",
-                correctAnswer = word.translation,
-                options = (listOf(word.translation) + otherWords.map { it.translation }).shuffled(),
-                word = word
-            )
-        )
-        
-        // 2. Fill word (Điền từ - text input)
-        questions.add(
-            QuizQuestion(
-                type = QuestionType.FILL_WORD,
-                question = "Điền từ tiếng Anh của \"${word.translation}\":",
-                correctAnswer = word.meaning,
-                options = emptyList(), // No options for text input
-                word = word
-            )
-        )
-    }
-    
-    // Add True/False questions
-    words.take(2).forEach { word ->
-        val isTrue = Math.random() > 0.5
-        val displayTranslation = if (isTrue) {
-            word.translation
-        } else {
-            words.filter { it != word }.random().translation
+    // Convert GameType to QuestionType
+    val questionTypes = selectedGameTypes.map { gameType ->
+        when (gameType) {
+            com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.LISTEN_FILL -> QuestionType.LISTEN_FILL
+            com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.LISTEN_CHOOSE -> QuestionType.LISTEN_CHOOSE
+            com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.TRUE_FALSE -> QuestionType.TRUE_FALSE
+            com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.SEE_WORD_CHOOSE_MEANING -> QuestionType.SEE_WORD_CHOOSE_MEANING
+            com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.SEE_MEANING_CHOOSE_WORD -> QuestionType.SEE_MEANING_CHOOSE_WORD
         }
-        
-        questions.add(
-            QuizQuestion(
-                type = QuestionType.TRUE_FALSE,
-                question = "\"${word.meaning}\" có nghĩa là \"$displayTranslation\"",
-                correctAnswer = if (isTrue) "Đúng" else "Sai",
-                options = listOf("Đúng", "Sai"),
-                word = word
-            )
-        )
     }
     
-    // Add Listen and fill questions
-    words.take(3).forEach { word ->
-        val otherWords = words.filter { it != word }.shuffled().take(3)
-        questions.add(
-            QuizQuestion(
-                type = QuestionType.LISTEN_FILL,
-                question = "Nghe và chọn từ đúng",
-                correctAnswer = word.meaning,
-                options = (listOf(word.meaning) + otherWords.map { it.meaning }).shuffled(),
-                word = word
-            )
-        )
+    words.forEach { word ->
+        questionTypes.forEach { questionType ->
+            when (questionType) {
+                QuestionType.LISTEN_FILL -> {
+                    // Nghe điền từ - text input
+                    word.meaning?.let { meaning ->
+                        questions.add(
+                            QuizQuestion(
+                                type = QuestionType.LISTEN_FILL,
+                                question = "Nghe và điền từ tiếng Anh của \"$meaning\":",
+                                correctAnswer = word.word,
+                                options = emptyList(), // Text input
+                                word = word
+                            )
+                        )
+                    }
+                }
+                QuestionType.LISTEN_CHOOSE -> {
+                    // Nghe chọn từ - multiple choice
+                    val otherWords = words.filter { it != word }.shuffled().take(3)
+                    questions.add(
+                        QuizQuestion(
+                            type = QuestionType.LISTEN_CHOOSE,
+                            question = "Nghe và chọn từ đúng",
+                            correctAnswer = word.word,
+                            options = (listOf(word.word) + otherWords.map { it.word }).shuffled(),
+                            word = word
+                        )
+                    )
+                }
+                QuestionType.TRUE_FALSE -> {
+                    // Đúng/Sai
+                    word.meaning?.let { meaning ->
+                        val isTrue = Math.random() > 0.5
+                        val displayMeaning = if (isTrue) {
+                            meaning
+                        } else {
+                            words.filter { it != word && it.meaning != null }.randomOrNull()?.meaning ?: meaning
+                        }
+                        if (displayMeaning != null) {
+                            questions.add(
+                                QuizQuestion(
+                                    type = QuestionType.TRUE_FALSE,
+                                    question = "\"${word.word}\" có nghĩa là \"$displayMeaning\"",
+                                    correctAnswer = if (isTrue) "Đúng" else "Sai",
+                                    options = listOf("Đúng", "Sai"),
+                                    word = word
+                                )
+                            )
+                        }
+                    }
+                }
+                QuestionType.SEE_WORD_CHOOSE_MEANING -> {
+                    // Nhìn từ chọn nghĩa
+                    word.meaning?.let { meaning ->
+                        val otherWords = words.filter { it != word && it.meaning != null }.shuffled().take(3)
+                        questions.add(
+                            QuizQuestion(
+                                type = QuestionType.SEE_WORD_CHOOSE_MEANING,
+                                question = "Nghĩa của từ \"${word.word}\" là gì?",
+                                correctAnswer = meaning,
+                                options = (listOf(meaning) + otherWords.mapNotNull { it.meaning }).shuffled(),
+                                word = word
+                            )
+                        )
+                    }
+                }
+                QuestionType.SEE_MEANING_CHOOSE_WORD -> {
+                    // Nhìn nghĩa chọn từ
+                    word.meaning?.let { meaning ->
+                        val otherWords = words.filter { it != word }.shuffled().take(3)
+                        questions.add(
+                            QuizQuestion(
+                                type = QuestionType.SEE_MEANING_CHOOSE_WORD,
+                                question = "Từ tiếng Anh của \"$meaning\" là gì?",
+                                correctAnswer = word.word,
+                                options = (listOf(word.word) + otherWords.map { it.word }).shuffled(),
+                                word = word
+                            )
+                        )
+                    }
+                }
+            }
+        }
     }
-    
-    return questions.shuffled()
+
+    val targetSize = (words.size * 2).coerceAtLeast(1)
+    val finalQuestions = questions.shuffled().take(targetSize)
+    return finalQuestions
 }

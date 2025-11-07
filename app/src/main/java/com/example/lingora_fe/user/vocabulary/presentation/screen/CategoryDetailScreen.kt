@@ -1,142 +1,68 @@
 package com.example.lingora_fe.user.vocabulary.presentation.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.lingora_fe.admin.common.presentation.components.SearchBar
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
 import com.example.lingora_fe.user.vocabulary.presentation.components.TopicCard
-
-data class TopicUiState(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val level: String,
-    val duration: String,
-    val learnedWords: Int,
-    val totalWords: Int
-)
+import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.CategoryDetailViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryDetailScreen(
-    categoryName: String,
+    categoryId: Int,
     onBackClick: () -> Unit,
-    onTopicClick: (Int) -> Unit,
+    onTopicClick: (Int, String) -> Unit,
+    viewModel: CategoryDetailViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
-    // Sample data - replace with ViewModel later
-    val topics = listOf(
-        TopicUiState(
-            id = 1,
-            name = "Chào hỏi & Giới thiệu",
-            description = "Cách chào hỏi và giới thiệu bản thân",
-            level = "Beginner",
-            duration = "15 phút",
-            learnedWords = 30,
-            totalWords = 50
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        ),
-        TopicUiState(
-            id = 2,
-            name = "Gia đình & Bạn bè",
-            description = "Từ vựng về gia đình và mối quan hệ",
-            level = "Beginner",
-            duration = "20 phút",
-            learnedWords = 0,
-            totalWords = 60
-        )
-    )
-    
+    val uiState by viewModel.uiState.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(categoryId) {
+        viewModel.loadCategoryTopics(categoryId)
+    }
+
+    // Load more when scrolling near the end
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastVisibleIndex ->
+                if (lastVisibleIndex != null && lastVisibleIndex >= uiState.topics.size - 3) {
+                    viewModel.loadNextPage()
+                }
+            }
+    }
+
+    // Debounce search
+    var searchQuery by remember { mutableStateOf(uiState.searchQuery) }
+    LaunchedEffect(searchQuery) {
+        delay(500)
+        if (searchQuery != uiState.searchQuery) {
+            viewModel.searchTopics(searchQuery)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier
-                    .border(width = 1.dp, color = TopBarBorder),
+                modifier = Modifier.border(width = 1.dp, color = TopBarBorder),
                 title = {
                     Text(
-                        text = categoryName,
+                        text = uiState.categoryName.ifEmpty { "Category" },
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -155,21 +81,83 @@ fun CategoryDetailScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(paddingValues)
         ) {
-            items(topics) { topic ->
-                TopicCard(
-                    title = topic.name,
-                    description = topic.description,
-                    learnedWords = topic.learnedWords,
-                    totalWords = topic.totalWords,
-                    onClick = { onTopicClick(topic.id) }
-                )
+            // Search Bar
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholder = "Tìm kiếm chủ đề...",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            // Content
+            when {
+                uiState.isLoading && uiState.topics.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                uiState.error != null && uiState.topics.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = uiState.error!!,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Button(onClick = { viewModel.refresh() }) {
+                                Text("Thử lại")
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(uiState.topics) { topic ->
+                            TopicCard(
+                                title = topic.name,
+                                description = topic.description,
+                                learnedWords = topic.learnedWords,
+                                totalWords = topic.totalWords,
+                                onClick = { onTopicClick(topic.id, topic.name) }
+                            )
+                        }
+
+                        // Loading indicator at the end
+                        if (uiState.isLoading && uiState.topics.isNotEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

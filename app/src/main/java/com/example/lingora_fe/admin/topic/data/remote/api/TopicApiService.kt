@@ -7,7 +7,7 @@ import retrofit2.http.*
 interface TopicApiService {
 
     // Get all topics (standalone - not filtered by category)
-    @GET("topic")
+    @GET("topics")
     suspend fun getAllTopics(
         @Query("limit") limit: Int = 20,
         @Query("page") page: Int = 1,
@@ -17,7 +17,7 @@ interface TopicApiService {
     ): ApiResponse<TopicListMetaData>
 
     // Get topics in a specific category (nested view)
-    @GET("category/{id}/topics")
+    @GET("categories/{id}/topics")
     suspend fun getCategoryWithTopics(
         @Path("id") categoryId: Int,
         @Query("limit") limit: Int = 20,
@@ -27,25 +27,25 @@ interface TopicApiService {
     ): ApiResponse<CategoryWithTopicsDto>
 
     // Get topic with words (for details/edit)
-    @GET("topic/{id}/words")
+    @GET("topics/{id}/words")
     suspend fun getTopicById(
         @Path("id") topicId: Int,
         @Query("limit") limit: Int = 20,
         @Query("page") page: Int = 1
     ): ApiResponse<TopicWithWordsDto>
 
-    @POST("topic")
+    @POST("topics")
     suspend fun createTopic(
         @Body request: CreateTopicRequest
     ): ApiResponse<TopicDto>
 
-    @PATCH("topic/{id}")
+    @PATCH("topics/{id}")
     suspend fun updateTopic(
         @Path("id") topicId: Int,
         @Body request: UpdateTopicRequest
     ): ApiResponse<TopicDto>
 
-    @DELETE("topic/{id}")
+    @DELETE("topics/{id}")
     suspend fun deleteTopic(
         @Path("id") topicId: Int
     ): ApiResponse<Any>

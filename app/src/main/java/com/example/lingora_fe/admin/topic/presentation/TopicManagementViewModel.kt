@@ -2,6 +2,7 @@ package com.example.lingora_fe.admin.topic.presentation
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.admin.topic.domain.model.CreateTopicData
@@ -276,6 +277,7 @@ class TopicManagementViewModel @Inject constructor(
                 description = currentTopic.description,
                 categoryId = null
             )
+            Log.d("TopicManagementVM", "Removing topic $topicId from category, updateData: $updateData")
             repository.updateTopic(token, topicId, updateData)
                 .onRight {
                     _state.value = _state.value.copy(
@@ -383,8 +385,21 @@ class TopicManagementViewModel @Inject constructor(
             
             val token = getToken() ?: return@launch
 
-            // Update topic to add categoryId
-            val updateData = UpdateTopicData(categoryId = categoryId)
+            // Get current topic info to preserve name and description
+            val currentTopic = repository.getTopicById(token, topicId).orNull() ?: run {
+                _state.value = _state.value.copy(
+                    isUpdating = false,
+                    actionError = "Topic not found"
+                )
+                return@launch
+            }
+
+            // Update topic to add categoryId while preserving name and description
+            val updateData = UpdateTopicData(
+                name = currentTopic.name,
+                description = currentTopic.description,
+                categoryId = categoryId
+            )
             repository.updateTopic(token, topicId, updateData)
                 .onRight {
                     _state.value = _state.value.copy(

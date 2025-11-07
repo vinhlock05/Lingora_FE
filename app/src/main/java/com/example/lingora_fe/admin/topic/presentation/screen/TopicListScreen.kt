@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.topic.domain.model.TopicSortOption
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementEvent
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementViewModel
+import com.example.lingora_fe.admin.common.presentation.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,13 +73,14 @@ fun TopicListScreen(
                 SearchBar(
                     query = state.searchQuery,
                     onQueryChange = { viewModel.onEvent(TopicManagementEvent.SearchTopics(it)) },
+                    placeholder = "Search topics...",
                     modifier = Modifier.weight(1f)
                 )
                 
                 // Sort Button
                 SortButton(
                     onClick = { showSortMenu = true },
-                    currentSort = state.selectedSort
+                    hasActiveSort = state.selectedSort != null
                 )
             }
 
@@ -118,7 +120,7 @@ fun TopicListScreen(
                     )
                 }
                 state.topics.isEmpty() -> {
-                    EmptyContent()
+                    EmptyContent(message = "No topics found", icon = Icons.Default.Topic)
                 }
                 else -> {
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -207,115 +209,6 @@ fun TopicListScreen(
     }
 }
 
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("Search topics...") },
-        leadingIcon = { Icon(Icons.Default.Search, "Search") },
-        trailingIcon = {
-            if (query.isNotBlank()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, "Clear")
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(24.dp)
-    )
-}
-
-@Composable
-private fun PaginationControls(
-    currentPage: Int,
-    totalPages: Int,
-    onPageChange: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = { onPageChange(currentPage - 1) },
-            enabled = currentPage > 1
-        ) {
-            Icon(Icons.Default.ChevronLeft, "Previous")
-        }
-        
-        Text(
-            text = "Page $currentPage of $totalPages",
-            modifier = Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.bodyMedium
-        )
-        
-        IconButton(
-            onClick = { onPageChange(currentPage + 1) },
-            enabled = currentPage < totalPages
-        ) {
-            Icon(Icons.Default.ChevronRight, "Next")
-        }
-    }
-}
-
-@Composable
-private fun ErrorContent(message: String, onRetry: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.Error,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.error
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Button(onClick = onRetry) {
-                Text("Retry")
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.Topic,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "No topics found",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
 
 @Composable
 private fun DeleteConfirmDialog(
@@ -345,29 +238,6 @@ private fun DeleteConfirmDialog(
     )
 }
 
-@Composable
-private fun SortButton(
-    onClick: () -> Unit,
-    currentSort: TopicSortOption?
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(
-                if (currentSort != null) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-    ) {
-        Icon(
-            imageVector = Icons.Default.Sort,
-            contentDescription = "Sort",
-            tint = if (currentSort != null) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
 
 @Composable
 private fun SortDialog(

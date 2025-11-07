@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.lingora_fe.admin.common.presentation.components.ErrorContent
 import com.example.lingora_fe.admin.user.domain.model.AdminUser
 import com.example.lingora_fe.admin.user.presentation.UserManagementEvent
 import com.example.lingora_fe.admin.user.presentation.UserManagementViewModel

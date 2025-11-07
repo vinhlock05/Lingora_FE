@@ -40,7 +40,7 @@ data class UpdateWordRequest(
 
 interface WordApiService {
     // Standalone list of words
-    @GET("word")
+    @GET("words")
     suspend fun getAllWords(
         @Query("limit") limit: Int = 20,
         @Query("page") page: Int = 1,
@@ -52,7 +52,7 @@ interface WordApiService {
     ): ApiResponse<WordListMetaData>
 
     // Words in a topic
-    @GET("topic/{id}/words")
+    @GET("topics/{id}/words")
     suspend fun getTopicWords(
         @Path("id") topicId: Int,
         @Query("limit") limit: Int = 20,
@@ -63,16 +63,16 @@ interface WordApiService {
         @Query("type") type: String? = null
     ): ApiResponse<WordListMetaData>
 
-    @GET("word/{id}")
+    @GET("words/{id}")
     suspend fun getWordById(@Path("id") wordId: Int): ApiResponse<WordDto>
 
-    @POST("word")
+    @POST("words")
     suspend fun createWord(@Body request: CreateWordRequest): ApiResponse<WordDto>
 
-    @PATCH("word/{id}")
+    @PATCH("words/{id}")
     suspend fun updateWord(@Path("id") wordId: Int, @Body request: UpdateWordRequest): ApiResponse<WordDto>
 
-    @DELETE("word/{id}")
+    @DELETE("words/{id}")
     suspend fun deleteWord(@Path("id") wordId: Int): ApiResponse<Any>
 }
 

@@ -38,6 +38,7 @@ object AppModule {
     fun provideGson(): Gson {
         return GsonBuilder()
             .setLenient()
+            .serializeNulls() // Include null values in JSON serialization
             .create()
     }
 

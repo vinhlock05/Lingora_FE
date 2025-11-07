@@ -7,7 +7,7 @@ import retrofit2.http.*
 
 interface CategoryApiService {
 
-    @GET("category")
+    @GET("categories")
     suspend fun getAllCategories(
         @Query("limit") limit: Int = 20,
         @Query("page") page: Int = 1,
@@ -16,7 +16,7 @@ interface CategoryApiService {
     ): ApiResponse<CategoryListMetaData>
 
     // Get topics in a specific category
-    @GET("category/{id}/topics")
+    @GET("categories/{id}/topics")
     suspend fun getCategoryById(
         @Path("id") categoryId: Int,
         @Query("limit") limit: Int = 20,
@@ -25,18 +25,18 @@ interface CategoryApiService {
         @Query("sort") sort: String? = null
     ): ApiResponse<CategoryWithTopicsDto>
 
-    @POST("category")
+    @POST("categories")
     suspend fun createCategory(
         @Body request: CreateCategoryRequest
     ): ApiResponse<CategoryDto>
 
-    @PATCH("category/{id}")
+    @PATCH("categories/{id}")
     suspend fun updateCategory(
         @Path("id") categoryId: Int,
         @Body request: UpdateCategoryRequest
     ): ApiResponse<CategoryDto>
 
-    @DELETE("category/{id}")
+    @DELETE("categories/{id}")
     suspend fun deleteCategory(
         @Path("id") categoryId: Int
     ): ApiResponse<Any>

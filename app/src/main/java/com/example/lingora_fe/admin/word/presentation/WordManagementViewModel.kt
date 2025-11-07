@@ -2,6 +2,7 @@ package com.example.lingora_fe.admin.word.presentation
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.admin.word.domain.model.Word
@@ -228,6 +229,7 @@ class WordManagementViewModel @Inject constructor(
                 return@launch
             }
             val cleared = base.copy(topicId = null)
+            Log.d("WordManagementViewModel", "Removing word $wordId from topic, updating to: $cleared")
             repository.updateWord(token, wordId, cleared)
                 .onRight {
                     _state.value = _state.value.copy(isUpdating = false, actionSuccess = "Word removed from topic")

@@ -26,6 +26,7 @@ import coil.request.ImageRequest
 import com.example.lingora_fe.admin.word.domain.model.Word
 import com.example.lingora_fe.admin.word.presentation.WordManagementEvent
 import com.example.lingora_fe.admin.word.presentation.WordManagementViewModel
+import com.example.lingora_fe.admin.common.presentation.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +80,7 @@ fun WordListScreen(
                 SearchBar(
                     query = state.searchQuery,
                     onQueryChange = { viewModel.onEvent(WordManagementEvent.Search(it)) },
+                    placeholder = "Search words...",
                     modifier = Modifier.weight(1f)
                 )
                 FilterButton(
@@ -87,7 +89,7 @@ fun WordListScreen(
                 )
                 SortButton(
                     onClick = { showSortDialog = true },
-                    currentSort = state.selectedSort
+                    hasActiveSort = state.selectedSort != null
                 )
             }
 
@@ -126,16 +128,52 @@ fun WordListScreen(
                 }
             }
 
-            if (state.isLoading && state.words.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            } else {
-                LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(state.words, key = { it.id }) { word ->
-                        WordCard(
-                            word = word,
-                            onEdit = { onNavigateToEdit(word.id) },
-                            onDelete = { showDeleteDialog = word.id }
-                        )
+            when {
+                state.isLoading && state.words.isEmpty() -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                }
+                state.error != null && state.words.isEmpty() -> {
+                    ErrorContent(
+                        message = state.error!!,
+                        onRetry = { viewModel.onEvent(WordManagementEvent.LoadAll()) }
+                    )
+                }
+                state.words.isEmpty() -> {
+                    EmptyContent(message = "No words found", icon = Icons.Default.TextFields)
+                }
+                else -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(state.words, key = { it.id }) { word ->
+                                WordCard(
+                                    word = word,
+                                    onEdit = { onNavigateToEdit(word.id) },
+                                    onDelete = { showDeleteDialog = word.id }
+                                )
+                            }
+
+                            // Pagination
+                            if (state.totalPages > 1) {
+                                item {
+                                    PaginationControls(
+                                        currentPage = state.currentPage,
+                                        totalPages = state.totalPages,
+                                        onPageChange = { page: Int ->
+                                            viewModel.onEvent(WordManagementEvent.LoadAll(page))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Loading Overlay
+                        if (state.isLoading && state.words.isNotEmpty()) {
+                            LinearProgressIndicator(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.TopCenter)
+                            )
+                        }
                     }
                 }
             }
@@ -339,77 +377,6 @@ fun WordCard(word: Word, onEdit: () -> Unit, onDelete: () -> Unit) {
     }
 }
 
-@Composable
-fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("Search words...") },
-        leadingIcon = { Icon(Icons.Default.Search, "Search") },
-        trailingIcon = {
-            if (query.isNotBlank()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, "Clear")
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(24.dp)
-    )
-}
-
-@Composable
-fun FilterButton(
-    onClick: () -> Unit,
-    hasActiveFilters: Boolean
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(
-                if (hasActiveFilters) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-    ) {
-        Icon(
-            imageVector = Icons.Default.FilterList,
-            contentDescription = "Filter",
-            tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-fun SortButton(
-    onClick: () -> Unit,
-    currentSort: String?
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(
-                if (currentSort != null) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-    ) {
-        Icon(
-            imageVector = Icons.Default.Sort,
-            contentDescription = "Sort",
-            tint = if (currentSort != null) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
 
 @Composable
 fun WordFilterDialog(
@@ -532,3 +499,4 @@ fun WordSortDialog(
         }
     )
 }
+

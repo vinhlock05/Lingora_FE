@@ -26,6 +26,7 @@ import com.example.lingora_fe.admin.user.domain.model.SortOption
 import com.example.lingora_fe.admin.user.domain.model.UserStatus
 import com.example.lingora_fe.admin.user.presentation.UserManagementEvent
 import com.example.lingora_fe.admin.user.presentation.UserManagementViewModel
+import com.example.lingora_fe.admin.common.presentation.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +75,7 @@ fun UserListScreen(
                 SearchBar(
                     query = state.searchQuery,
                     onQueryChange = { viewModel.onEvent(UserManagementEvent.SearchUsers(it)) },
+                    placeholder = "Search by username or email...",
                     modifier = Modifier.weight(1f)
                 )
                 
@@ -86,7 +88,7 @@ fun UserListScreen(
                 // Sort Button
                 SortButton(
                     onClick = { showSortMenu = true },
-                    currentSort = state.selectedSort
+                    hasActiveSort = state.selectedSort != null
                 )
             }
 
@@ -142,7 +144,7 @@ fun UserListScreen(
                     )
                 }
                 state.users.isEmpty() -> {
-                    EmptyContent()
+                    EmptyContent(message = "No users found", icon = Icons.Default.PersonOff)
                 }
                 else -> {
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -390,115 +392,6 @@ fun ProficiencyChip(proficiency: String) {
     }
 }
 
-@Composable
-fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("Search by username or email...") },
-        leadingIcon = { Icon(Icons.Default.Search, "Search") },
-        trailingIcon = {
-            if (query.isNotBlank()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, "Clear")
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(24.dp)
-    )
-}
-
-@Composable
-fun PaginationControls(
-    currentPage: Int,
-    totalPages: Int,
-    onPageChange: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = { onPageChange(currentPage - 1) },
-            enabled = currentPage > 1
-        ) {
-            Icon(Icons.Default.ChevronLeft, "Previous")
-        }
-        
-        Text(
-            text = "Page $currentPage of $totalPages",
-            modifier = Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.bodyMedium
-        )
-        
-        IconButton(
-            onClick = { onPageChange(currentPage + 1) },
-            enabled = currentPage < totalPages
-        ) {
-            Icon(Icons.Default.ChevronRight, "Next")
-        }
-    }
-}
-
-@Composable
-fun ErrorContent(message: String, onRetry: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.Error,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.error
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Button(onClick = onRetry) {
-                Text("Retry")
-            }
-        }
-    }
-}
-
-@Composable
-fun EmptyContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.PersonOff,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "No users found",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
 
 @Composable
 fun FilterDialog(
@@ -601,53 +494,6 @@ fun DeleteConfirmDialog(
     )
 }
 
-@Composable
-fun FilterButton(
-    onClick: () -> Unit,
-    hasActiveFilters: Boolean
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(
-                if (hasActiveFilters) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-    ) {
-        Icon(
-            imageVector = Icons.Default.FilterList,
-            contentDescription = "Filter",
-            tint = if (hasActiveFilters) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-fun SortButton(
-    onClick: () -> Unit,
-    currentSort: SortOption?
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(
-                if (currentSort != null) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-    ) {
-        Icon(
-            imageVector = Icons.Default.Sort,
-            contentDescription = "Sort",
-            tint = if (currentSort != null) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
 
 @Composable
 fun SortDialog(

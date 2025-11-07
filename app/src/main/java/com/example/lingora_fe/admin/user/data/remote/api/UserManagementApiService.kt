@@ -6,7 +6,7 @@ import retrofit2.http.*
 
 interface UserManagementApiService {
 
-    @GET("user")
+    @GET("users")
     suspend fun getAllUsers(
         @Query("limit") limit: Int = 20,
         @Query("page") page: Int = 1,
@@ -16,28 +16,28 @@ interface UserManagementApiService {
         @Query("sort") sort: String? = null
     ): ApiResponse<UserListMetaData>
 
-    @GET("user/{id}")
+    @GET("users/{id}")
     suspend fun getUserById(
         @Path("id") userId: Int
     ): ApiResponse<AdminUserDto>
 
-    @POST("user")
+    @POST("users")
     suspend fun createUser(
         @Body request: CreateUserRequest
     ): ApiResponse<AdminUserDto>
 
-    @PATCH("user/{id}")
+    @PATCH("users/{id}")
     suspend fun updateUser(
         @Path("id") userId: Int,
         @Body request: UpdateUserRequest
     ): ApiResponse<AdminUserDto>
 
-    @PATCH("user/restore/{id}")
+    @PATCH("users/restore/{id}")
     suspend fun restoreUser(
         @Path("id") userId: Int
     ): ApiResponse<AdminUserDto>
 
-    @DELETE("user/{id}")
+    @DELETE("users/{id}")
     suspend fun deleteUser(
         @Path("id") userId: Int
     ): ApiResponse<Any>

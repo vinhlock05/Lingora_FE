@@ -26,6 +26,7 @@ import com.example.lingora_fe.admin.word.domain.model.Word
 import com.example.lingora_fe.admin.word.presentation.WordManagementEvent
 import com.example.lingora_fe.admin.word.presentation.WordManagementViewModel
 import com.example.lingora_fe.admin.word.presentation.screen.*
+import com.example.lingora_fe.admin.common.presentation.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,6 +124,7 @@ fun WordsInTopicScreen(
                     SearchBar(
                         query = state.searchQuery,
                         onQueryChange = { viewModel.onEvent(WordManagementEvent.Search(it)) },
+                        placeholder = "Search words...",
                         modifier = Modifier.weight(1f)
                     )
                     FilterButton(
@@ -131,7 +133,7 @@ fun WordsInTopicScreen(
                     )
                     SortButton(
                         onClick = { showSortDialog = true },
-                        currentSort = state.selectedSort
+                        hasActiveSort = state.selectedSort != null
                     )
                 }
 
@@ -170,16 +172,52 @@ fun WordsInTopicScreen(
                     }
                 }
 
-                if (state.isLoading && state.words.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                } else {
-                    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(state.words, key = { it.id }) { word ->
-                            WordCard(
-                                word = word,
-                                onEdit = { onNavigateToEdit(word.id) },
-                                onDelete = { showDeleteDialog = word.id }
-                            )
+                when {
+                    state.isLoading && state.words.isEmpty() -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                    }
+                    state.error != null && state.words.isEmpty() -> {
+                        ErrorContent(
+                            message = state.error!!,
+                            onRetry = { viewModel.onEvent(WordManagementEvent.LoadInTopic(topicId)) }
+                        )
+                    }
+                    state.words.isEmpty() -> {
+                        EmptyContent(message = "No words found", icon = Icons.Default.TextFields)
+                    }
+                    else -> {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                items(state.words, key = { it.id }) { word ->
+                                    WordCard(
+                                        word = word,
+                                        onEdit = { onNavigateToEdit(word.id) },
+                                        onDelete = { showDeleteDialog = word.id }
+                                    )
+                                }
+
+                                // Pagination
+                                if (state.totalPages > 1) {
+                                    item {
+                                        PaginationControls(
+                                            currentPage = state.currentPage,
+                                            totalPages = state.totalPages,
+                                            onPageChange = { page: Int ->
+                                                viewModel.onEvent(WordManagementEvent.LoadInTopic(topicId, page))
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Loading Overlay
+                            if (state.isLoading && state.words.isNotEmpty()) {
+                                LinearProgressIndicator(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.TopCenter)
+                                )
+                            }
                         }
                     }
                 }
@@ -486,3 +524,4 @@ private fun WordCardForDialog(
         }
     }
 }
+

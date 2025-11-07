@@ -1,6 +1,5 @@
 package com.example.lingora_fe.admin.navigator
 
-import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -16,9 +15,13 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.lingora_fe.admin.category.presentation.screen.CategoryListScreen
 import com.example.lingora_fe.admin.category.presentation.screen.CreateEditCategoryScreen
+import com.example.lingora_fe.admin.common.presentation.AnalyticsScreen
+import com.example.lingora_fe.admin.common.presentation.ContentManagementScreen
+import com.example.lingora_fe.admin.common.presentation.DashboardScreen
+import com.example.lingora_fe.admin.common.presentation.ForumManagementScreen
+import com.example.lingora_fe.admin.common.presentation.SettingsScreen
 import com.example.lingora_fe.admin.navigator.components.AdminDrawerContent
 import com.example.lingora_fe.admin.navigator.components.AdminTopBar
-import com.example.lingora_fe.admin.presentation.screen.placeholder.*
 import com.example.lingora_fe.admin.topic.presentation.screen.CreateEditTopicScreen
 import com.example.lingora_fe.admin.topic.presentation.screen.TopicListScreen
 import com.example.lingora_fe.admin.topic.presentation.screen.TopicsInCategoryScreen

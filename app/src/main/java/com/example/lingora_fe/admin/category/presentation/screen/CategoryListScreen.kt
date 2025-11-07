@@ -24,6 +24,7 @@ import com.example.lingora_fe.admin.category.domain.model.Category
 import com.example.lingora_fe.admin.category.domain.model.CategorySortOption
 import com.example.lingora_fe.admin.category.presentation.CategoryManagementEvent
 import com.example.lingora_fe.admin.category.presentation.CategoryManagementViewModel
+import com.example.lingora_fe.admin.common.presentation.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,13 +72,14 @@ fun CategoryListScreen(
                 SearchBar(
                     query = state.searchQuery,
                     onQueryChange = { viewModel.onEvent(CategoryManagementEvent.SearchCategories(it)) },
+                    placeholder = "Search categories...",
                     modifier = Modifier.weight(1f)
                 )
                 
                 // Sort Button
                 SortButton(
                     onClick = { showSortMenu = true },
-                    currentSort = state.selectedSort
+                    hasActiveSort = state.selectedSort != null
                 )
             }
 
@@ -117,7 +119,7 @@ fun CategoryListScreen(
                     )
                 }
                 state.categories.isEmpty() -> {
-                    EmptyContent()
+                    EmptyContent(message = "No categories found", icon = Icons.Default.Folder)
                 }
                 else -> {
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -282,115 +284,6 @@ fun CategoryCard(
     }
 }
 
-@Composable
-fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("Search categories...") },
-        leadingIcon = { Icon(Icons.Default.Search, "Search") },
-        trailingIcon = {
-            if (query.isNotBlank()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, "Clear")
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(24.dp)
-    )
-}
-
-@Composable
-fun PaginationControls(
-    currentPage: Int,
-    totalPages: Int,
-    onPageChange: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = { onPageChange(currentPage - 1) },
-            enabled = currentPage > 1
-        ) {
-            Icon(Icons.Default.ChevronLeft, "Previous")
-        }
-        
-        Text(
-            text = "Page $currentPage of $totalPages",
-            modifier = Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.bodyMedium
-        )
-        
-        IconButton(
-            onClick = { onPageChange(currentPage + 1) },
-            enabled = currentPage < totalPages
-        ) {
-            Icon(Icons.Default.ChevronRight, "Next")
-        }
-    }
-}
-
-@Composable
-fun ErrorContent(message: String, onRetry: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.Error,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.error
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Button(onClick = onRetry) {
-                Text("Retry")
-            }
-        }
-    }
-}
-
-@Composable
-fun EmptyContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.Folder,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "No categories found",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
 
 @Composable
 fun DeleteConfirmDialog(
@@ -420,29 +313,6 @@ fun DeleteConfirmDialog(
     )
 }
 
-@Composable
-fun SortButton(
-    onClick: () -> Unit,
-    currentSort: CategorySortOption?
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(
-                if (currentSort != null) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-    ) {
-        Icon(
-            imageVector = Icons.Default.Sort,
-            contentDescription = "Sort",
-            tint = if (currentSort != null) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
 
 @Composable
 fun SortDialog(

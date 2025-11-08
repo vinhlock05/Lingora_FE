@@ -31,13 +31,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Check if user is already logged in and get user role
+        // Check if user is already logged in and get active role
         val accessToken = tokenManager.getAccessToken()
-        val userRole = tokenManager.getUserRole()
+        val activeRole = tokenManager.getActiveRole() ?: tokenManager.getUserRole()
         
         val startDestination = if (accessToken != null) {
-            // Route based on user role
-            if (userRole == "ADMIN") {
+            // Route based on active role
+            if (activeRole == "ADMIN") {
                 Route.AdminNavigation.route
             } else {
                 Route.UserNavigation.route

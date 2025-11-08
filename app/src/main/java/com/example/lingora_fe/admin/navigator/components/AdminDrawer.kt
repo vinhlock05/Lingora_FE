@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +25,8 @@ fun AdminDrawerContent(
     userEmail: String,
     onNavigateToItem: (String) -> Unit,
     onLogout: () -> Unit,
+    canSwitchToUser: Boolean = false,
+    onSwitchToUser: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     ModalDrawerSheet(modifier = modifier) {
@@ -57,6 +60,35 @@ fun AdminDrawerContent(
             }
 
             Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // Switch to User View button (if user has LEARNER role)
+            if (canSwitchToUser && onSwitchToUser != null) {
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Outlined.School, contentDescription = null) },
+                    label = { 
+                        Column {
+                            Text(
+                                text = "Chuyển sang chế độ Người học",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                            Text(
+                                text = "Sử dụng ứng dụng như người dùng",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    selected = false,
+                    onClick = onSwitchToUser,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
+                        unselectedIconColor = MaterialTheme.colorScheme.secondary,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                )
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+            }
 
             // Logout button (fixed at bottom)
             NavigationDrawerItem(

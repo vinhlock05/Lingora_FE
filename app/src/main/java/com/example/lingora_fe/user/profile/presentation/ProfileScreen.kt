@@ -9,6 +9,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +38,11 @@ fun ProfileScreen(
 ) {
     val profileState by viewModel.profileState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    
+    // Check if user can switch roles
+    val canSwitchRoles = viewModel.canSwitchRoles()
+    val activeRole = viewModel.getActiveRole()
+    val allRoles = viewModel.getAllRoles()
 
     // Show error snackbar if there's an error
     LaunchedEffect(profileState.error) {
@@ -294,9 +302,131 @@ fun ProfileScreen(
                                             },
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = MainText
+                                            color = MainText,
+                                            modifier = Modifier.weight(1f)
                                         )
+                                        // Show active indicator
+                                        if (role.name == activeRole) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = GradientStart.copy(alpha = 0.2f)
+                                            ) {
+                                                Text(
+                                                    text = "Đang dùng",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = GradientStart,
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                )
+                                            }
+                                        }
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Role Switcher Card (only show if user has both ADMIN and LEARNER roles)
+                if (canSwitchRoles) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.SwapHoriz,
+                                    contentDescription = null,
+                                    tint = GradientStart,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Chuyển đổi vai trò",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MainText
+                                )
+                            }
+                            
+                            Text(
+                                text = "Bạn có thể chuyển đổi giữa các vai trò của mình",
+                                fontSize = 14.sp,
+                                color = NavBarText,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                            
+                            // Switch to Admin button
+                            if (allRoles.contains("ADMIN") && activeRole != "ADMIN") {
+                                Button(
+                                    onClick = {
+                                        viewModel.switchRole("ADMIN") { destination ->
+                                            rootNavController.navigate(destination) {
+                                                popUpTo(0) { inclusive = true }
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = GradientStart
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.AdminPanelSettings,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Chuyển sang chế độ Quản trị viên",
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            
+                            // Switch to Learner button
+                            if (allRoles.contains("LEARNER") && activeRole != "LEARNER") {
+                                Button(
+                                    onClick = {
+                                        viewModel.switchRole("LEARNER") { destination ->
+                                            rootNavController.navigate(destination) {
+                                                popUpTo(0) { inclusive = true }
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = GradientStart
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.School,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Chuyển sang chế độ Người học",
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
                             }
                         }

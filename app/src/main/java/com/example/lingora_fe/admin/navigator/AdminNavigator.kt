@@ -57,6 +57,10 @@ fun AdminNavigator(
     // Get user info
     val userName = authState.user?.username ?: "Admin"
     val userEmail = authState.user?.email ?: "admin@lingora.com"
+    
+    // Check if user can switch to user view (has LEARNER role)
+    val tokenManager = authViewModel.tokenManager
+    val canSwitchToUser = tokenManager.hasRole("LEARNER")
 
     // Determine if current route is a nested screen
     val isNestedScreen = remember(currentRoute) {
@@ -109,6 +113,18 @@ fun AdminNavigator(
                             }
                             launchSingleTop = true
                             restoreState = true
+                        }
+                    }
+                },
+                canSwitchToUser = canSwitchToUser,
+                onSwitchToUser = {
+                    scope.launch {
+                        drawerState.close()
+                    }
+                    // Switch to LEARNER role and navigate to user view
+                    authViewModel.switchRole("LEARNER") { destination ->
+                        rootNavController.navigate(destination) {
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 },

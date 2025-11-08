@@ -83,5 +83,40 @@ class ProfileViewModel @Inject constructor(
     fun clearError() {
         _profileState.value = _profileState.value.copy(error = null)
     }
+    
+    /**
+     * Kiểm tra user có thể chuyển đổi roles không
+     */
+    fun canSwitchRoles(): Boolean {
+        return tokenManager.canSwitchRoles()
+    }
+    
+    /**
+     * Lấy active role hiện tại
+     */
+    fun getActiveRole(): String? {
+        return tokenManager.getActiveRole()
+    }
+    
+    /**
+     * Lấy tất cả roles của user
+     */
+    fun getAllRoles(): List<String> {
+        return tokenManager.getAllRoles()
+    }
+    
+    /**
+     * Chuyển đổi role
+     */
+    fun switchRole(newRole: String, onSuccess: (String) -> Unit) {
+        if (tokenManager.switchRole(newRole)) {
+            val destination = if (newRole == "ADMIN") {
+                com.example.lingora_fe.navigation.Route.AdminNavigation.route
+            } else {
+                com.example.lingora_fe.navigation.Route.UserNavigation.route
+            }
+            onSuccess(destination)
+        }
+    }
 }
 

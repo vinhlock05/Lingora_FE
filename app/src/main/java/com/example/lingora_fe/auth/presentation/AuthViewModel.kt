@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.auth.domain.repository.AuthRepository
+import com.example.lingora_fe.navigation.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val tokenManager: TokenManager
+    val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow(AuthState())
@@ -33,6 +34,26 @@ class AuthViewModel @Inject constructor(
             viewModelScope.launch {
                 authRepository.getProfile(token)
                     .onRight { user ->
+                        // Update roles if they've changed or not stored
+                        val existingRoles = tokenManager.getAllRoles()
+                        if (existingRoles.isEmpty() || existingRoles.size != user.roles.size) {
+                            // Save all roles if not already saved or if roles have changed
+                            val allRoles = user.roles.map { it.name }
+                            val activeRole = tokenManager.getActiveRole() ?: if (allRoles.contains("ADMIN")) {
+                                "ADMIN"
+                            } else {
+                                allRoles.firstOrNull() ?: "LEARNER"
+                            }
+                            
+                            tokenManager.saveTokensWithRoles(
+                                accessToken = token,
+                                refreshToken = null,
+                                userId = user.id,
+                                allRoles = allRoles,
+                                activeRole = activeRole
+                            )
+                        }
+                        
                         _authState.value = _authState.value.copy(
                             user = user,
                             token = token,
@@ -57,14 +78,24 @@ class AuthViewModel @Inject constructor(
 
             authRepository.login(identifier, password)
                 .onRight { authData ->
-                    // Determine user role (check if user has ADMIN role)
-                    val userRole = if (authData.user.roles.any { it.name == "ADMIN" }) {
+                    // Get all roles from user
+                    val allRoles = authData.user.roles.map { it.name }
+                    // Determine default active role (ADMIN if available, else first role, else LEARNER)
+                    val defaultActiveRole = if (allRoles.contains("ADMIN")) {
                         "ADMIN"
                     } else {
-                        "LEARNER"
+                        allRoles.firstOrNull() ?: "LEARNER"
                     }
-                    Log.d("AuthViewModel", "User role determined: $userRole")
-                    saveAuthData(authData.accessToken, authData.user.id, userRole, authData.refreshToken)
+                    Log.d("AuthViewModel", "User roles: $allRoles, default active role: $defaultActiveRole")
+                    
+                    // Save all roles and active role
+                    saveAuthDataWithRoles(
+                        token = authData.accessToken,
+                        userId = authData.user.id,
+                        allRoles = allRoles,
+                        activeRole = defaultActiveRole,
+                        refreshToken = authData.refreshToken
+                    )
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         user = authData.user,
@@ -89,13 +120,24 @@ class AuthViewModel @Inject constructor(
 
             authRepository.register(email, username, password)
                 .onRight { authData ->
-                    // Determine user role (check if user has ADMIN role)
-                    val userRole = if (authData.user.roles.any { it.name == "ADMIN" }) {
+                    // Get all roles from user
+                    val allRoles = authData.user.roles.map { it.name }
+                    // Determine default active role (ADMIN if available, else first role, else LEARNER)
+                    val defaultActiveRole = if (allRoles.contains("ADMIN")) {
                         "ADMIN"
                     } else {
-                        "LEARNER"
+                        allRoles.firstOrNull() ?: "LEARNER"
                     }
-                    saveAuthData(authData.accessToken, authData.user.id, userRole, authData.refreshToken)
+                    Log.d("AuthViewModel", "User roles after registration: $allRoles, default active role: $defaultActiveRole")
+                    
+                    // Save all roles and active role
+                    saveAuthDataWithRoles(
+                        token = authData.accessToken,
+                        userId = authData.user.id,
+                        allRoles = allRoles,
+                        activeRole = defaultActiveRole,
+                        refreshToken = authData.refreshToken
+                    )
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         user = authData.user,
@@ -119,12 +161,32 @@ class AuthViewModel @Inject constructor(
             if (currentToken != null) {
                 authRepository.refreshToken(currentToken)
                     .onRight { newToken ->
-                        val userRole = if (_authState.value.user?.roles?.any { it.name == "ADMIN" } == true) {
+                        // Preserve existing roles when refreshing token
+                        val existingRoles = tokenManager.getAllRoles()
+                        val activeRole = tokenManager.getActiveRole() ?: if (existingRoles.contains("ADMIN")) {
                             "ADMIN"
                         } else {
-                            "LEARNER"
+                            existingRoles.firstOrNull() ?: "LEARNER"
                         }
-                        saveAuthData(newToken, _authState.value.user?.id ?: 0, userRole)
+                        val userId = _authState.value.user?.id ?: tokenManager.getUserId() ?: 0
+                        
+                        if (existingRoles.isNotEmpty()) {
+                            // Save with existing roles
+                            saveAuthDataWithRoles(
+                                token = newToken,
+                                userId = userId,
+                                allRoles = existingRoles,
+                                activeRole = activeRole
+                            )
+                        } else {
+                            // Fallback to old method if no roles stored
+                            val userRole = if (_authState.value.user?.roles?.any { it.name == "ADMIN" } == true) {
+                                "ADMIN"
+                            } else {
+                                "LEARNER"
+                            }
+                            saveAuthData(newToken, userId, userRole)
+                        }
                         _authState.value = _authState.value.copy(token = newToken)
                     }
                     .onLeft {
@@ -194,6 +256,39 @@ class AuthViewModel @Inject constructor(
             userId = userId,
             userRole = userRole
         )
+    }
+    
+    private fun saveAuthDataWithRoles(
+        token: String,
+        userId: Int,
+        allRoles: List<String>,
+        activeRole: String,
+        refreshToken: String? = null
+    ) {
+        Log.d("AuthViewModel", "Saving auth data with roles - userId: $userId, roles: $allRoles, activeRole: $activeRole")
+        // Lưu access token, tất cả roles và active role
+        // refreshToken sẽ được lưu tự động trong cookie bởi CookieJar
+        tokenManager.saveTokensWithRoles(
+            accessToken = token,
+            refreshToken = null, // Không lưu refreshToken vào SharedPreferences vì nó đã có trong cookie
+            userId = userId,
+            allRoles = allRoles,
+            activeRole = activeRole
+        )
+    }
+    
+    /**
+     * Chuyển đổi active role và navigate đến view tương ứng
+     */
+    fun switchRole(newRole: String, onNavigate: (String) -> Unit) {
+        if (tokenManager.switchRole(newRole)) {
+            val destination = if (newRole == "ADMIN") {
+                Route.AdminNavigation.route
+            } else {
+                Route.UserNavigation.route
+            }
+            onNavigate(destination)
+        }
     }
 
     fun clearAuthData() {

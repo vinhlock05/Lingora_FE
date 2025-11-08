@@ -68,9 +68,10 @@ fun AuthScreen(
             activeTab == "login" && 
             !authState.isLoading &&
             !previousAuthState) {  // Chỉ navigate khi chuyển từ not authenticated -> authenticated
-            // Login successful - navigate based on user role
-            val isAdmin = authState.user?.roles?.any { it.name == "ADMIN" } == true
-            val destination = if (isAdmin) {
+            // Login successful - navigate based on active role (from TokenManager)
+            val tokenManager = viewModel.tokenManager
+            val activeRole = tokenManager.getActiveRole() ?: tokenManager.getUserRole()
+            val destination = if (activeRole == "ADMIN") {
                 Route.AdminNavigation.route
             } else {
                 Route.UserNavigation.route

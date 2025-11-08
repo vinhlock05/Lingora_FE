@@ -68,11 +68,11 @@ fun AdminDrawerContent(
                     label = { 
                         Column {
                             Text(
-                                text = "Chuyển sang chế độ Người học",
+                                text = "Change to User View",
                                 style = MaterialTheme.typography.labelLarge
                             )
                             Text(
-                                text = "Sử dụng ứng dụng như người dùng",
+                                text = "Access the app as a learner",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

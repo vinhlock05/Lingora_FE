@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.vocabulary.presentation.components
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -237,28 +238,29 @@ fun FlashcardBackSide(
             .graphicsLayer { this.alpha = alpha },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val meaningText = word.meaning ?: "Không có nghĩa"
-        Text(
-            text = meaningText,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
+        word.meaning?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    TopBarBorder,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(16.dp)
-        ) {
-            Column {
-                if (word.example != null || word.exampleTranslation != null) {
+        if (word.example != null || word.exampleTranslation != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        TopBarBorder,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Column {
                     word.example?.let { example ->
                         Text(
                             text = "\"$example\"",
@@ -276,13 +278,6 @@ fun FlashcardBackSide(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                } else {
-                    Text(
-                        text = "Không có ví dụ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontStyle = FontStyle.Italic
-                    )
                 }
             }
         }

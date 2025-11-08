@@ -24,6 +24,10 @@ fun VocabularyCategoriesScreen(
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
 
+    LaunchedEffect(Unit) {
+        viewModel.loadCategories()
+    }
+
     // Load more when scrolling near the end
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }

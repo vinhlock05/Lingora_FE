@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.example.lingora_fe.core.ui.theme.ArimoFontFamily
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
@@ -38,11 +40,20 @@ fun ProfileScreen(
 ) {
     val profileState by viewModel.profileState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showProficiencyDialog by remember { mutableStateOf(false) }
+    var selectedProficiency by remember { mutableStateOf<String?>(null) }
     
     // Check if user can switch roles
     val canSwitchRoles = viewModel.canSwitchRoles()
     val activeRole = viewModel.getActiveRole()
     val allRoles = viewModel.getAllRoles()
+    
+    // Initialize selected proficiency when dialog opens
+    LaunchedEffect(showProficiencyDialog) {
+        if (showProficiencyDialog) {
+            selectedProficiency = profileState.user?.proficiency
+        }
+    }
 
     // Show error snackbar if there's an error
     LaunchedEffect(profileState.error) {
@@ -230,15 +241,64 @@ fun ProfileScreen(
                             value = profileState.user?.email ?: ""
                         )
 
-                        ProfileInfoItem(
-                            icon = Icons.Default.School,
-                            label = "Trình độ",
-                            value = when (profileState.user?.proficiency) {
-                                "BEGINNER" -> "Người mới bắt đầu"
-                                "INTERMEDIATE" -> "Trung cấp"
-                                "ADVANCED" -> "Nâng cao"
-                                else -> profileState.user?.proficiency ?: "Chưa xác định"
+                        // Proficiency with edit button
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(GradientStart.copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.School,
+                                    contentDescription = null,
+                                    tint = GradientStart,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Trình độ",
+                                    fontSize = 13.sp,
+                                    color = NavBarText,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = when (profileState.user?.proficiency) {
+                                        "BEGINNER" -> "Người mới bắt đầu"
+                                        "INTERMEDIATE" -> "Trung cấp"
+                                        "ADVANCED" -> "Nâng cao"
+                                        else -> profileState.user?.proficiency ?: "Chưa xác định"
+                                    },
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MainText,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = { showProficiencyDialog = true },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Chỉnh sửa trình độ",
+                                    tint = GradientStart,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider(
+                            color = Color.Gray.copy(alpha = 0.1f),
+                            thickness = 1.dp
                         )
 
                         ProfileInfoItem(
@@ -545,6 +605,160 @@ fun ProfileScreen(
                 }
             }
         )
+    }
+    
+    // Proficiency Selection Dialog
+    if (showProficiencyDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showProficiencyDialog = false
+                selectedProficiency = null
+            },
+            title = {
+                Text(
+                    text = "Chọn trình độ",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MainText
+                )
+            },
+            text = {
+                Column {
+                    ProficiencySelectionItem(
+                        title = "Người mới bắt đầu",
+                        description = "Bạn mới bắt đầu học ngôn ngữ",
+                        proficiency = "BEGINNER",
+                        isSelected = selectedProficiency == "BEGINNER",
+                        onClick = { selectedProficiency = "BEGINNER" },
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    ProficiencySelectionItem(
+                        title = "Trung cấp",
+                        description = "Bạn đã có kiến thức cơ bản",
+                        proficiency = "INTERMEDIATE",
+                        isSelected = selectedProficiency == "INTERMEDIATE",
+                        onClick = { selectedProficiency = "INTERMEDIATE" },
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    ProficiencySelectionItem(
+                        title = "Nâng cao",
+                        description = "Bạn đã thành thạo và muốn nâng cao kỹ năng",
+                        proficiency = "ADVANCED",
+                        isSelected = selectedProficiency == "ADVANCED",
+                        onClick = { selectedProficiency = "ADVANCED" }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedProficiency?.let { proficiency ->
+                            viewModel.updateProficiency(proficiency) {
+                                showProficiencyDialog = false
+                                selectedProficiency = null
+                            }
+                        }
+                    },
+                    enabled = selectedProficiency != null && 
+                              selectedProficiency != profileState.user?.proficiency &&
+                              !profileState.isLoading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GradientStart
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (profileState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = "Xác nhận",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { 
+                        showProficiencyDialog = false
+                        selectedProficiency = null
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = NavBarText
+                    )
+                ) {
+                    Text("Hủy", fontWeight = FontWeight.Medium)
+                }
+            },
+            shape = RoundedCornerShape(20.dp),
+            containerColor = Color.White
+        )
+    }
+}
+
+@Composable
+private fun ProficiencySelectionItem(
+    title: String,
+    description: String,
+    proficiency: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) {
+            GradientStart.copy(alpha = 0.1f)
+        } else {
+            Color.White
+        },
+        border = if (isSelected) {
+            androidx.compose.foundation.BorderStroke(2.dp, GradientStart)
+        } else {
+            androidx.compose.foundation.BorderStroke(1.dp, Color.Gray.copy(alpha = 0.2f))
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = ArimoFontFamily,
+                    color = if (isSelected) GradientStart else MainText
+                )
+                Text(
+                    text = description,
+                    fontSize = 12.sp,
+                    fontFamily = ArimoFontFamily,
+                    color = NavBarText,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+            
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = GradientStart,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
     }
 }
 

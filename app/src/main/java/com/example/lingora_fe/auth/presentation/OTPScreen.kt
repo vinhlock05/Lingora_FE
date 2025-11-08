@@ -26,6 +26,7 @@ import com.example.lingora_fe.R
 import com.example.lingora_fe.core.ui.theme.*
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.delay
+import android.util.Log
 
 @Composable
 fun OTPScreen(
@@ -39,6 +40,7 @@ fun OTPScreen(
     var countdown by remember { mutableStateOf(41) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var attemptCount by remember { mutableStateOf(0) }
+    var hasVerifiedOTP by remember { mutableStateOf(false) } // Track if OTP was verified in this screen
 
     LaunchedEffect(countdown) {
         if (countdown > 0) {
@@ -48,9 +50,33 @@ fun OTPScreen(
     }
     
     LaunchedEffect(authState.error) {
-        authState.error?.let {
-            errorMessage = it
+        if (authState.error != null) {
+            errorMessage = authState.error
             attemptCount++
+        } else {
+            // Clear error message when error is cleared
+            errorMessage = null
+        }
+    }
+    
+    // Navigate to proficiency selection after successful OTP verification
+    // Only navigate if OTP was actually verified in this screen (hasVerifiedOTP = true)
+    // This prevents auto-navigation when screen is first loaded with isAuthenticated = true
+    LaunchedEffect(authState.isAuthenticated, authState.user, authState.token, hasVerifiedOTP, authState.isLoading, authState.error) {
+        Log.d("OTPScreen", "LaunchedEffect triggered - hasVerifiedOTP: $hasVerifiedOTP, isAuthenticated: ${authState.isAuthenticated}, user: ${authState.user != null}, token: ${authState.token != null}, isLoading: ${authState.isLoading}, error: ${authState.error}")
+        
+        if (hasVerifiedOTP && // Only navigate if OTP was verified in this screen
+            authState.isAuthenticated && 
+            authState.user != null && 
+            authState.token != null && 
+            !authState.isLoading &&
+            authState.error == null) { // Use authState.error instead of errorMessage
+            // Always navigate to proficiency selection after OTP verification
+            // This is a required step in the registration flow: Register -> OTP -> ProficiencySelection
+            Log.d("OTPScreen", "Navigating to ProficiencySelection")
+            navController.navigate(Route.ProficiencySelection.route) {
+                popUpTo(Route.OTPScreen.route) { inclusive = false }
+            }
         }
     }
 
@@ -132,15 +158,13 @@ fun OTPScreen(
                                 
                                 Text(
                                     text = "Chúng tôi đã gửi mã xác minh 6 số đến",
-                                    fontSize = 12.sp,
-                                    fontFamily = ArimoFontFamily,
-                                    color = NavBarText,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     textAlign = TextAlign.Center
                                 )
 
                                 Text(
                                     text = email,
-                                    fontSize = 14.sp,
+                                    fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = ArimoFontFamily,
                                     color = MainText
@@ -244,11 +268,8 @@ fun OTPScreen(
                         Button(
                             onClick = {
                                 if (otpValue.length == 6) {
+                                    hasVerifiedOTP = true // Mark that OTP verification was initiated
                                     viewModel.verifyOTP(email, otpValue)
-                                    // Navigate on success
-                                    navController.navigate(Route.UserNavigation.route) {
-                                        popUpTo(Route.AuthNavigation.route) { inclusive = true }
-                                    }
                                 }
                             },
                             modifier = Modifier
@@ -288,7 +309,7 @@ fun OTPScreen(
                         // Note
                         Text(
                             text = "Kiểm tra hộp thư spam nếu bạn không thấy email",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontFamily = ArimoFontFamily,
                             color = NavBarText,
                             textAlign = TextAlign.Center,

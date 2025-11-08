@@ -71,3 +71,9 @@ data class UpdateUserRequest(
     val status: String?
 )
 
+// Request for updating only proficiency field
+data class UpdateProficiencyRequest(
+    @SerializedName("proficiency")
+    val proficiency: String
+)
+

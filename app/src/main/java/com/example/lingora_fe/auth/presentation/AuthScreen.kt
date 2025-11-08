@@ -59,9 +59,24 @@ fun AuthScreen(
     // Track previous auth state to avoid re-navigation
     var previousAuthState by remember { mutableStateOf(authState.isAuthenticated) }
     
-    LaunchedEffect(authState.isAuthenticated, registrationEmail, authState.user, authState.token) {
-        // Chỉ navigate khi có user, token và đang ở login tab (tránh navigate khi logout)
-        // Và chỉ navigate khi authState thay đổi từ false -> true (tránh navigate lại khi đã ở auth screen)
+    LaunchedEffect(authState.isAuthenticated, registrationEmail, authState.user, authState.token, authState.isLoading) {
+        // Check if registration was successful (has user, token, but NOT authenticated yet)
+        // This means user registered but hasn't verified OTP yet
+        if (registrationEmail != null && 
+            authState.user != null && 
+            authState.token != null && 
+            !authState.isAuthenticated &&
+            !authState.isLoading &&
+            activeTab == "register") {
+            // Registration complete - navigate to OTP screen
+            // Clear registrationEmail to prevent re-navigation
+            val email = registrationEmail
+            registrationEmail = null
+            navController.navigate(Route.otpScreen(email!!))
+            return@LaunchedEffect
+        }
+        
+        // Login successful - only navigate when authenticated and on login tab
         if (authState.isAuthenticated && 
             authState.user != null && 
             authState.token != null && 
@@ -81,9 +96,6 @@ fun AuthScreen(
             navController.navigate(destination) {
                 popUpTo(Route.AuthNavigation.route) { inclusive = true }
             }
-        } else if (registrationEmail != null) {
-            // Registration complete - navigate to OTP screen
-            navController.navigate(Route.otpScreen(registrationEmail!!))
         }
         
         // Update previous auth state

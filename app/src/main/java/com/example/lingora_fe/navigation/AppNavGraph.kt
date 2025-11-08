@@ -10,6 +10,7 @@ import androidx.navigation.navigation
 import com.example.lingora_fe.admin.navigator.AdminNavigator
 import com.example.lingora_fe.auth.presentation.AuthScreen
 import com.example.lingora_fe.auth.presentation.OTPScreen
+import com.example.lingora_fe.auth.presentation.ProficiencySelectionScreen
 import com.example.lingora_fe.navigation.Route.Companion.otpScreen
 import com.example.lingora_fe.user.navigator.UserNavigator
 
@@ -48,6 +49,10 @@ fun AppNavGraph(
             ) { backStackEntry ->
                 val email = backStackEntry.arguments?.getString("email") ?: ""
                 OTPScreen(navController = navController, email = email)
+            }
+            
+            composable(route = Route.ProficiencySelection.route) {
+                ProficiencySelectionScreen(navController = navController)
             }
         }
         

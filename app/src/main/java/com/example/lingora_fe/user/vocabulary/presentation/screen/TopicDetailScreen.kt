@@ -88,7 +88,7 @@ fun TopicDetailScreen(
                 modifier = Modifier.border(width = 1.dp, color = TopBarBorder),
                 title = {
                         Text(
-                            text = "Topic Detail",
+                            text = "Chi tiết chủ đề",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
@@ -216,7 +216,7 @@ fun LearningTab(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Learned",
+                            text = "đã học",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -1,10 +1,10 @@
 package com.example.lingora_fe.admin.word.data.repository
 
 import arrow.core.Either
-import com.example.lingora_fe.admin.word.data.remote.api.CreateWordRequest
-import com.example.lingora_fe.admin.word.data.remote.api.UpdateWordRequest
 import com.example.lingora_fe.admin.word.data.remote.api.WordApiService
-import com.example.lingora_fe.admin.word.data.remote.api.WordListMetaData
+import com.example.lingora_fe.admin.word.data.remote.dto.CreateWordRequest
+import com.example.lingora_fe.admin.word.data.remote.dto.UpdateWordRequest
+import com.example.lingora_fe.admin.word.data.remote.dto.WordListMetaData
 import com.example.lingora_fe.admin.word.data.remote.dto.toDomain
 import com.example.lingora_fe.admin.word.domain.model.Word
 import com.example.lingora_fe.admin.word.domain.repository.WordFilterOptions

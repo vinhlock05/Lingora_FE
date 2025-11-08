@@ -2,8 +2,10 @@ package com.example.lingora_fe.admin.user.presentation
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingora_fe.admin.user.data.remote.dto.toDto
 import com.example.lingora_fe.admin.user.domain.model.CreateUserData
 import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
 import com.example.lingora_fe.admin.user.domain.model.SortOption
@@ -228,7 +230,7 @@ class UserManagementViewModel @Inject constructor(
             _state.value = _state.value.copy(isUpdating = true, actionError = null)
             
             val token = getToken() ?: return@launch
-
+            Log.d("UserManagementViewModel", "Preparing to update user $roleIds")
             val userData = UpdateUserData(
                 username = username,
                 email = email,
@@ -237,7 +239,7 @@ class UserManagementViewModel @Inject constructor(
                 proficiency = proficiency,
                 status = status
             )
-
+            Log.d("UserManagementViewModel", "Updating user $userId with data: ${userData.toDto()}")
             repository.updateUser(token, userId, userData)
                 .onRight {
                     _state.value = _state.value.copy(

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.user.vocabulary.domain.repository.ProgressRepository
 import com.example.lingora_fe.user.vocabulary.domain.repository.StatisticItem
+import com.example.lingora_fe.user.vocabulary.domain.repository.WordRepository
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,27 +23,32 @@ private val DEFAULT_GAME_TYPES = setOf(
 
 data class VocabularyReviewUiState(
     val isLoading: Boolean = false,
+    val isLoadingReviewWords: Boolean = false,
     val error: String? = null,
     val totalLearnWord: Int = 0,
+    val reviewWordsCount: Int = 0,
     val statistics: List<StatisticItem> = emptyList(),
-    val selectedWordCount: Int = 0,
+    val selectedWordCount: Int = 5,
     val selectedGameTypes: Set<GameType> = DEFAULT_GAME_TYPES
 ) {
     val hasLearnedWords: Boolean get() = totalLearnWord > 0
-    val maxSelectableWordCount: Int get() = totalLearnWord
-    val canStartReview: Boolean get() = hasLearnedWords && selectedWordCount in 1..maxSelectableWordCount && selectedGameTypes.size >= 2
+    val hasReviewWords: Boolean get() = reviewWordsCount > 0
+    val maxSelectableWordCount: Int get() = if (hasReviewWords) reviewWordsCount.coerceAtMost(totalLearnWord) else totalLearnWord
+    val canStartReview: Boolean get() = hasReviewWords && selectedGameTypes.size >= 2
 }
 
 @HiltViewModel
 class VocabularyReviewViewModel @Inject constructor(
-    private val progressRepository: ProgressRepository
+    private val progressRepository: ProgressRepository,
+    private val wordRepository: WordRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(VocabularyReviewUiState(isLoading = true))
+    private val _uiState = MutableStateFlow(VocabularyReviewUiState(isLoading = true, isLoadingReviewWords = true))
     val uiState: StateFlow<VocabularyReviewUiState> = _uiState.asStateFlow()
 
     init {
         loadProgressSummary()
+        loadWordsForReview()
     }
 
     fun loadProgressSummary() {
@@ -85,9 +91,7 @@ class VocabularyReviewViewModel @Inject constructor(
 
     fun setWordCount(value: Int) {
         val currentState = _uiState.value
-        if (!currentState.hasLearnedWords) return
-        val sanitized = value.coerceIn(1, currentState.maxSelectableWordCount)
-        _uiState.value = currentState.copy(selectedWordCount = sanitized)
+        _uiState.value = currentState.copy(selectedWordCount = value)
     }
 
     fun toggleGameType(gameType: GameType) {
@@ -99,6 +103,34 @@ class VocabularyReviewViewModel @Inject constructor(
             currentTypes + gameType
         }
         _uiState.value = currentState.copy(selectedGameTypes = nextTypes)
+    }
+
+    fun loadWordsForReview() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingReviewWords = true, error = null)
+            // Gọi API với limit lớn để lấy số lượng từ cần ôn tập
+            wordRepository.getWordsForReview(limit = 1000, page = 1).fold(
+                ifLeft = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingReviewWords = false,
+                        error = error.message ?: "Failed to load words for review",
+                        reviewWordsCount = 0,
+                        selectedWordCount = 0
+                    )
+                },
+                ifRight = { words ->
+                    val reviewCount = words.size
+                    // Điều chỉnh selectedWordCount nếu vượt quá số lượng từ cần ôn tập
+                    val currentState = _uiState.value
+                    
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingReviewWords = false,
+                        error = null,
+                        reviewWordsCount = reviewCount
+                    )
+                }
+            )
+        }
     }
 
     fun resetError() {

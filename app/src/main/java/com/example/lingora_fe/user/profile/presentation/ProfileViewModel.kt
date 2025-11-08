@@ -131,7 +131,6 @@ class ProfileViewModel @Inject constructor(
             
             val token = tokenManager.getAccessToken()
             val userId = tokenManager.getUserId()
-            val currentUser = _profileState.value.user
 
             if (token == null || userId == null) {
                 _profileState.value = _profileState.value.copy(
@@ -140,18 +139,8 @@ class ProfileViewModel @Inject constructor(
                 )
                 return@launch
             }
-            
-            // Use updateProficiencyOnly to only send proficiency field
-            // This prevents sending null/empty values for other fields
-            val result = if (userManagementRepository is com.example.lingora_fe.admin.user.data.repository.UserManagementRepositoryImpl) {
-                userManagementRepository.updateProficiencyOnly(token, userId, newProficiency)
-            } else {
-                // Fallback to regular update if repository doesn't have the method
-                val updateData = UpdateUserData(proficiency = newProficiency)
-                userManagementRepository.updateUser(token, userId, updateData)
-            }
-            
-            result
+            val updateData = UpdateUserData(proficiency = newProficiency)
+            userManagementRepository.updateUser(token, userId, updateData)
                 .onRight { updatedUser ->
                     Log.d("ProfileViewModel", "Proficiency updated successfully: $newProficiency")
                     // Reload profile to get updated data

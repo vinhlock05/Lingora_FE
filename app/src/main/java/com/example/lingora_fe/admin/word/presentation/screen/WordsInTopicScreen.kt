@@ -15,9 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -27,6 +30,8 @@ import com.example.lingora_fe.admin.word.presentation.WordManagementEvent
 import com.example.lingora_fe.admin.word.presentation.WordManagementViewModel
 import com.example.lingora_fe.admin.word.presentation.screen.*
 import com.example.lingora_fe.admin.common.presentation.components.*
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,8 +71,44 @@ fun WordsInTopicScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SmallFloatingActionButton(onClick = { showAttach = true }) { Icon(Icons.Default.Link, null) }
-                FloatingActionButton(onClick = onNavigateToCreate) { Icon(Icons.Default.Add, null) }
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(GradientStart.copy(alpha = 0.8f), GradientEnd.copy(alpha = 0.8f))
+                            )
+                        )
+                        .clickable(onClick = { showAttach = true }),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Link,
+                        "Attach Word",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(GradientStart, GradientEnd)
+                            )
+                        )
+                        .clickable(onClick = onNavigateToCreate),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        "Create Word",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     ) { padding ->
@@ -149,24 +190,51 @@ fun WordsInTopicScreen(
                             FilterChip(
                                 selected = true,
                                 onClick = { viewModel.setCefrFilter(null) },
-                                label = { Text(cefr) },
-                                trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                                label = { 
+                                    Text(
+                                        cefr,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                    ) 
+                                },
+                                trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                    selectedLabelColor = GradientStart
+                                )
                             )
                         }
                         state.typeFilter?.let { type ->
                             FilterChip(
                                 selected = true,
                                 onClick = { viewModel.setTypeFilter(null) },
-                                label = { Text(type) },
-                                trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                                label = { 
+                                    Text(
+                                        type,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                    ) 
+                                },
+                                trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                    selectedLabelColor = GradientStart
+                                )
                             )
                         }
                         state.selectedSort?.let { sort ->
                             FilterChip(
                                 selected = true,
                                 onClick = { viewModel.onEvent(WordManagementEvent.SortBy(null)) },
-                                label = { Text("Sort: $sort") },
-                                trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                                label = { 
+                                    Text(
+                                        "Sort: $sort",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                    ) 
+                                },
+                                trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                    selectedLabelColor = GradientStart
+                                )
                             )
                         }
                     }

@@ -19,9 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -29,6 +33,9 @@ import coil.request.ImageRequest
 import com.example.lingora_fe.admin.word.domain.model.CefrLevel
 import com.example.lingora_fe.admin.word.domain.model.WordType
 import com.example.lingora_fe.admin.word.presentation.*
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.NavBarText
 import com.example.lingora_fe.util.FileUploadHelper
 import kotlinx.coroutines.launch
 
@@ -163,6 +170,13 @@ fun CreateEditWordScreen(
                 value = form.word,
                 onValueChange = { viewModel.updateFormState(form.copy(word = it)) },
                 label = { Text("Word *") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.TextFields,
+                        "Word",
+                        tint = GradientStart
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 isError = form.wordError != null,
                 supportingText = form.wordError?.let { { Text(it) } }
@@ -173,6 +187,13 @@ fun CreateEditWordScreen(
                 value = form.phonetic ?: "",
                 onValueChange = { viewModel.updateFormState(form.copy(phonetic = it.takeIf { it.isNotBlank() })) },
                 label = { Text("Phonetic") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.VolumeUp,
+                        "Phonetic",
+                        tint = GradientStart
+                    )
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -187,6 +208,13 @@ fun CreateEditWordScreen(
                     value = form.cefrLevel,
                     onValueChange = {},
                     label = { Text("CEFR Level *") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Label,
+                            "CEFR Level",
+                            tint = GradientStart
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -219,6 +247,13 @@ fun CreateEditWordScreen(
                     value = form.type,
                     onValueChange = {},
                     label = { Text("Type *") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Category,
+                            "Type",
+                            tint = GradientStart
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -245,6 +280,13 @@ fun CreateEditWordScreen(
                 value = form.meaning,
                 onValueChange = { viewModel.updateFormState(form.copy(meaning = it)) },
                 label = { Text("Meaning *") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Description,
+                        "Meaning",
+                        tint = GradientStart
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 maxLines = 4,
@@ -257,6 +299,13 @@ fun CreateEditWordScreen(
                 value = form.example ?: "",
                 onValueChange = { viewModel.updateFormState(form.copy(example = it.takeIf { it.isNotBlank() })) },
                 label = { Text("Example") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Article,
+                        "Example",
+                        tint = GradientStart
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 maxLines = 3
@@ -267,6 +316,13 @@ fun CreateEditWordScreen(
                 value = form.exampleTranslation ?: "",
                 onValueChange = { viewModel.updateFormState(form.copy(exampleTranslation = it.takeIf { it.isNotBlank() })) },
                 label = { Text("Example Translation") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Language,
+                        "Example Translation",
+                        tint = GradientStart
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 maxLines = 3
@@ -276,18 +332,32 @@ fun CreateEditWordScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        "Image",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Image,
+                            "Image",
+                            tint = GradientStart,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            "Image",
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
+                            fontWeight = FontWeight.SemiBold,
+                            color = GradientStart
+                        )
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -326,11 +396,31 @@ fun CreateEditWordScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Button(
                                 onClick = { imagePicker.launch("image/*") },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(GradientStart, GradientEnd)
+                                        ),
+                                        shape = RoundedCornerShape(40.dp)
+                                    ),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = Color.White
+                                )
                             ) {
-                                Icon(Icons.Default.Upload, null)
+                                Icon(
+                                    Icons.Default.Upload, 
+                                    "Upload",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Upload Image")
+                                Text(
+                                    "Upload Image",
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
+                                )
                             }
                             if (imageToShow != null) {
                                 TextButton(
@@ -338,9 +428,12 @@ fun CreateEditWordScreen(
                                         selectedImageUri = null
                                         viewModel.updateFormState(form.copy(imageUrl = null))
                                     },
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    )
                                 ) {
-                                    Text("Remove")
+                                    Text("Remove", fontWeight = FontWeight.Medium)
                                 }
                             }
                         }
@@ -352,14 +445,16 @@ fun CreateEditWordScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val audioToShow = selectedAudioUri?.toString() ?: form.audioUrl
@@ -378,43 +473,82 @@ fun CreateEditWordScreen(
                                     e.printStackTrace()
                                 }
                             },
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
-                            Icon(Icons.Default.VolumeUp, "Play audio", modifier = Modifier.size(24.dp))
+                            Icon(
+                                Icons.Default.VolumeUp, 
+                                "Play audio",
+                                tint = GradientStart,
+                                modifier = Modifier.size(28.dp)
+                            )
                         }
-                        Text(
-                            "Audio file selected",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f)
-                        )
-                        TextButton(
-                            onClick = {
-                                selectedAudioUri = null
-                                viewModel.updateFormState(form.copy(audioUrl = null))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Audio file selected",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                                fontWeight = FontWeight.Medium,
+                                color = NavBarText
+                            )
+                            TextButton(
+                                onClick = {
+                                    selectedAudioUri = null
+                                    viewModel.updateFormState(form.copy(audioUrl = null))
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text("Remove", fontWeight = FontWeight.Medium)
                             }
-                        ) {
-                            Text("Remove")
                         }
                     } else {
                         Icon(
                             Icons.Default.MusicNote,
                             "No audio",
                             modifier = Modifier.size(32.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = GradientStart
                         )
-                        Text(
-                            "No audio file",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "No audio file",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                                color = NavBarText,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                "Upload an audio file for pronunciation",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                color = NavBarText.copy(alpha = 0.7f),
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
                         Button(
                             onClick = { audioPicker.launch("audio/*") },
-                            modifier = Modifier.height(36.dp)
+                            modifier = Modifier
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(GradientStart, GradientEnd)
+                                    ),
+                                    shape = RoundedCornerShape(40.dp)
+                                ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.White
+                            )
                         ) {
-                            Icon(Icons.Default.Upload, null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("Upload", style = MaterialTheme.typography.labelSmall)
+                            Icon(
+                                Icons.Default.Upload, 
+                                "Upload",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "Upload", 
+                                style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp),
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
                         }
                     }
                 }
@@ -451,13 +585,16 @@ fun CreateEditWordScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
+                OutlinedButton(
                     onClick = onNavigateBack,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    )
+                    modifier = Modifier.weight(1f)
                 ) {
+                    Icon(
+                        Icons.Default.Close, 
+                        "Cancel",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
                     Text("Cancel")
                 }
                 Button(
@@ -497,19 +634,49 @@ fun CreateEditWordScreen(
                         }
                     },
                     enabled = form.isValid && !isUploading,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer {
+                            alpha = if (form.isValid && !isUploading) 1f else 0.5f
+                        }
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(GradientStart, GradientEnd)
+                            ),
+                            shape = RoundedCornerShape(40.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = Color.White.copy(alpha = 0.7f),
+                        contentColor = Color.White
+                    )
                 ) {
                     if (isUploading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Uploading...")
+                        Text(
+                            "Uploading...",
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
                     } else {
-                        Icon(if (wordId == null) Icons.Default.Add else Icons.Default.Save, null)
+                        Icon(
+                            if (wordId == null) Icons.Default.Add else Icons.Default.Save, 
+                            if (wordId == null) "Create" else "Save",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(Modifier.width(8.dp))
-                        Text(if (wordId == null) "Create" else "Save")
+                        Text(
+                            if (wordId == null) "Create" else "Save",
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
                     }
                 }
             }

@@ -5,11 +5,15 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingora_fe.admin.topic.data.remote.dto.UpdateTopicRequest
+import com.example.lingora_fe.admin.topic.data.remote.dto.toDto
 import com.example.lingora_fe.admin.topic.domain.model.CreateTopicData
 import com.example.lingora_fe.admin.topic.domain.model.TopicFilterOptions
 import com.example.lingora_fe.admin.topic.domain.model.TopicSortOption
 import com.example.lingora_fe.admin.topic.domain.model.UpdateTopicData
 import com.example.lingora_fe.admin.topic.domain.repository.TopicRepository
+import com.example.lingora_fe.core.network.SelectiveNullsAdapterFactory
+import com.google.gson.GsonBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -269,7 +273,15 @@ class TopicManagementViewModel @Inject constructor(
                 )
                 return@launch
             }
-
+            val gson = GsonBuilder()
+                .setLenient()
+                .registerTypeAdapterFactory(SelectiveNullsAdapterFactory())
+                .create()
+            val test = UpdateTopicRequest(
+                name = "apt language",
+                description = "Textor auctor sumo velit vulpes provident adfero comparo.",
+                categoryId = null
+            )
             // Update topic to set categoryId = null (remove from category)
             // Keep name and description unchanged
             val updateData = UpdateTopicData(
@@ -277,7 +289,11 @@ class TopicManagementViewModel @Inject constructor(
                 description = currentTopic.description,
                 categoryId = null
             )
-            Log.d("TopicManagementVM", "Removing topic $topicId from category, updateData: $updateData")
+            val req = updateData.toDto()
+            Log.d("TopicManagementVM", "req: $req, updateData: ${gson.toJson(req)}")
+            Log.d("TopicManagementVM", "req class = ${req::class.qualifiedName}")
+            Log.d("TopicManagementVM", gson.toJson(test))
+
             repository.updateTopic(token, topicId, updateData)
                 .onRight {
                     _state.value = _state.value.copy(
@@ -429,12 +445,12 @@ class TopicManagementViewModel @Inject constructor(
     }
 
     // Form state management
-    fun updateFormState(formState: TopicFormState) {
-        _formState.value = formState.validate()
+    fun updateFormState(formState: TopicFormState, isEditMode: Boolean = false) {
+        _formState.value = formState.validate(isEditMode)
     }
 
     fun resetFormState() {
-        _formState.value = TopicFormState()
+        _formState.value = TopicFormState().validate(isEditMode = false)
     }
 
     fun loadTopicIntoForm(topicId: Int) {
@@ -447,7 +463,7 @@ class TopicManagementViewModel @Inject constructor(
                         name = topic.name,
                         description = topic.description,
                         categoryId = topic.category?.id
-                    ).validate()
+                    ).validate(isEditMode = true)
                 }
                 .onLeft { failure ->
                     _state.value = _state.value.copy(error = failure.message)
@@ -455,8 +471,8 @@ class TopicManagementViewModel @Inject constructor(
         }
     }
 
-    fun setFormCategoryId(categoryId: Int?) {
-        _formState.value = _formState.value.copy(categoryId = categoryId).validate()
+    fun setFormCategoryId(categoryId: Int?, isEditMode: Boolean = false) {
+        _formState.value = _formState.value.copy(categoryId = categoryId).validate(isEditMode)
     }
 
     private fun getToken(): String? {

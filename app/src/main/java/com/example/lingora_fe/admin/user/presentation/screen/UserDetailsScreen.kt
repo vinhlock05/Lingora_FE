@@ -12,16 +12,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.common.presentation.components.ErrorContent
 import com.example.lingora_fe.admin.user.domain.model.AdminUser
 import com.example.lingora_fe.admin.user.presentation.UserManagementEvent
 import com.example.lingora_fe.admin.user.presentation.UserManagementViewModel
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.core.ui.theme.NavBarText
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -94,11 +100,16 @@ fun UserDetailsScreen(
             title = { Text("Restore User") },
             text = { Text("Are you sure you want to restore this user?") },
             confirmButton = {
-                Button(onClick = {
-                    viewModel.onEvent(UserManagementEvent.RestoreUser(userId))
-                    showRestoreDialog = false
-                }) {
-                    Text("Restore")
+                Button(
+                    onClick = {
+                        viewModel.onEvent(UserManagementEvent.RestoreUser(userId))
+                        showRestoreDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GradientStart
+                    )
+                ) {
+                    Text("Restore", fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -131,21 +142,26 @@ fun UserDetailsContent(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(GradientStart, GradientEnd)
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = user.username.take(2).uppercase(),
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 48.sp),
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             Text(
                 text = user.username,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp),
+                fontWeight = FontWeight.Bold,
+                color = MainText
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -181,8 +197,9 @@ fun UserDetailsContent(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
+                        containerColor = GradientStart.copy(alpha = 0.15f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -195,14 +212,15 @@ fun UserDetailsContent(
                             if (role.name == "ADMIN") Icons.Default.AdminPanelSettings 
                             else Icons.Default.Person,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            tint = GradientStart,
+                            modifier = Modifier.size(28.dp)
                         )
                         Column {
                             Text(
                                 text = role.name,
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                color = GradientStart
                             )
                             Text(
                                 text = when (role.name) {
@@ -210,8 +228,8 @@ fun UserDetailsContent(
                                     "LEARNER" -> "Standard user access"
                                     else -> "Custom role"
                                 },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                                color = NavBarText
                             )
                         }
                     }
@@ -225,12 +243,13 @@ fun UserDetailsContent(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = when (user.proficiency) {
-                        "BEGINNER" -> Color(0xFF2196F3).copy(alpha = 0.1f)
-                        "INTERMEDIATE" -> Color(0xFFFF9800).copy(alpha = 0.1f)
-                        "ADVANCED" -> Color(0xFF9C27B0).copy(alpha = 0.1f)
+                        "BEGINNER" -> Color(0xFF2196F3).copy(alpha = 0.15f)
+                        "INTERMEDIATE" -> Color(0xFFFF9800).copy(alpha = 0.15f)
+                        "ADVANCED" -> GradientEnd.copy(alpha = 0.15f)
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     }
-                )
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -242,18 +261,30 @@ fun UserDetailsContent(
                     Icon(
                         Icons.Default.School,
                         contentDescription = null,
+                        tint = when (user.proficiency) {
+                            "BEGINNER" -> Color(0xFF2196F3)
+                            "INTERMEDIATE" -> Color(0xFFFF9800)
+                            "ADVANCED" -> GradientEnd
+                            else -> Color.Gray
+                        },
                         modifier = Modifier.size(32.dp)
                     )
                     Column {
                         Text(
                             text = "Proficiency Level",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+                            color = NavBarText
                         )
                         Text(
                             text = user.proficiency,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = when (user.proficiency) {
+                                "BEGINNER" -> Color(0xFF2196F3)
+                                "INTERMEDIATE" -> Color(0xFFFF9800)
+                                "ADVANCED" -> GradientEnd
+                                else -> MainText
+                            }
                         )
                     }
                 }
@@ -270,9 +301,9 @@ fun InfoSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = GradientStart
         )
         content()
     }
@@ -292,19 +323,20 @@ fun InfoItem(
         Icon(
             icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = GradientStart,
             modifier = Modifier.size(24.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+                color = NavBarText
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
+                fontWeight = FontWeight.Medium,
+                color = MainText
             )
         }
     }

@@ -14,10 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.topic.domain.model.Topic
@@ -25,6 +27,10 @@ import com.example.lingora_fe.admin.topic.domain.model.TopicSortOption
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementEvent
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementViewModel
 import com.example.lingora_fe.admin.common.presentation.components.*
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,23 +63,45 @@ fun TopicsInCategoryScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Add Existing Topic
-                SmallFloatingActionButton(
-                    onClick = { showAddExistingDialog = true },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(GradientStart.copy(alpha = 0.8f), GradientEnd.copy(alpha = 0.8f))
+                            )
+                        )
+                        .clickable(onClick = { showAddExistingDialog = true }),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Link,
                         "Add Existing Topic",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 
                 // Create New Topic
-                FloatingActionButton(
-                    onClick = onNavigateToCreateTopic,
-                    containerColor = MaterialTheme.colorScheme.primary
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(GradientStart, GradientEnd)
+                            )
+                        )
+                        .clickable(onClick = onNavigateToCreateTopic),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Add, "Create New Topic")
+                    Icon(
+                        Icons.Default.Add,
+                        "Create New Topic",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }
@@ -93,30 +121,53 @@ fun TopicsInCategoryScreen(
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(GradientStart, GradientEnd)
+                                )
+                            )
+                            .padding(20.dp)
                     ) {
-                        Text(
-                            text = category.name,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = category.description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "${category.totalTopics} topics",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Column {
+                            Text(
+                                text = category.name,
+                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                text = category.description,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 14.sp),
+                                color = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Topic,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = "${category.totalTopics} topics",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -155,8 +206,17 @@ fun TopicsInCategoryScreen(
                         FilterChip(
                             selected = true,
                             onClick = { viewModel.onEvent(TopicManagementEvent.SortBy(null)) },
-                            label = { Text("Sort: ${sort.displayName}") },
-                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                            label = { 
+                                Text(
+                                    "Sort: ${sort.displayName}",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                ) 
+                            },
+                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                selectedLabelColor = GradientStart
+                            )
                         )
                     }
                 }
@@ -295,35 +355,42 @@ fun TopicCard(
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .clickable { onClick() },
+                .padding(20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Icon
+                // Icon with gradient background
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(64.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(GradientStart, GradientEnd)
+                            )
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Topic,
                         contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White
                     )
                 }
 
@@ -331,47 +398,59 @@ fun TopicCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = topic.name,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
                         fontWeight = FontWeight.Bold,
+                        color = MainText,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = topic.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 14.sp),
+                        color = NavBarText,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                     // Words count
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(top = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             Icons.Default.TextFields,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.secondary
+                            modifier = Modifier.size(18.dp),
+                            tint = GradientStart
                         )
                         Text(
                             text = "${topic.totalWords} words",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                            color = GradientStart,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
 
             // Actions
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row {
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, "Edit", tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.Edit, 
+                        "Edit",
+                        tint = GradientStart,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.RemoveCircle, "Remove from Category", tint = MaterialTheme.colorScheme.error)
+                    Icon(
+                        Icons.Default.Delete,
+                        "Remove from Category",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
@@ -396,7 +475,7 @@ private fun RemoveFromCategoryDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("Remove")
+                Text("Remove", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -431,7 +510,10 @@ private fun SortDialog(
                     ) {
                         RadioButton(
                             selected = selectedSort == sortOption,
-                            onClick = { onSelectSort(sortOption) }
+                            onClick = { onSelectSort(sortOption) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = GradientStart
+                            )
                         )
                         Text(
                             text = sortOption.displayName,
@@ -443,8 +525,13 @@ private fun SortDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Done")
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = GradientStart
+                )
+            ) {
+                Text("Done", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -624,8 +711,13 @@ private fun AddExistingTopicDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = GradientStart
+                )
+            ) {
+                Text("Close", fontWeight = FontWeight.SemiBold)
             }
         }
     )

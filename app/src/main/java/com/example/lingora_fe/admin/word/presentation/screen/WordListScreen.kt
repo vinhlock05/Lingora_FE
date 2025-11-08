@@ -17,8 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -27,6 +31,10 @@ import com.example.lingora_fe.admin.word.domain.model.Word
 import com.example.lingora_fe.admin.word.presentation.WordManagementEvent
 import com.example.lingora_fe.admin.word.presentation.WordManagementViewModel
 import com.example.lingora_fe.admin.common.presentation.components.*
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +72,25 @@ fun WordListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToCreate) { Icon(Icons.Default.Add, null) }
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(GradientStart, GradientEnd)
+                        )
+                    )
+                    .clickable(onClick = onNavigateToCreate),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    "Create Word",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     ) { padding ->
         val bottom = padding.calculateBottomPadding()
@@ -105,24 +131,51 @@ fun WordListScreen(
                         FilterChip(
                             selected = true,
                             onClick = { viewModel.setCefrFilter(null) },
-                            label = { Text(cefr) },
-                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                            label = { 
+                                Text(
+                                    cefr,
+                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                ) 
+                            },
+                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                selectedLabelColor = GradientStart
+                            )
                         )
                     }
                     state.typeFilter?.let { type ->
                         FilterChip(
                             selected = true,
                             onClick = { viewModel.setTypeFilter(null) },
-                            label = { Text(type) },
-                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                            label = { 
+                                Text(
+                                    type,
+                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                ) 
+                            },
+                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                selectedLabelColor = GradientStart
+                            )
                         )
                     }
                     state.selectedSort?.let { sort ->
                         FilterChip(
                             selected = true,
                             onClick = { viewModel.onEvent(WordManagementEvent.SortBy(null)) },
-                            label = { Text("Sort: $sort") },
-                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                            label = { 
+                                Text(
+                                    "Sort: $sort",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                ) 
+                            },
+                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                selectedLabelColor = GradientStart
+                            )
                         )
                     }
                 }
@@ -219,10 +272,27 @@ fun WordListScreen(
     showDeleteDialog?.let { id ->
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Delete word") },
-            text = { Text("Are you sure you want to delete this word?") },
-            confirmButton = { TextButton(onClick = { viewModel.onEvent(WordManagementEvent.Delete(id)); showDeleteDialog = null }) { Text("Delete") } },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = null }) { Text("Cancel") } }
+            icon = { Icon(Icons.Default.Warning, "Warning", tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete Word") },
+            text = { Text("Are you sure you want to delete this word? This action cannot be undone.") },
+            confirmButton = { 
+                Button(
+                    onClick = { 
+                        viewModel.onEvent(WordManagementEvent.Delete(id))
+                        showDeleteDialog = null 
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = { 
+                TextButton(onClick = { showDeleteDialog = null }) { 
+                    Text("Cancel") 
+                } 
+            }
         )
     }
 }
@@ -234,9 +304,11 @@ fun WordCard(word: Word, onEdit: () -> Unit, onDelete: () -> Unit) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             // Header row with word and actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -244,17 +316,18 @@ fun WordCard(word: Word, onEdit: () -> Unit, onDelete: () -> Unit) {
                 verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
                             text = word.word,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = MainText
                         )
                         word.phonetic?.let {
                             Text(
                                 text = it,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                                color = NavBarText
                             )
                         }
                         // Audio button
@@ -273,47 +346,65 @@ fun WordCard(word: Word, onEdit: () -> Unit, onDelete: () -> Unit) {
                                         e.printStackTrace()
                                     }
                                 },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(40.dp)
                             ) {
                                 Icon(
                                     Icons.Default.VolumeUp,
                                     "Play audio",
-                                    modifier = Modifier.size(20.dp)
+                                    tint = GradientStart,
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
                         }
                     }
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer
+                            shape = RoundedCornerShape(12.dp),
+                            color = GradientStart.copy(alpha = 0.15f)
                         ) {
                             Text(
                                 text = word.cefrLevel,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                color = GradientStart,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.tertiaryContainer
+                            shape = RoundedCornerShape(12.dp),
+                            color = GradientEnd.copy(alpha = 0.15f)
                         ) {
                             Text(
                                 text = word.type,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                color = GradientEnd,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
                 }
                 Row {
-                    IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, null) }
-                    IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
+                    IconButton(onClick = onEdit) { 
+                        Icon(
+                            Icons.Default.Edit, 
+                            "Edit",
+                            tint = GradientStart,
+                            modifier = Modifier.size(20.dp)
+                        ) 
+                    }
+                    IconButton(onClick = onDelete) { 
+                        Icon(
+                            Icons.Default.Delete, 
+                            "Delete",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        ) 
+                    }
                 }
             }
 
@@ -339,8 +430,9 @@ fun WordCard(word: Word, onEdit: () -> Unit, onDelete: () -> Unit) {
             // Meaning
             Text(
                 text = word.meaning,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 4.dp)
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
+                color = MainText,
+                modifier = Modifier.padding(vertical = 8.dp)
             )
 
             // Example
@@ -349,20 +441,22 @@ fun WordCard(word: Word, onEdit: () -> Unit, onDelete: () -> Unit) {
                 Column {
                     Text(
                         text = "Example:",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp),
+                        color = NavBarText,
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = example,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                        color = MainText,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                     word.exampleTranslation?.let { translation ->
                         Text(
                             text = translation,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 2.dp)
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                            color = NavBarText,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 }
@@ -406,7 +500,10 @@ fun WordFilterDialog(
                     ) {
                         RadioButton(
                             selected = tempCefr == level,
-                            onClick = { tempCefr = if (tempCefr == level) null else level }
+                            onClick = { tempCefr = if (tempCefr == level) null else level },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = GradientStart
+                            )
                         )
                         Text(level, modifier = Modifier.padding(start = 8.dp))
                     }
@@ -426,7 +523,10 @@ fun WordFilterDialog(
                     ) {
                         RadioButton(
                             selected = tempType == type,
-                            onClick = { tempType = if (tempType == type) null else type }
+                            onClick = { tempType = if (tempType == type) null else type },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = GradientStart
+                            )
                         )
                         Text(type, modifier = Modifier.padding(start = 8.dp))
                     }
@@ -434,8 +534,13 @@ fun WordFilterDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onApply(tempCefr, tempType) }) {
-                Text("Apply")
+            TextButton(
+                onClick = { onApply(tempCefr, tempType) },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = GradientStart
+                )
+            ) {
+                Text("Apply", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -475,7 +580,10 @@ fun WordSortDialog(
                     ) {
                         RadioButton(
                             selected = tempSort == sort,
-                            onClick = { tempSort = if (tempSort == sort) null else sort }
+                            onClick = { tempSort = if (tempSort == sort) null else sort },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = GradientStart
+                            )
                         )
                         Text(sort, modifier = Modifier.padding(start = 8.dp))
                     }
@@ -483,8 +591,13 @@ fun WordSortDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onApply(tempSort) }) {
-                Text("Apply")
+            TextButton(
+                onClick = { onApply(tempSort) },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = GradientStart
+                )
+            ) {
+                Text("Apply", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {

@@ -46,8 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -79,6 +82,7 @@ fun VocabularyReviewScreen(
         savedStateHandle?.getStateFlow("refreshReviewSummary", false)?.collect { shouldRefresh ->
             if (shouldRefresh) {
                 viewModel.loadProgressSummary()
+                viewModel.loadWordsForReview()
                 savedStateHandle.set("refreshReviewSummary", false)
             }
         }
@@ -126,17 +130,13 @@ fun VocabularyReviewScreen(
                 .background(Color.White)
         ) {
             when {
-                uiState.isLoading -> {
+                uiState.isLoading || uiState.isLoadingReviewWords -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(color = GradientStart)
                     }
-                }
-
-                !uiState.hasLearnedWords -> {
-                    EmptyReviewState()
                 }
 
                 else -> {
@@ -177,109 +177,188 @@ private fun ReviewSummaryContent(
             statistics = uiState.statistics
         )
 
-        WordCountSelector(
-            selectedWordCount = uiState.selectedWordCount,
-            onSelectCount = onSelectCount
-        )
-
-        QuestionTypeSelector(
-            selectedTypes = uiState.selectedGameTypes,
-            onToggle = onToggleType
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = onStartReview,
-            enabled = uiState.canStartReview,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = GradientStart)
-        ) {
-            Text(
-                text = "Ôn tập",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+        if (!uiState.hasReviewWords) {
+            // Hiển thị thông báo nếu chưa có từ cần ôn tập
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Chưa có từ nào cần ôn tập",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MainText,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Hãy học thêm từ mới trước khi quay lại ôn tập nhé!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            // Hiển thị đầy đủ các component nếu có từ cần ôn tập
+            WordCountSelector(
+                selectedWordCount = uiState.selectedWordCount,
+                onSelectCount = onSelectCount
             )
+
+            QuestionTypeSelector(
+                selectedTypes = uiState.selectedGameTypes,
+                onToggle = onToggleType
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = onStartReview,
+                enabled = uiState.canStartReview,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GradientStart)
+            ) {
+                Text(
+                    text = "Ôn tập",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ProgressSummaryCard(
+fun ProgressSummaryCard(
     totalLearned: Int,
     statistics: List<StatisticItem>
 ) {
-    // Ensure we always have 5 levels (1-5), fill missing ones with 0 wordCount
+    // Đảm bảo luôn có 5 cấp độ (1–5)
     val allLevels = remember(statistics) {
         val statsMap = statistics.associateBy { it.srsLevel }
         (1..5).map { level ->
             statsMap[level] ?: StatisticItem(srsLevel = level, wordCount = 0)
         }
     }
-    
+
     val maxValue = allLevels.maxOfOrNull { it.wordCount }?.coerceAtLeast(1) ?: 1
 
+    // Màu cột theo cấp độ (tương tự ProgressChartView)
+    val barColors = listOf(
+        Color(0xFFF44336), // đỏ
+        Color(0xFFFFC107), // vàng
+        Color(0xFF03A9F4), // xanh dương nhạt
+        Color(0xFF3F51B5), // xanh dương đậm
+        Color(0xFF4CAF50)  // xanh lá
+    )
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            // Header with gradient background
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 🔹 Tiêu đề
+            Text(
+                buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            fontSize = 40.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0D47A1)
+                        )
+                    ) {
+                        append("$totalLearned")
+                    }
+                    append("  từ đã học chia theo cấp độ")
+                },
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 🔹 Biểu đồ cột
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                allLevels.forEachIndexed { index, stat ->
+                    val ratio = stat.wordCount.toFloat() / maxValue
+                    val barHeight = if (stat.wordCount == 0) 8.dp else 180.dp * ratio
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Bottom
+                    ) {
+                        Text(
+                            "${stat.wordCount} từ",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .height(barHeight)
+                                .width(28.dp)
+                                .background(
+                                    color = barColors.getOrElse(index) { Color.Gray },
+                                    shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+                                )
+                        )
+                    }
+                }
+            }
+
+            // 🔹 Đường ngang dưới cột
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(GradientStart, GradientEnd)
-                        )
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFFDDDDDD))
+                    .padding(top = 2.dp, start = 20.dp, end = 20.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 🔹 Label cho các cấp độ
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                allLevels.forEachIndexed { index, _ ->
+                    Text(
+                        text = if (index+1 == 5) "Master" else "${index + 1}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        modifier = if (index+1!=5) Modifier.width(28.dp) else Modifier.wrapContentHeight(),
+                        textAlign = TextAlign.Center
                     )
-                    .padding(horizontal = 20.dp, vertical = 18.dp)
-            ) {
-                Text(
-                    text = "$totalLearned từ đã học",
-                    color = Color.White,
-                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp)
-                )
-            }
-            
-            // Chart section
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                Text(
-                    text = "Cấp độ ghi nhớ",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                
-                // Bar chart
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    allLevels.forEachIndexed { index, stat ->
-                        LevelBar(
-                            statistic = stat,
-                            maxValue = maxValue,
-                            index = index
-                        )
-                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 private fun LevelBar(
@@ -357,34 +436,6 @@ private fun LevelBar(
         }
     }
 }
-
-@Composable
-private fun EmptyReviewState() {
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Bạn chưa có từ nào để ôn",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MainText,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Hãy học thêm từ mới trước khi quay lại ôn tập nhé!",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
 
 private fun levelColorFor(level: Int, fallbackIndex: Int): Color {
     return when (level) {

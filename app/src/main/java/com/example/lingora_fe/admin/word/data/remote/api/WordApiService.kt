@@ -1,42 +1,11 @@
 package com.example.lingora_fe.admin.word.data.remote.api
 
+import com.example.lingora_fe.admin.word.data.remote.dto.CreateWordRequest
+import com.example.lingora_fe.admin.word.data.remote.dto.UpdateWordRequest
 import com.example.lingora_fe.admin.word.data.remote.dto.WordDto
+import com.example.lingora_fe.admin.word.data.remote.dto.WordListMetaData
 import com.example.lingora_fe.core.network.ApiResponse
 import retrofit2.http.*
-
-data class WordListMetaData(
-    val currentPage: Int,
-    val totalPages: Int,
-    val total: Int,
-    val totalWords: Int? = null, // For topic/{id}/words response
-    val words: List<WordDto>
-)
-
-data class CreateWordRequest(
-    val word: String,
-    val meaning: String,
-    val phonetic: String?,
-    val cefrLevel: String,
-    val type: String,
-    val example: String?,
-    val exampleTranslation: String?,
-    val audioUrl: String?,
-    val imageUrl: String?,
-    val topicId: Int?
-)
-
-data class UpdateWordRequest(
-    val word: String? = null,
-    val meaning: String? = null,
-    val phonetic: String? = null,
-    val cefrLevel: String? = null,
-    val type: String? = null,
-    val example: String? = null,
-    val exampleTranslation: String? = null,
-    val audioUrl: String? = null,
-    val imageUrl: String? = null,
-    val topicId: Int? = null
-)
 
 interface WordApiService {
     // Standalone list of words

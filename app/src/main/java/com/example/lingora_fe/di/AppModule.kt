@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.lingora_fe.core.network.AuthInterceptor
 import com.example.lingora_fe.core.network.PersistentCookieJar
+import com.example.lingora_fe.core.network.SelectiveNullsAdapterFactory
 import com.example.lingora_fe.core.network.TokenAuthenticator
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.di.qualifier.AuthApiClient
@@ -38,7 +39,7 @@ object AppModule {
     fun provideGson(): Gson {
         return GsonBuilder()
             .setLenient()
-            .serializeNulls() // Include null values in JSON serialization
+            .registerTypeAdapterFactory(SelectiveNullsAdapterFactory())
             .create()
     }
 

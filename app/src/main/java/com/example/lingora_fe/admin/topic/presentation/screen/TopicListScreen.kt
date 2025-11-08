@@ -14,13 +14,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.topic.domain.model.TopicSortOption
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementEvent
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementViewModel
 import com.example.lingora_fe.admin.common.presentation.components.*
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,11 +55,24 @@ fun TopicListScreen(
             SnackbarHost(hostState = snackbarHostState)
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToCreateTopic,
-                containerColor = MaterialTheme.colorScheme.primary
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(GradientStart, GradientEnd)
+                        )
+                    )
+                    .clickable(onClick = onNavigateToCreateTopic),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Add, "Create Topic")
+                Icon(
+                    Icons.Default.Add,
+                    "Create Topic",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     ) {
@@ -96,8 +118,17 @@ fun TopicListScreen(
                         FilterChip(
                             selected = true,
                             onClick = { viewModel.onEvent(TopicManagementEvent.SortBy(null)) },
-                            label = { Text("Sort: ${sort.displayName}") },
-                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                            label = { 
+                                Text(
+                                    "Sort: ${sort.displayName}",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                ) 
+                            },
+                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                selectedLabelColor = GradientStart
+                            )
                         )
                     }
                 }
@@ -227,7 +258,7 @@ private fun DeleteConfirmDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("Delete")
+                Text("Delete", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -262,7 +293,10 @@ private fun SortDialog(
                     ) {
                         RadioButton(
                             selected = selectedSort == sortOption,
-                            onClick = { onSelectSort(sortOption) }
+                            onClick = { onSelectSort(sortOption) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = GradientStart
+                            )
                         )
                         Text(
                             text = sortOption.displayName,
@@ -274,8 +308,13 @@ private fun SortDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Done")
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = GradientStart
+                )
+            ) {
+                Text("Done", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {

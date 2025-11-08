@@ -7,15 +7,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.topic.presentation.TopicFormState
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementEvent
 import com.example.lingora_fe.admin.topic.presentation.TopicManagementViewModel
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,9 +48,9 @@ fun CreateEditTopicScreen(
             viewModel.resetFormState()
             // For standalone topics, categoryId can be 0 (which means null)
             if (categoryId > 0) {
-                viewModel.setFormCategoryId(categoryId)
+                viewModel.setFormCategoryId(categoryId, isEditMode = false)
             } else {
-                viewModel.setFormCategoryId(null)
+                viewModel.setFormCategoryId(null, isEditMode = false)
             }
         }
     }
@@ -75,11 +84,17 @@ fun CreateEditTopicScreen(
                 OutlinedTextField(
                     value = formState.name,
                     onValueChange = { 
-                        viewModel.updateFormState(formState.copy(name = it))
+                        viewModel.updateFormState(formState.copy(name = it), isEditMode = isEditMode)
                     },
                     label = { Text("Topic Name *") },
                     placeholder = { Text("e.g., Thorough Experience") },
-                    leadingIcon = { Icon(Icons.Default.Topic, "Topic") },
+                    leadingIcon = { 
+                        Icon(
+                            Icons.Default.Topic, 
+                            "Topic",
+                            tint = GradientStart
+                        ) 
+                    },
                     isError = formState.nameError != null,
                     supportingText = {
                         formState.nameError?.let { Text(it) }
@@ -92,12 +107,16 @@ fun CreateEditTopicScreen(
                 OutlinedTextField(
                     value = formState.description,
                     onValueChange = { 
-                        viewModel.updateFormState(formState.copy(description = it))
+                        viewModel.updateFormState(formState.copy(description = it), isEditMode = isEditMode)
                     },
                     label = { Text("Description *") },
                     placeholder = { Text("Enter topic description...") },
                     leadingIcon = { 
-                        Icon(Icons.Default.Description, "Description")
+                        Icon(
+                            Icons.Default.Description, 
+                            "Description",
+                            tint = GradientStart
+                        )
                     },
                     isError = formState.descriptionError != null,
                     supportingText = {
@@ -147,56 +166,45 @@ fun CreateEditTopicScreen(
                                 )
                             }
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .graphicsLayer {
+                                alpha = if (formState.isValid && !state.isCreating && !state.isUpdating) 1f else 0.5f
+                            }
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(GradientStart, GradientEnd)
+                                ),
+                                shape = RoundedCornerShape(40.dp)
+                            ),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            disabledContentColor = Color.White.copy(alpha = 0.7f),
+                            contentColor = Color.White
+                        ),
                         enabled = formState.isValid && !state.isCreating && !state.isUpdating
                     ) {
                         if (state.isCreating || state.isUpdating) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(18.dp),
                                 strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = Color.White
                             )
                         } else {
                             Icon(
                                 if (isEditMode) Icons.Default.Save else Icons.Default.Add,
                                 if (isEditMode) "Save" else "Create",
+                                tint = Color.White,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (isEditMode) "Save Changes" else "Create")
-                    }
-                }
-
-                // Info Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                        Text(
+                            if (isEditMode) "Save Changes" else "Create",
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
                         )
-                        Column {
-                            Text(
-                                text = "Topic Information",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Topics group related words together. Make sure to provide a clear name and description.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     }
                 }
             }

@@ -27,6 +27,7 @@ import com.example.lingora_fe.core.ui.theme.*
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.delay
 import android.util.Log
+import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun OTPScreen(
@@ -275,6 +276,9 @@ fun OTPScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp)
+                                .graphicsLayer {
+                                    alpha = if (otpValue.length == 6 && !authState.isLoading) 1f else 0.5f
+                                }
                                 .background(
                                     brush = Brush.linearGradient(
                                         colors = listOf(GradientStart, GradientEnd)
@@ -283,7 +287,9 @@ fun OTPScreen(
                                 ),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.Transparent,
-                                disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
+                                disabledContainerColor = Color.Transparent,
+                                disabledContentColor = Color.White.copy(alpha = 0.7f),
+                                contentColor = Color.White
                             ),
                             shape = RoundedCornerShape(12.dp),
                             enabled = otpValue.length == 6 && !authState.isLoading

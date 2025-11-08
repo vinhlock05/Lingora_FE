@@ -43,18 +43,9 @@ class ProficiencySelectionViewModel @Inject constructor(
                 )
                 return@launch
             }
-
-            // Use updateProficiencyOnly to only send proficiency field
-            // This prevents sending null/empty values for other fields
-            val result = if (repository is com.example.lingora_fe.admin.user.data.repository.UserManagementRepositoryImpl) {
-                repository.updateProficiencyOnly(token, userId, proficiency)
-            } else {
-                // Fallback to regular update if repository doesn't have the method
                 val updateData = UpdateUserData(proficiency = proficiency)
                 repository.updateUser(token, userId, updateData)
-            }
-            
-            result
+
                 .onRight { user ->
                     Log.d("ProficiencySelection", "Proficiency updated successfully: $proficiency")
                     

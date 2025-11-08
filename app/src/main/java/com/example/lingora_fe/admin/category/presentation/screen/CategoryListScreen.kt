@@ -14,10 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.category.domain.model.Category
@@ -25,6 +27,10 @@ import com.example.lingora_fe.admin.category.domain.model.CategorySortOption
 import com.example.lingora_fe.admin.category.presentation.CategoryManagementEvent
 import com.example.lingora_fe.admin.category.presentation.CategoryManagementViewModel
 import com.example.lingora_fe.admin.common.presentation.components.*
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,16 +46,33 @@ fun CategoryListScreen(
     var showDeleteDialog by remember { mutableStateOf<Int?>(null) }
     var showSortMenu by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(CategoryManagementEvent.LoadCategories())
+    }
+
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToCreateCategory,
-                containerColor = MaterialTheme.colorScheme.primary
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(GradientStart, GradientEnd)
+                        )
+                    )
+                    .clickable(onClick = onNavigateToCreateCategory),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Add, "Create Category")
+                Icon(
+                    Icons.Default.Add,
+                    "Create Category",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     ) {
@@ -95,8 +118,17 @@ fun CategoryListScreen(
                         FilterChip(
                             selected = true,
                             onClick = { viewModel.onEvent(CategoryManagementEvent.SortBy(null)) },
-                            label = { Text("Sort: ${sort.displayName}") },
-                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) }
+                            label = { 
+                                Text(
+                                    "Sort: ${sort.displayName}",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                ) 
+                            },
+                            trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                selectedLabelColor = GradientStart
+                            )
                         )
                     }
                 }
@@ -219,65 +251,99 @@ fun CategoryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Icon with gradient background
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(GradientStart, GradientEnd)
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Folder,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White
+                    )
+                }
+
                 // Category Info
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = category.name,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
                         fontWeight = FontWeight.Bold,
+                        color = MainText,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = category.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 14.sp),
+                        color = NavBarText,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                     // Topics count
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(top = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             Icons.Default.Article,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            modifier = Modifier.size(18.dp),
+                            tint = GradientStart
                         )
                         Text(
                             text = "${category.totalTopics} topics",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                            color = GradientStart,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
 
             // Actions
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row {
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, "Edit", tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.Edit, 
+                        "Edit",
+                        tint = GradientStart,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                    Icon(
+                        Icons.Default.Delete, 
+                        "Delete",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
@@ -302,7 +368,7 @@ fun DeleteConfirmDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("Delete")
+                Text("Delete", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -337,7 +403,10 @@ fun SortDialog(
                     ) {
                         RadioButton(
                             selected = selectedSort == sortOption,
-                            onClick = { onSelectSort(sortOption) }
+                            onClick = { onSelectSort(sortOption) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = GradientStart
+                            )
                         )
                         Text(
                             text = sortOption.displayName,
@@ -349,8 +418,13 @@ fun SortDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Done")
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = GradientStart
+                )
+            ) {
+                Text("Done", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {

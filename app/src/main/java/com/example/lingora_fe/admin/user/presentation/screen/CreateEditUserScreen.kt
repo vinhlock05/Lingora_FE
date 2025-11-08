@@ -9,9 +9,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
@@ -19,6 +26,10 @@ import com.example.lingora_fe.admin.user.domain.model.UserRoleType
 import com.example.lingora_fe.admin.user.domain.model.UserStatus
 import com.example.lingora_fe.admin.user.presentation.UserManagementEvent
 import com.example.lingora_fe.admin.user.presentation.UserManagementViewModel
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,8 +70,9 @@ fun CreateEditUserScreen(
             // Basic Information Section
             Text(
                 text = "Basic Information",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
+                color = GradientStart,
+                fontWeight = FontWeight.Bold
             )
 
             // Username
@@ -70,7 +82,13 @@ fun CreateEditUserScreen(
                     viewModel.updateFormState(formState.copy(username = it))
                 },
                 label = { Text("Username") },
-                leadingIcon = { Icon(Icons.Default.Person, "Username") },
+                leadingIcon = { 
+                    Icon(
+                        Icons.Default.Person, 
+                        "Username",
+                        tint = GradientStart
+                    ) 
+                },
                 isError = formState.usernameError != null,
                 supportingText = formState.usernameError?.let { { Text(it) } },
                 modifier = Modifier.fillMaxWidth(),
@@ -84,7 +102,13 @@ fun CreateEditUserScreen(
                     viewModel.updateFormState(formState.copy(email = it))
                 },
                 label = { Text("Email") },
-                leadingIcon = { Icon(Icons.Default.Email, "Email") },
+                leadingIcon = { 
+                    Icon(
+                        Icons.Default.Email, 
+                        "Email",
+                        tint = GradientStart
+                    ) 
+                },
                 isError = formState.emailError != null,
                 supportingText = formState.emailError?.let { { Text(it) } },
                 modifier = Modifier.fillMaxWidth(),
@@ -95,8 +119,9 @@ fun CreateEditUserScreen(
             if (!isEditMode || formState.password.isNotBlank()) {
                 Text(
                     text = if (isEditMode) "Change Password (Optional)" else "Password",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
+                    color = GradientStart,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
@@ -107,7 +132,13 @@ fun CreateEditUserScreen(
                         viewModel.updateFormState(formState.copy(password = it))
                     },
                     label = { Text(if (isEditMode) "New Password" else "Password") },
-                    leadingIcon = { Icon(Icons.Default.Lock, "Password") },
+                    leadingIcon = { 
+                        Icon(
+                            Icons.Default.Lock, 
+                            "Password",
+                            tint = GradientStart
+                        ) 
+                    },
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
@@ -130,7 +161,13 @@ fun CreateEditUserScreen(
                         viewModel.updateFormState(formState.copy(confirmPassword = it))
                     },
                     label = { Text("Confirm Password") },
-                    leadingIcon = { Icon(Icons.Default.Lock, "Confirm Password") },
+                    leadingIcon = { 
+                        Icon(
+                            Icons.Default.Lock, 
+                            "Confirm Password",
+                            tint = GradientStart
+                        ) 
+                    },
                     trailingIcon = {
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Icon(
@@ -150,8 +187,9 @@ fun CreateEditUserScreen(
             // Proficiency Level
             Text(
                 text = "Proficiency Level",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
+                color = GradientStart,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 8.dp)
             )
 
@@ -160,12 +198,28 @@ fun CreateEditUserScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ProficiencyLevel.values().forEach { level ->
+                    val chipColor = when (level.value) {
+                        "BEGINNER" -> Color(0xFF2196F3)
+                        "INTERMEDIATE" -> Color(0xFFFF9800)
+                        "ADVANCED" -> GradientEnd
+                        else -> Color.Gray
+                    }
                     FilterChip(
                         selected = formState.selectedProficiency == level,
                         onClick = { 
                             viewModel.updateFormState(formState.copy(selectedProficiency = level))
                         },
-                        label = { Text(level.value) },
+                        label = { 
+                            Text(
+                                level.value,
+                                style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp),
+                                fontWeight = if (formState.selectedProficiency == level) FontWeight.SemiBold else FontWeight.Normal
+                            ) 
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = chipColor.copy(alpha = 0.2f),
+                            selectedLabelColor = chipColor
+                        ),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -174,40 +228,66 @@ fun CreateEditUserScreen(
             // Roles
             Text(
                 text = "User Roles",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
+                color = GradientStart,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 8.dp)
             )
 
             UserRoleType.values().forEach { roleType ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Checkbox(
-                        checked = formState.selectedRoleIds.contains(roleType.id),
-                        onCheckedChange = { checked ->
-                            val newRoleIds = if (checked) {
-                                formState.selectedRoleIds + roleType.id
-                            } else {
-                                formState.selectedRoleIds - roleType.id
-                            }
-                            viewModel.updateFormState(formState.copy(selectedRoleIds = newRoleIds))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (formState.selectedRoleIds.contains(roleType.id)) {
+                            GradientStart.copy(alpha = 0.1f)
+                        } else {
+                            Color.Transparent
                         }
                     )
-                    Column {
-                        Text(
-                            text = roleType.value,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = when (roleType) {
-                                UserRoleType.ADMIN -> "Full access to all features"
-                                UserRoleType.LEARNER -> "Standard user access"
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = formState.selectedRoleIds.contains(roleType.id),
+                            onCheckedChange = { checked ->
+                                val newRoleIds = if (checked) {
+                                    formState.selectedRoleIds + roleType.id
+                                } else {
+                                    formState.selectedRoleIds - roleType.id
+                                }
+                                viewModel.updateFormState(formState.copy(selectedRoleIds = newRoleIds))
                             },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = GradientStart
+                            )
                         )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = roleType.value,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (formState.selectedRoleIds.contains(roleType.id)) {
+                                    GradientStart
+                                } else {
+                                    MainText
+                                }
+                            )
+                            Text(
+                                text = when (roleType) {
+                                    UserRoleType.ADMIN -> "Full access to all features"
+                                    UserRoleType.LEARNER -> "Standard user access"
+                                },
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                                color = NavBarText
+                            )
+                        }
                     }
                 }
             }
@@ -216,8 +296,9 @@ fun CreateEditUserScreen(
             if (isEditMode) {
                 Text(
                     text = "Account Status",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp),
+                    color = GradientStart,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
@@ -227,12 +308,28 @@ fun CreateEditUserScreen(
                 ) {
                     UserStatus.values().forEach { status ->
                         if (status != UserStatus.DELETED) {
+                            val chipColor = when (status.value) {
+                                "ACTIVE" -> GradientStart
+                                "INACTIVE" -> Color(0xFFFF9800)
+                                "BANNED" -> Color(0xFFF44336)
+                                else -> Color.Gray
+                            }
                             FilterChip(
                                 selected = formState.selectedStatus == status,
                                 onClick = { 
                                     viewModel.updateFormState(formState.copy(selectedStatus = status))
                                 },
-                                label = { Text(status.value) },
+                                label = { 
+                                    Text(
+                                        status.value,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
+                                        fontWeight = if (formState.selectedStatus == status) FontWeight.SemiBold else FontWeight.Normal
+                                    ) 
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = chipColor.copy(alpha = 0.2f),
+                                    selectedLabelColor = chipColor
+                                ),
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -273,6 +370,7 @@ fun CreateEditUserScreen(
                     .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                val isEnable = formState.isValid && !state.isCreating && !state.isUpdating
                 OutlinedButton(
                     onClick = onNavigateBack,
                     modifier = Modifier.weight(1f),
@@ -313,16 +411,35 @@ fun CreateEditUserScreen(
                             )
                         }
                     },
-                    modifier = Modifier.weight(1f),
-                    enabled = formState.isValid && !state.isCreating && !state.isUpdating
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer {
+                            alpha = if (isEnable) 1f else 0.5f
+                        }
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(GradientStart, GradientEnd)
+                            ),
+                            shape = RoundedCornerShape(40.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = Color.White.copy(alpha = 0.7f),
+                        contentColor = Color.White
+                    ),
+                    enabled = isEnable
                 ) {
                     if (state.isCreating || state.isUpdating) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
+                            color = Color.White
                         )
                     } else {
-                        Text(if (isEditMode) "Update User" else "Create User")
+                        Text(
+                            if (isEditMode) "Update User" else "Create User",
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }

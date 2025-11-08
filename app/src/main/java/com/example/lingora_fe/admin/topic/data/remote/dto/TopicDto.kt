@@ -1,6 +1,7 @@
 package com.example.lingora_fe.admin.topic.data.remote.dto
 
 import com.example.lingora_fe.admin.word.data.remote.dto.WordDto
+import com.example.lingora_fe.core.network.SerializeNull
 import com.google.gson.annotations.SerializedName
 
 // MetaData DTOs
@@ -95,6 +96,6 @@ data class UpdateTopicRequest(
     @SerializedName("description")
     val description: String?,
     @SerializedName("categoryId")
-    val categoryId: Int?
+    @SerializeNull val categoryId: Int?
 )
 

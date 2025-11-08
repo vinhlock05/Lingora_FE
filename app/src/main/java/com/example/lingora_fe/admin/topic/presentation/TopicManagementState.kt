@@ -50,7 +50,7 @@ data class TopicFormState(
     
     val isValid: Boolean = false
 ) {
-    fun validate(): TopicFormState {
+    fun validate(isEditMode: Boolean = false): TopicFormState {
         val nameErr = when {
             name.isBlank() -> "Name is required"
             name.length < 3 -> "Name must be at least 3 characters"
@@ -63,8 +63,9 @@ data class TopicFormState(
             else -> null
         }
         
+        // Chỉ validate categoryId khi create mode, edit mode cho phép null (để xóa category)
         val categoryIdErr = when {
-            categoryId == null || categoryId == 0 -> "Category is required"
+            !isEditMode && (categoryId == null || categoryId == 0) -> "Category is required"
             else -> null
         }
         

@@ -7,7 +7,7 @@ data class User(
     val roles: List<Role>,
     val avatar: String?,
     val status: String,
-    val proficiency: String,
+    val proficiency: String? = null,
     val createdAt: String? = null,
     val deletedAt: String? = null
 )

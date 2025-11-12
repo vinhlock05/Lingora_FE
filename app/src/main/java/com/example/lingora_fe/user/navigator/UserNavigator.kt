@@ -2,17 +2,22 @@ package com.example.lingora_fe.user.navigator
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -45,9 +50,52 @@ import com.example.lingora_fe.user.vocabulary.presentation.screen.VocabularyCate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserNavigator(rootNavController: NavHostController) {
+fun UserNavigator(
+    rootNavController: NavHostController,
+    viewModel: AuthRepositoryViewModel = hiltViewModel()
+) {
     val navController = rememberNavController()
     val backStackState = navController.currentBackStackEntryAsState().value
+    var isCheckingProficiency by remember { mutableStateOf(false) }
+    var shouldCheckProficiency by remember { mutableStateOf(true) }
+    
+    // Check proficiency when entering UserNavigator (only once)
+    LaunchedEffect(Unit) {
+        if (!shouldCheckProficiency) {
+            return@LaunchedEffect
+        }
+        
+        val token = viewModel.tokenManager.getAccessToken()
+        val activeRole = viewModel.tokenManager.getActiveRole() ?: viewModel.tokenManager.getUserRole()
+        
+        // Only check proficiency for LEARNER role, ADMIN doesn't need it
+        if (token != null && activeRole != "ADMIN") {
+            isCheckingProficiency = true
+            shouldCheckProficiency = false
+            
+            // Check proficiency - no delay needed as backend should have updated it
+            viewModel.authRepository.getProfile(token).fold(
+                ifLeft = {
+                    // Error case - allow access to avoid blocking user
+                    isCheckingProficiency = false
+                },
+                ifRight = { user ->
+                    // Success case
+                    isCheckingProficiency = false
+                    // If proficiency is null or empty, navigate to adaptive test
+                    if (user.proficiency.isNullOrBlank()) {
+                        rootNavController.navigate(Route.AdaptiveTest.route) {
+                            popUpTo(Route.UserNavigation.route) { inclusive = false }
+                        }
+                    }
+                }
+            )
+        } else {
+            // No token or ADMIN role - skip proficiency check
+            isCheckingProficiency = false
+            shouldCheckProficiency = false
+        }
+    }
 
     var selectedItem by rememberSaveable {
         mutableStateOf(0)

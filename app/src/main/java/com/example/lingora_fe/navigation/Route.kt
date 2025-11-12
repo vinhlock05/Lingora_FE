@@ -10,6 +10,7 @@ sealed class Route(
     object RegisterScreen : Route("registerScreen") // Deprecated - use AuthScreen with initialTab = "register"
     object OTPScreen : Route("otpScreen/{email}")
     object ProficiencySelection : Route("proficiencySelection")
+    object AdaptiveTest : Route("adaptiveTest")
     
     // Admin Navigation
     object AdminNavigation : Route("adminNavigation")

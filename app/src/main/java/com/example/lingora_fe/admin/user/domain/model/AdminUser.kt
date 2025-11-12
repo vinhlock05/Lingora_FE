@@ -7,7 +7,7 @@ data class AdminUser(
     val roles: List<UserRole>,
     val avatar: String?,
     val status: String,
-    val proficiency: String,
+    val proficiency: String? = null,
     val createdAt: String? = null
 )
 

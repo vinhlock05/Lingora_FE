@@ -12,6 +12,7 @@ import com.example.lingora_fe.auth.presentation.AuthScreen
 import com.example.lingora_fe.auth.presentation.OTPScreen
 import com.example.lingora_fe.auth.presentation.ProficiencySelectionScreen
 import com.example.lingora_fe.navigation.Route.Companion.otpScreen
+import com.example.lingora_fe.user.adaptivetest.presentation.AdaptiveTestScreen
 import com.example.lingora_fe.user.navigator.UserNavigator
 
 @Composable
@@ -50,9 +51,9 @@ fun AppNavGraph(
                 val email = backStackEntry.arguments?.getString("email") ?: ""
                 OTPScreen(navController = navController, email = email)
             }
-            
-            composable(route = Route.ProficiencySelection.route) {
-                ProficiencySelectionScreen(navController = navController)
+
+            composable(route = Route.AdaptiveTest.route) {
+                AdaptiveTestScreen(navController = navController)
             }
         }
         
@@ -74,6 +75,11 @@ fun AppNavGraph(
             composable(route = Route.UserNavigator.route) {
                 UserNavigator(rootNavController = navController)
             }
+        }
+        
+        // Adaptive Test (accessible from root for navigation from UserNavigator)
+        composable(route = Route.AdaptiveTest.route) {
+            AdaptiveTestScreen(navController = navController)
         }
     }
 }

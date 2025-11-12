@@ -372,7 +372,9 @@ fun UserCard(
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
                         StatusChip(status = user.status)
-                        ProficiencyChip(proficiency = user.proficiency)
+                        user.proficiency?.let { proficiency ->
+                            ProficiencyChip(proficiency = proficiency)
+                        }
                     }
                     // Roles
                     Text(

@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.lingora_fe.admin.user.domain.model.AdminUser
-import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
 import com.example.lingora_fe.admin.user.domain.model.SortOption
+import com.example.lingora_fe.core.domain.model.ProficiencyLevel
 import com.example.lingora_fe.admin.user.domain.model.UserStatus
 import com.example.lingora_fe.admin.user.presentation.UserManagementEvent
 import com.example.lingora_fe.admin.user.presentation.UserManagementViewModel

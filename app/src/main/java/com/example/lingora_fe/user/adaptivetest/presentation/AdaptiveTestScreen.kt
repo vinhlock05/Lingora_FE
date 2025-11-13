@@ -1,22 +1,35 @@
 package com.example.lingora_fe.user.adaptivetest.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -25,8 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.lingora_fe.core.ui.theme.GradientEnd
@@ -34,7 +45,8 @@ import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
 import com.example.lingora_fe.navigation.Route
-import com.example.lingora_fe.user.adaptivetest.domain.model.ProficiencyLevel
+import com.example.lingora_fe.core.domain.model.ProficiencyLevel
+import com.example.lingora_fe.user.adaptivetest.domain.model.PublicAdaptiveQuestion
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,16 +67,6 @@ fun AdaptiveTestScreen(
                         color = MainText
                     )
                 },
-                navigationIcon = {
-                    if (!state.isCompleted) {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.White
                 )
@@ -79,9 +81,11 @@ fun AdaptiveTestScreen(
         ) {
             val currentQuestion = state.currentQuestion
             val error = state.error
+            val lastAnsweredQuestion = state.lastAnsweredQuestion
+            val showResult = state.showResult
             
             when {
-                state.isLoading && currentQuestion == null -> {
+                state.isLoading && currentQuestion == null && !showResult -> {
                     // Initial loading
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
@@ -103,16 +107,36 @@ fun AdaptiveTestScreen(
                         }
                     )
                 }
+                showResult && lastAnsweredQuestion != null -> {
+                    // Question screen - show result
+                    // Find the evaluation for this question
+                    val evaluation = state.answerEvaluations.find { it.questionId == state.lastQuestionId }
+                    QuestionContent(
+                        question = lastAnsweredQuestion,
+                        answeredCount = state.answeredCount,
+                        selectedAnswer = state.lastSelectedAnswer,
+                        isLoading = state.isLoading,
+                        showResult = true,
+                        isCorrect = evaluation?.isCorrect ?: false,
+                        correctAnswer = state.lastCorrectAnswer ?: evaluation?.correctAnswer,
+                        onAnswerSelected = { },
+                        onSubmitAnswer = { },
+                        onContinue = { viewModel.continueToNextQuestion() }
+                    )
+                }
                 currentQuestion != null -> {
-                    // Question screen
+                    // Question screen - normal state
                     QuestionContent(
                         question = currentQuestion,
                         answeredCount = state.answeredCount,
-                        currentProficiency = state.currentProficiency,
                         selectedAnswer = state.selectedAnswer,
                         isLoading = state.isLoading,
+                        showResult = false,
+                        isCorrect = false,
+                        correctAnswer = null,
                         onAnswerSelected = { viewModel.selectAnswer(it) },
-                        onSubmitAnswer = { viewModel.submitAnswer() }
+                        onSubmitAnswer = { viewModel.submitAnswer() },
+                        onContinue = { }
                     )
                 }
                 error != null -> {
@@ -130,20 +154,23 @@ fun AdaptiveTestScreen(
 
 @Composable
 fun QuestionContent(
-    question: com.example.lingora_fe.user.adaptivetest.domain.model.PublicAdaptiveQuestion,
+    question: PublicAdaptiveQuestion,
     answeredCount: Int,
-    currentProficiency: ProficiencyLevel,
     selectedAnswer: String?,
     isLoading: Boolean,
+    showResult: Boolean = false,
+    isCorrect: Boolean = false,
+    correctAnswer: String? = null,
     onAnswerSelected: (String) -> Unit,
-    onSubmitAnswer: () -> Unit
+    onSubmitAnswer: () -> Unit,
+    onContinue: () -> Unit = { }
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Progress indicator
         Text(
@@ -155,6 +182,46 @@ fun QuestionContent(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        // Passage card (if exists)
+        if (!question.passage.isNullOrBlank()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFF8FAFC)
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Passage label
+                    Text(
+                        text = "Đọc đoạn văn:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF64748B)
+                    )
+                    
+                    // Passage text
+                    Text(
+                        text = question.passage,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = MainText,
+                        lineHeight = 22.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Question card
         Card(
@@ -205,48 +272,92 @@ fun QuestionContent(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             question.options.forEach { option ->
+                // Determine if this option is correct or wrong
+                val isSelectedOption = selectedAnswer?.equals(option, ignoreCase = true) == true
+                val isCorrectAnswerOption = if (showResult && correctAnswer != null) {
+                    // Backend provided correct answer - compare with option
+                    correctAnswer.equals(option, ignoreCase = true)
+                } else if (showResult && isSelectedOption) {
+                    // Backend didn't provide correct answer - use evaluation result
+                    // If user answered correctly, the selected answer is correct
+                    isCorrect
+                } else {
+                    false
+                }
+                val isWrongSelected = showResult && isSelectedOption && !isCorrectAnswerOption
+                val isCorrectSelected = showResult && isCorrectAnswerOption
+                
                 AnswerOption(
                     text = option,
-                    isSelected = selectedAnswer == option,
-                    onClick = { if (!isLoading) onAnswerSelected(option) }
+                    isSelected = isSelectedOption,
+                    isCorrect = isCorrectSelected,
+                    isWrong = isWrongSelected,
+                    showResult = showResult,
+                    onClick = { if (!isLoading && !showResult) onAnswerSelected(option) }
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Submit button
-        Button(
-            onClick = onSubmitAnswer,
-            enabled = selectedAnswer != null && !isLoading,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(GradientStart, GradientEnd)
+        // Submit button or Continue button
+        if (showResult) {
+            Button(
+                onClick = onContinue,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(GradientStart, GradientEnd)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     ),
-                    shape = RoundedCornerShape(12.dp)
-                ),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                disabledContainerColor = Color(0xFFE5E7EB)
-            )
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent
                 )
-            } else {
+            ) {
                 Text(
-                    text = "Gửi câu trả lời",
+                    text = "Tiếp tục",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (selectedAnswer != null && !isLoading) Color.White else NavBarText
+                    color = Color.White
                 )
+            }
+        } else {
+            Button(
+                onClick = onSubmitAnswer,
+                enabled = selectedAnswer != null && !isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(GradientStart, GradientEnd)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    disabledContainerColor = Color(0xFFE5E7EB)
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Gửi câu trả lời",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (selectedAnswer != null && !isLoading) Color.White else NavBarText
+                    )
+                }
             }
         }
     }
@@ -256,23 +367,44 @@ fun QuestionContent(
 fun AnswerOption(
     text: String,
     isSelected: Boolean,
+    isCorrect: Boolean = false,
+    isWrong: Boolean = false,
+    showResult: Boolean = false,
     onClick: () -> Unit
 ) {
+    val backgroundColor = when {
+        isCorrect -> Color(0xFFDCFCE7) // Green background for correct answer
+        isWrong -> Color(0xFFFEE2E2) // Red background for wrong selected answer
+        isSelected -> Color(0xFFE0F2FE) // Light blue for selected
+        else -> Color.White
+    }
+    
+    val borderColor = when {
+        isCorrect -> Color(0xFF10B981) // Green border
+        isWrong -> Color(0xFFEF4444) // Red border
+        isSelected -> GradientStart
+        else -> Color(0xFFE5E7EB)
+    }
+    
+    val borderWidth = if (isSelected || isCorrect || isWrong) 2.dp else 1.dp
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .then(
+                if (!showResult) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) Color(0xFFE0F2FE) else Color.White
+            containerColor = backgroundColor
         ),
-        border = if (isSelected) {
-            androidx.compose.foundation.BorderStroke(2.dp, GradientStart)
-        } else {
-            androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB))
-        },
+        border = androidx.compose.foundation.BorderStroke(borderWidth, borderColor),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 4.dp else 1.dp
+            defaultElevation = if (isSelected || isCorrect || isWrong) 4.dp else 1.dp
         )
     ) {
         Row(
@@ -282,26 +414,81 @@ fun AnswerOption(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Radio button indicator
-            Surface(
-                modifier = Modifier.size(24.dp),
-                shape = androidx.compose.foundation.shape.CircleShape,
-                color = if (isSelected) GradientStart else Color.Transparent,
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 2.dp,
-                    color = if (isSelected) GradientStart else Color(0xFF9CA3AF)
-                )
-            ) {
-                if (isSelected) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+            // Radio button indicator or result icon
+            if (showResult) {
+                // Show checkmark for correct answer or X for wrong answer
+                if (isCorrect) {
+                    // Green checkmark
+                    Surface(
+                        modifier = Modifier.size(24.dp),
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        color = Color(0xFF10B981)
                     ) {
-                        Surface(
-                            modifier = Modifier.size(12.dp),
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            color = Color.White
-                        ) {}
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "✓",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                } else if (isWrong) {
+                    // Red X
+                    Surface(
+                        modifier = Modifier.size(24.dp),
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        color = Color(0xFFEF4444)
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "✕",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                } else {
+                    // Empty circle for unselected options
+                    Surface(
+                        modifier = Modifier.size(24.dp),
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        color = Color.Transparent,
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 2.dp,
+                            color = Color(0xFF9CA3AF)
+                        )
+                    ) {}
+                }
+            } else {
+                // Radio button indicator (normal state)
+                Surface(
+                    modifier = Modifier.size(24.dp),
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    color = if (isSelected) GradientStart else Color.Transparent,
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 2.dp,
+                        color = if (isSelected) GradientStart else Color(0xFF9CA3AF)
+                    )
+                ) {
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Surface(
+                                modifier = Modifier.size(12.dp),
+                                shape = androidx.compose.foundation.shape.CircleShape,
+                                color = Color.White
+                            ) {}
+                        }
                     }
                 }
             }
@@ -310,6 +497,7 @@ fun AnswerOption(
                 text = text,
                 fontSize = 16.sp,
                 color = MainText,
+                fontWeight = if (isCorrect || isWrong) FontWeight.SemiBold else FontWeight.Normal,
                 modifier = Modifier.weight(1f)
             )
         }

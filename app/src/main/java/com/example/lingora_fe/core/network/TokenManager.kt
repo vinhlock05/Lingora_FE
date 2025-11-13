@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
 
 @Singleton
 class TokenManager @Inject constructor(
@@ -156,12 +157,16 @@ class TokenManager @Inject constructor(
 
     /**
      * Cập nhật access token sau khi refresh
+     * Sử dụng commit() để đảm bảo token được lưu ngay lập tức
      */
     fun updateAccessToken(newAccessToken: String) {
         Log.d(TAG, "Updating access token")
-        sharedPreferences.edit()
-            .putString(KEY_ACCESS_TOKEN, newAccessToken)
-            .apply()
+        sharedPreferences.edit(commit = true) {
+            putString(KEY_ACCESS_TOKEN, newAccessToken)
+        }
+        // Verify token was updated
+        val updatedToken = sharedPreferences.getString(KEY_ACCESS_TOKEN, null)
+        Log.d(TAG, "Token updated successfully: ${updatedToken != null}, token length: ${updatedToken?.length}")
     }
 
     /**

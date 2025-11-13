@@ -38,8 +38,14 @@ data class PublicAdaptiveQuestionDto(
     @SerializedName("text")
     val text: String,
     
+    @SerializedName("passage")
+    val passage: String? = null,
+    
     @SerializedName("options")
     val options: List<String>,
+    
+    @SerializedName("answer")
+    val answer: String? = null,
     
     @SerializedName("proficiency")
     val proficiency: String
@@ -71,6 +77,9 @@ data class AnswerEvaluationDto(
     
     @SerializedName("isCorrect")
     val isCorrect: Boolean,
+    
+    @SerializedName("correctAnswer")
+    val correctAnswer: String? = null,
     
     @SerializedName("proficiency")
     val proficiency: String

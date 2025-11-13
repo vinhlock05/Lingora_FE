@@ -3,6 +3,9 @@ package com.example.lingora_fe.navigation
 sealed class Route(
     val route: String
 ) {
+    // Splash Screen
+    object SplashScreen : Route("splashScreen")
+    
     // Auth Navigation
     object AuthNavigation : Route("authNavigation")
     object AuthScreen : Route("authScreen")

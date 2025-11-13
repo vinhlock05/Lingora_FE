@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.adaptivetest.data.remote.dto
 
+import com.example.lingora_fe.core.domain.model.ProficiencyLevel
 import com.example.lingora_fe.user.adaptivetest.domain.model.*
 
 fun PublicAdaptiveQuestionDto.toDomainModel(): PublicAdaptiveQuestion {
@@ -7,7 +8,9 @@ fun PublicAdaptiveQuestionDto.toDomainModel(): PublicAdaptiveQuestion {
         id = id,
         skill = skill,
         text = text,
+        passage = passage,
         options = options,
+        answer = answer,
         proficiency = ProficiencyLevel.fromString(proficiency) ?: ProficiencyLevel.BEGINNER
     )
 }
@@ -24,6 +27,7 @@ fun AnswerEvaluationDto.toDomainModel(): AnswerEvaluation {
     return AnswerEvaluation(
         questionId = questionId,
         isCorrect = isCorrect,
+        correctAnswer = correctAnswer,
         proficiency = ProficiencyLevel.fromString(proficiency) ?: ProficiencyLevel.BEGINNER
     )
 }

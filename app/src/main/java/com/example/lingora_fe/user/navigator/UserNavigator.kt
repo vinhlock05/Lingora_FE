@@ -1,8 +1,8 @@
 package com.example.lingora_fe.user.navigator
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -56,44 +56,46 @@ fun UserNavigator(
 ) {
     val navController = rememberNavController()
     val backStackState = navController.currentBackStackEntryAsState().value
-    var isCheckingProficiency by remember { mutableStateOf(false) }
-    var shouldCheckProficiency by remember { mutableStateOf(true) }
+    var isCheckingProficiency by remember { mutableStateOf(true) }
+    var hasProficiency by remember { mutableStateOf(false) }
     
-    // Check proficiency when entering UserNavigator (only once)
+    // Check proficiency when entering UserNavigator
+    // This must complete BEFORE rendering NavHost to prevent API calls
     LaunchedEffect(Unit) {
-        if (!shouldCheckProficiency) {
-            return@LaunchedEffect
-        }
-        
         val token = viewModel.tokenManager.getAccessToken()
         val activeRole = viewModel.tokenManager.getActiveRole() ?: viewModel.tokenManager.getUserRole()
         
         // Only check proficiency for LEARNER role, ADMIN doesn't need it
         if (token != null && activeRole != "ADMIN") {
             isCheckingProficiency = true
-            shouldCheckProficiency = false
             
-            // Check proficiency - no delay needed as backend should have updated it
+            // Check proficiency
             viewModel.authRepository.getProfile(token).fold(
                 ifLeft = {
                     // Error case - allow access to avoid blocking user
                     isCheckingProficiency = false
+                    hasProficiency = true // Allow access even on error
                 },
                 ifRight = { user ->
                     // Success case
                     isCheckingProficiency = false
                     // If proficiency is null or empty, navigate to adaptive test
                     if (user.proficiency.isNullOrBlank()) {
+                        // Navigate to adaptive test - don't set hasProficiency to true
                         rootNavController.navigate(Route.AdaptiveTest.route) {
                             popUpTo(Route.UserNavigation.route) { inclusive = false }
                         }
+                        // Keep hasProficiency = false to prevent NavHost from rendering
+                    } else {
+                        // User has proficiency - allow rendering NavHost
+                        hasProficiency = true
                     }
                 }
             )
         } else {
-            // No token or ADMIN role - skip proficiency check
+            // No token or ADMIN role - skip proficiency check and allow rendering
             isCheckingProficiency = false
-            shouldCheckProficiency = false
+            hasProficiency = true
         }
     }
 
@@ -154,6 +156,18 @@ fun UserNavigator(
                 { /* No action */ }
             }
         }
+    }
+
+    // Show loading while checking proficiency
+    // Don't render NavHost until proficiency check is complete
+    if (isCheckingProficiency || !hasProficiency) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
     Scaffold(

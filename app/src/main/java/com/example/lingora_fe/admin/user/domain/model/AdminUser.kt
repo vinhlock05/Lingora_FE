@@ -60,12 +60,6 @@ enum class UserStatus(val value: String) {
     DELETED("DELETED")
 }
 
-enum class ProficiencyLevel(val value: String) {
-    BEGINNER("BEGINNER"),
-    INTERMEDIATE("INTERMEDIATE"),
-    ADVANCED("ADVANCED")
-}
-
 enum class UserRoleType(val value: String, val id: Int) {
     ADMIN("ADMIN", 1),
     LEARNER("LEARNER", 2)

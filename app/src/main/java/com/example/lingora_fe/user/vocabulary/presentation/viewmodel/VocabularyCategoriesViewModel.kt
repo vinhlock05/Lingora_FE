@@ -2,7 +2,6 @@ package com.example.lingora_fe.user.vocabulary.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import arrow.core.getOrElse
 import com.example.lingora_fe.user.vocabulary.domain.model.CategoryProgress
 import com.example.lingora_fe.user.vocabulary.domain.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,10 +28,6 @@ class VocabularyCategoriesViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(VocabularyCategoriesUiState())
     val uiState: StateFlow<VocabularyCategoriesUiState> = _uiState.asStateFlow()
-
-    init {
-        loadCategories()
-    }
 
     fun loadCategories(page: Int = 1, search: String? = null) {
         viewModelScope.launch {

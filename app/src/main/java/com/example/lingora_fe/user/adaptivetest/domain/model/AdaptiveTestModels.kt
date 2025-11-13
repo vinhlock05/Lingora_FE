@@ -1,18 +1,14 @@
 package com.example.lingora_fe.user.adaptivetest.domain.model
 
-data class AdaptiveQuestion(
-    val id: Int,
-    val skill: String,
-    val text: String,
-    val options: List<String>,
-    val proficiency: ProficiencyLevel
-)
+import com.example.lingora_fe.core.domain.model.ProficiencyLevel
 
 data class PublicAdaptiveQuestion(
     val id: Int,
     val skill: String,
     val text: String,
+    val passage: String? = null,
     val options: List<String>,
+    val answer: String? = null,
     val proficiency: ProficiencyLevel
 )
 
@@ -24,6 +20,7 @@ data class AdaptiveTestAnswer(
 data class AnswerEvaluation(
     val questionId: Int,
     val isCorrect: Boolean,
+    val correctAnswer: String? = null,
     val proficiency: ProficiencyLevel
 )
 
@@ -41,21 +38,3 @@ data class QuestionBank(
     val intermediate: List<PublicAdaptiveQuestion>,
     val advanced: List<PublicAdaptiveQuestion>
 )
-
-enum class ProficiencyLevel(val value: String) {
-    BEGINNER("BEGINNER"),
-    INTERMEDIATE("INTERMEDIATE"),
-    ADVANCED("ADVANCED");
-    
-    companion object {
-        fun fromString(value: String?): ProficiencyLevel? {
-            return when (value?.uppercase()) {
-                "BEGINNER" -> BEGINNER
-                "INTERMEDIATE" -> INTERMEDIATE
-                "ADVANCED" -> ADVANCED
-                else -> null
-            }
-        }
-    }
-}
-

@@ -76,11 +76,26 @@ class AdaptiveTestViewModel @Inject constructor(
             
             repository.getNextQuestion(updatedAnsweredQuestions)
                 .onRight { result ->
+                    // Find the evaluation for the current question
+                    val currentEvaluation = result.answerEvaluations.find { 
+                        it.questionId == currentQuestion.id 
+                    }
+                    val correctAnswer = currentEvaluation?.correctAnswer
+                    
+                    // After getting response, show result with the answered question
+                    // Store the next question temporarily while showing result
                     _state.value = _state.value.copy(
                         isLoading = false,
                         answeredQuestions = updatedAnsweredQuestions,
                         answerEvaluations = result.answerEvaluations,
-                        currentQuestion = result.nextQuestion,
+                        // Keep last question to show result
+                        lastAnsweredQuestion = currentQuestion,
+                        lastSelectedAnswer = selectedAnswer,
+                        lastQuestionId = currentQuestion.id,
+                        lastCorrectAnswer = correctAnswer,
+                        showResult = true,
+                        // Store next question but don't show it yet
+                        nextQuestion = result.nextQuestion,
                         currentProficiency = result.currentProficiency,
                         answeredCount = result.answeredCount,
                         isCompleted = result.isCompleted,
@@ -93,9 +108,39 @@ class AdaptiveTestViewModel @Inject constructor(
                     Log.e("AdaptiveTestViewModel", "Failed to submit answer: ${failure.message}")
                     _state.value = _state.value.copy(
                         isLoading = false,
+                        showResult = false,
                         error = failure.message ?: "Không thể gửi câu trả lời"
                     )
                 }
+        }
+    }
+    
+    fun continueToNextQuestion() {
+        // Use the stored nextQuestion when continuing
+        val nextQuestion = _state.value.nextQuestion
+        val isCompleted = _state.value.isCompleted
+        
+        if (isCompleted) {
+            // Test completed, just clear result
+            _state.value = _state.value.copy(
+                showResult = false,
+                lastAnsweredQuestion = null,
+                lastSelectedAnswer = null,
+                lastQuestionId = null,
+                lastCorrectAnswer = null,
+                nextQuestion = null
+            )
+        } else {
+            // Move to next question
+            _state.value = _state.value.copy(
+                showResult = false,
+                lastAnsweredQuestion = null,
+                lastSelectedAnswer = null,
+                lastQuestionId = null,
+                lastCorrectAnswer = null,
+                currentQuestion = nextQuestion,
+                nextQuestion = null
+            )
         }
     }
 

@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.admin.user.data.remote.dto.toDto
 import com.example.lingora_fe.admin.user.domain.model.CreateUserData
-import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
 import com.example.lingora_fe.admin.user.domain.model.SortOption
+import com.example.lingora_fe.core.domain.model.ProficiencyLevel
 import com.example.lingora_fe.admin.user.domain.model.UpdateUserData
 import com.example.lingora_fe.admin.user.domain.model.UserFilterOptions
 import com.example.lingora_fe.admin.user.domain.model.UserStatus

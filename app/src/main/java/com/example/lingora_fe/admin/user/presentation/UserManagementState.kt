@@ -2,9 +2,9 @@ package com.example.lingora_fe.admin.user.presentation
 
 import android.util.Patterns
 import com.example.lingora_fe.admin.user.domain.model.AdminUser
-import com.example.lingora_fe.admin.user.domain.model.ProficiencyLevel
 import com.example.lingora_fe.admin.user.domain.model.SortOption
 import com.example.lingora_fe.admin.user.domain.model.UserStatus
+import com.example.lingora_fe.core.domain.model.ProficiencyLevel
 
 // Main UI State
 data class UserManagementState(

@@ -1,18 +1,23 @@
 package com.example.lingora_fe.user.navigator
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -45,9 +50,54 @@ import com.example.lingora_fe.user.vocabulary.presentation.screen.VocabularyCate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserNavigator(rootNavController: NavHostController) {
+fun UserNavigator(
+    rootNavController: NavHostController,
+    viewModel: AuthRepositoryViewModel = hiltViewModel()
+) {
     val navController = rememberNavController()
     val backStackState = navController.currentBackStackEntryAsState().value
+    var isCheckingProficiency by remember { mutableStateOf(true) }
+    var hasProficiency by remember { mutableStateOf(false) }
+    
+    // Check proficiency when entering UserNavigator
+    // This must complete BEFORE rendering NavHost to prevent API calls
+    LaunchedEffect(Unit) {
+        val token = viewModel.tokenManager.getAccessToken()
+        val activeRole = viewModel.tokenManager.getActiveRole() ?: viewModel.tokenManager.getUserRole()
+        
+        // Only check proficiency for LEARNER role, ADMIN doesn't need it
+        if (token != null && activeRole != "ADMIN") {
+            isCheckingProficiency = true
+            
+            // Check proficiency
+            viewModel.authRepository.getProfile(token).fold(
+                ifLeft = {
+                    // Error case - allow access to avoid blocking user
+                    isCheckingProficiency = false
+                    hasProficiency = true // Allow access even on error
+                },
+                ifRight = { user ->
+                    // Success case
+                    isCheckingProficiency = false
+                    // If proficiency is null or empty, navigate to adaptive test
+                    if (user.proficiency.isNullOrBlank()) {
+                        // Navigate to adaptive test - don't set hasProficiency to true
+                        rootNavController.navigate(Route.AdaptiveTest.route) {
+                            popUpTo(Route.UserNavigation.route) { inclusive = false }
+                        }
+                        // Keep hasProficiency = false to prevent NavHost from rendering
+                    } else {
+                        // User has proficiency - allow rendering NavHost
+                        hasProficiency = true
+                    }
+                }
+            )
+        } else {
+            // No token or ADMIN role - skip proficiency check and allow rendering
+            isCheckingProficiency = false
+            hasProficiency = true
+        }
+    }
 
     var selectedItem by rememberSaveable {
         mutableStateOf(0)
@@ -106,6 +156,18 @@ fun UserNavigator(rootNavController: NavHostController) {
                 { /* No action */ }
             }
         }
+    }
+
+    // Show loading while checking proficiency
+    // Don't render NavHost until proficiency check is complete
+    if (isCheckingProficiency || !hasProficiency) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
     Scaffold(

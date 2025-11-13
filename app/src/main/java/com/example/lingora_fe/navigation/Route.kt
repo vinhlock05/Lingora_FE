@@ -3,6 +3,9 @@ package com.example.lingora_fe.navigation
 sealed class Route(
     val route: String
 ) {
+    // Splash Screen
+    object SplashScreen : Route("splashScreen")
+    
     // Auth Navigation
     object AuthNavigation : Route("authNavigation")
     object AuthScreen : Route("authScreen")
@@ -10,6 +13,7 @@ sealed class Route(
     object RegisterScreen : Route("registerScreen") // Deprecated - use AuthScreen with initialTab = "register"
     object OTPScreen : Route("otpScreen/{email}")
     object ProficiencySelection : Route("proficiencySelection")
+    object AdaptiveTest : Route("adaptiveTest")
     
     // Admin Navigation
     object AdminNavigation : Route("adminNavigation")

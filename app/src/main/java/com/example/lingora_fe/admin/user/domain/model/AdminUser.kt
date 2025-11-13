@@ -7,7 +7,7 @@ data class AdminUser(
     val roles: List<UserRole>,
     val avatar: String?,
     val status: String,
-    val proficiency: String,
+    val proficiency: String? = null,
     val createdAt: String? = null
 )
 
@@ -58,12 +58,6 @@ enum class UserStatus(val value: String) {
     INACTIVE("INACTIVE"),
     BANNED("BANNED"),
     DELETED("DELETED")
-}
-
-enum class ProficiencyLevel(val value: String) {
-    BEGINNER("BEGINNER"),
-    INTERMEDIATE("INTERMEDIATE"),
-    ADVANCED("ADVANCED")
 }
 
 enum class UserRoleType(val value: String, val id: Int) {

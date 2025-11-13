@@ -166,7 +166,9 @@ fun UserDetailsContent(
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusChip(status = user.status)
-                ProficiencyChip(proficiency = user.proficiency)
+                user.proficiency?.let { proficiency ->
+                    ProficiencyChip(proficiency = proficiency)
+                }
             }
         }
 
@@ -276,7 +278,7 @@ fun UserDetailsContent(
                             color = NavBarText
                         )
                         Text(
-                            text = user.proficiency,
+                            text = user.proficiency ?: "Not Set",
                             style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.Bold,
                             color = when (user.proficiency) {

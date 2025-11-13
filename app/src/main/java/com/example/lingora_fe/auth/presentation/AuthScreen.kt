@@ -22,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -83,18 +82,31 @@ fun AuthScreen(
             activeTab == "login" && 
             !authState.isLoading &&
             !previousAuthState) {  // Chỉ navigate khi chuyển từ not authenticated -> authenticated
-            // Login successful - navigate based on active role (from TokenManager)
+            // Login successful - check proficiency first
             val tokenManager = viewModel.tokenManager
             val activeRole = tokenManager.getActiveRole() ?: tokenManager.getUserRole()
-            val destination = if (activeRole == "ADMIN") {
-                Route.AdminNavigation.route
-            } else {
-                Route.UserNavigation.route
-            }
             
             previousAuthState = true
-            navController.navigate(destination) {
-                popUpTo(Route.AuthNavigation.route) { inclusive = true }
+            
+            // Check if user is ADMIN - admins don't need proficiency test
+            if (activeRole == "ADMIN") {
+                navController.navigate(Route.AdminNavigation.route) {
+                    popUpTo(Route.AuthNavigation.route) { inclusive = true }
+                }
+            } else {
+                // For LEARNER role, check proficiency
+                val userProficiency = authState.user?.proficiency
+                if (userProficiency.isNullOrBlank()) {
+                    // User has no proficiency - redirect to adaptive test
+                    navController.navigate(Route.AdaptiveTest.route) {
+                        popUpTo(Route.AuthNavigation.route) { inclusive = true }
+                    }
+                } else {
+                    // User has proficiency - navigate to UserNavigation
+                    navController.navigate(Route.UserNavigation.route) {
+                        popUpTo(Route.AuthNavigation.route) { inclusive = true }
+                    }
+                }
             }
         }
         

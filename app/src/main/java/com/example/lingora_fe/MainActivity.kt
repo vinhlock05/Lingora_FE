@@ -13,6 +13,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
+import com.example.lingora_fe.auth.domain.repository.AuthRepository
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.core.ui.theme.Lingora_FETheme
 import com.example.lingora_fe.navigation.AppNavGraph
@@ -27,24 +28,16 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var tokenManager: TokenManager
     
+    @Inject
+    lateinit var authRepository: AuthRepository
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Check if user is already logged in and get active role
-        val accessToken = tokenManager.getAccessToken()
-        val activeRole = tokenManager.getActiveRole() ?: tokenManager.getUserRole()
-        
-        val startDestination = if (accessToken != null) {
-            // Route based on active role
-            if (activeRole == "ADMIN") {
-                Route.AdminNavigation.route
-            } else {
-                Route.UserNavigation.route
-            }
-        } else {
-            Route.AuthNavigation.route
-        }
+        // Luôn bắt đầu từ SplashScreen để validate token
+        // SplashScreen sẽ validate token và navigate đến destination phù hợp
+        val startDestination = Route.SplashScreen.route
         
         setContent {
             Lingora_FETheme(darkTheme = false) {
@@ -64,7 +57,9 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavGraph(
                         navController = navController,
-                        startDestination = startDestination
+                        startDestination = startDestination,
+                        authRepository = authRepository,
+                        tokenManager = tokenManager
                     )
                 }
             }

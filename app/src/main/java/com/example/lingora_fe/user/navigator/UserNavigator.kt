@@ -29,7 +29,6 @@ import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.components.FloatingActionButton
 import com.example.lingora_fe.user.dictionary.presentation.DictionaryScreen
 import com.example.lingora_fe.user.forum.presentation.ForumScreen
-import com.example.lingora_fe.user.material.presentation.MaterialsScreen
 import com.example.lingora_fe.user.navigator.components.BottomNavigationBar
 import com.example.lingora_fe.user.navigator.components.UserTopBar
 import com.example.lingora_fe.user.notification.presentation.screen.NotificationScreen
@@ -106,7 +105,7 @@ fun UserNavigator(
     selectedItem = when (backStackState?.destination?.route) {
         Route.VocabularyTab.route -> 0
         Route.PracticeTab.route -> 1
-        Route.MaterialsTab.route -> 2
+        Route.StudySetList.route -> 2
         Route.DictionaryTab.route -> 3
         Route.ForumTab.route -> 4
         Route.ProfileTab.route -> 5
@@ -118,7 +117,7 @@ fun UserNavigator(
         when (backStackState?.destination?.route) {
             Route.VocabularyTab.route,
             Route.PracticeTab.route,
-            Route.MaterialsTab.route,
+            Route.StudySetList.route,
             Route.DictionaryTab.route,
             Route.ForumTab.route,
             Route.ProfileTab.route -> true
@@ -134,7 +133,7 @@ fun UserNavigator(
             route == Route.VocabularyTab.route -> true
             route.startsWith("vocabulary/category/") -> true
             route == Route.PracticeTab.route -> true
-            route == Route.MaterialsTab.route -> true
+                    route == Route.StudySetList.route -> true
             route == Route.DictionaryTab.route -> true
             route == Route.ForumTab.route -> true
             route == Route.ProfileTab.route -> true
@@ -177,7 +176,7 @@ fun UserNavigator(
                 val title = when (backStackState?.destination?.route) {
                     Route.VocabularyTab.route -> "Học từ vựng"
                     Route.PracticeTab.route -> "Luyện tập"
-                    Route.MaterialsTab.route -> "Học liệu"
+                            Route.StudySetList.route -> "Học liệu"
                     Route.DictionaryTab.route -> "Từ điển"
                     Route.ForumTab.route -> "Diễn đàn"
                     Route.ProfileTab.route -> "Cá nhân"
@@ -198,7 +197,7 @@ fun UserNavigator(
                         val index = when (route) {
                             Route.VocabularyTab.route -> 0
                             Route.PracticeTab.route -> 1
-                            Route.MaterialsTab.route -> 2
+                            Route.StudySetList.route -> 2
                             Route.DictionaryTab.route -> 3
                             Route.ForumTab.route -> 4
                             Route.ProfileTab.route -> 5
@@ -417,9 +416,104 @@ fun UserNavigator(
                 WritingPracticeScreen(navController = navController)
             }
 
-            // Materials Tab
-            composable(Route.MaterialsTab.route) {
-                MaterialsScreen()
+            composable(
+                route = Route.StudySetDetail.route,
+                arguments = listOf(
+                    navArgument("studySetId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val studySetId = backStackEntry.arguments?.getInt("studySetId") ?: 0
+                com.example.lingora_fe.user.studyset.presentation.screen.StudySetDetailScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onStartFlashcard = {
+                        navController.navigate(Route.studySetFlashcard(studySetId))
+                    },
+                    onStartQuiz = {
+                        navController.navigate(Route.studySetQuiz(studySetId))
+                    },
+                    onEditClick = { id ->
+                        navController.navigate(Route.studySetEdit(id))
+                    },
+                    onDeleteSuccess = {
+                        // Refresh list after delete
+                        navController.previousBackStackEntry?.savedStateHandle?.set("refreshStudySetList", true)
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Route.StudySetCreate.route) { backStackEntry ->
+                com.example.lingora_fe.user.studyset.presentation.screen.CreateEditStudySetScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        // Set refresh flag before navigating back
+                        navController.previousBackStackEntry?.savedStateHandle?.set("refreshStudySetList", true)
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(
+                route = Route.StudySetEdit.route,
+                arguments = listOf(
+                    navArgument("studySetId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                com.example.lingora_fe.user.studyset.presentation.screen.CreateEditStudySetScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onSaveSuccess = {
+                        // Set refresh flag before navigating back
+                        navController.previousBackStackEntry?.savedStateHandle?.set("refreshStudySetList", true)
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(
+                route = Route.StudySetFlashcard.route,
+                arguments = listOf(
+                    navArgument("studySetId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val studySetId = backStackEntry.arguments?.getInt("studySetId") ?: 0
+                com.example.lingora_fe.user.studyset.presentation.screen.StudySetFlashcardScreen(
+                    studySetId = studySetId,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Route.StudySetQuiz.route,
+                arguments = listOf(
+                    navArgument("studySetId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val studySetId = backStackEntry.arguments?.getInt("studySetId") ?: 0
+                com.example.lingora_fe.user.studyset.presentation.screen.StudySetQuizScreen(
+                    studySetId = studySetId,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            // StudySet Tab (replaces Materials Tab)
+            composable(Route.StudySetList.route) {
+                com.example.lingora_fe.user.studyset.presentation.screen.StudySetListScreen(
+                    onStudySetClick = { studySetId ->
+                        navController.navigate(Route.studySetDetail(studySetId))
+                    },
+                    onCreateClick = {
+                        navController.navigate(Route.StudySetCreate.route)
+                    },
+                    navController = navController
+                )
             }
 
             // Dictionary Tab

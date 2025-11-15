@@ -12,6 +12,9 @@ import com.example.lingora_fe.admin.word.domain.repository.WordRepository
 import com.example.lingora_fe.admin.user.data.remote.api.UserManagementApiService
 import com.example.lingora_fe.admin.user.data.repository.UserManagementRepositoryImpl
 import com.example.lingora_fe.admin.user.domain.repository.UserManagementRepository
+import com.example.lingora_fe.admin.studyset.data.remote.api.AdminStudySetApiService
+import com.example.lingora_fe.admin.studyset.data.repository.AdminStudySetRepositoryImpl
+import com.example.lingora_fe.admin.studyset.domain.repository.AdminStudySetRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -47,6 +50,12 @@ abstract class AdminRepositoryModule {
     abstract fun bindWordRepository(
         wordRepositoryImpl: WordRepositoryImpl
     ): WordRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAdminStudySetRepository(
+        adminStudySetRepositoryImpl: AdminStudySetRepositoryImpl
+    ): AdminStudySetRepository
 }
 
 @Module
@@ -79,6 +88,13 @@ object AdminNetworkModule {
     @Singleton
     fun provideWordApiService(retrofit: Retrofit): WordApiService {
         return retrofit.create(WordApiService::class.java)
+    }
+
+    // StudySet Management
+    @Provides
+    @Singleton
+    fun provideAdminStudySetApiService(retrofit: Retrofit): AdminStudySetApiService {
+        return retrofit.create(AdminStudySetApiService::class.java)
     }
 }
 

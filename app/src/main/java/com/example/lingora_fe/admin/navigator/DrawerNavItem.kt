@@ -45,6 +45,13 @@ sealed class DrawerNavItem(
         description = "Manage words"
     )
     
+    object StudySetManagement : DrawerNavItem(
+        route = "admin_studyset_management",
+        title = "StudySet Management",
+        icon = Icons.Default.School,
+        description = "Manage study sets"
+    )
+    
     object ContentManagement : DrawerNavItem(
         route = "admin_content",
         title = "Content Management",
@@ -80,6 +87,7 @@ sealed class DrawerNavItem(
             CategoryManagement,
             TopicManagement,
             WordManagement,
+            StudySetManagement,
             ContentManagement,
             ForumManagement,
             Analytics,

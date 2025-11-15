@@ -31,6 +31,8 @@ import com.example.lingora_fe.admin.user.presentation.screen.UserListScreen
 import com.example.lingora_fe.admin.word.presentation.screen.CreateEditWordScreen
 import com.example.lingora_fe.admin.word.presentation.screen.WordListScreen
 import com.example.lingora_fe.admin.word.presentation.screen.WordsInTopicScreen
+import com.example.lingora_fe.admin.studyset.presentation.screen.AdminStudySetListScreen
+import com.example.lingora_fe.admin.studyset.presentation.screen.AdminStudySetDetailScreen
 import com.example.lingora_fe.auth.presentation.AuthViewModel
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.launch
@@ -87,6 +89,8 @@ fun AdminNavigator(
             currentRoute == "admin_word_management/create" -> "Create Word"
             currentRoute.startsWith("admin_word_management/edit") -> "Edit Word"
             currentRoute.startsWith("admin_word_management") -> "Word Management"
+            currentRoute.startsWith("admin_studyset_management/detail") -> "StudySet Detail"
+            currentRoute.startsWith("admin_studyset_management") -> "StudySet Management"
             currentRoute.startsWith("admin_dashboard") -> "Dashboard"
             currentRoute.startsWith("admin_content") -> "Content Management"
             currentRoute.startsWith("admin_forum") -> "Forum Management"
@@ -390,6 +394,30 @@ fun AdminNavigator(
                 ) { backStackEntry ->
                     val wordId = backStackEntry.arguments?.getInt("wordId")
                     CreateEditWordScreen(wordId = wordId, topicId = null, onNavigateBack = { navController.popBackStack() })
+                }
+
+                // StudySet Management
+                composable("admin_studyset_management") {
+                    AdminStudySetListScreen(
+                        onNavigateToDetail = { studySetId ->
+                            navController.navigate("admin_studyset_management/detail/$studySetId")
+                        }
+                    )
+                }
+                composable(
+                    route = "admin_studyset_management/detail/{studySetId}",
+                    arguments = listOf(navArgument("studySetId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val studySetId = backStackEntry.arguments?.getInt("studySetId") ?: 0
+                    AdminStudySetDetailScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onStartFlashcard = { id ->
+                            navController.navigate("studyset/$id/flashcard")
+                        },
+                        onStartQuiz = { id ->
+                            navController.navigate("studyset/$id/quiz")
+                        }
+                    )
                 }
 
                 // Forum Management

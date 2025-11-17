@@ -91,11 +91,22 @@ fun PurchaseModal(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${studySet.flashcards.size} thẻ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = NavBarText
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "${studySet.totalFlashcards} thẻ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NavBarText
+                            )
+                            Text(
+                                text = "${studySet.totalQuizzes} câu hỏi",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NavBarText
+                            )
+                        }
+
                         Text(
                             text = formatPrice(studySet.price),
                             style = MaterialTheme.typography.titleLarge,

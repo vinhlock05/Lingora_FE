@@ -43,23 +43,22 @@ fun CreateEditStudySetScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var hasSaved by remember { mutableStateOf(false) }
-    
-    LaunchedEffect(uiState.isLoading, uiState.error, hasSaved) {
-        if (!uiState.isLoading && hasSaved) {
-            if (uiState.error == null) {
-                // Save was successful
-                hasSaved = false
-                val message = if (uiState.isEditMode) "Đã cập nhật học liệu thành công" else "Đã tạo học liệu thành công"
-                snackbarHostState.showSnackbar(message)
-                // Navigate back after showing snackbar
-                kotlinx.coroutines.delay(1500) // Wait for snackbar to show
-                onSaveSuccess()
-            } else {
-                // Save failed
-                hasSaved = false
-                snackbarHostState.showSnackbar(uiState.error ?: "Có lỗi xảy ra")
-            }
+    // Handle save success
+    LaunchedEffect(uiState.saveSuccess) {
+        if (uiState.saveSuccess) {
+            val message = if (uiState.isEditMode) "Đã cập nhật học liệu thành công" else "Đã tạo học liệu thành công"
+            snackbarHostState.showSnackbar(message)
+            viewModel.consumeSaveSuccess()
+            onSaveSuccess()
+        }
+    }
+
+    // Handle errors when not loading
+    LaunchedEffect(uiState.error, uiState.isLoading) {
+        val errorMessage = uiState.error
+        if (!uiState.isLoading && !errorMessage.isNullOrEmpty()) {
+            snackbarHostState.showSnackbar(errorMessage)
+            viewModel.clearError()
         }
     }
 
@@ -78,8 +77,7 @@ fun CreateEditStudySetScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            hasSaved = true
-                            viewModel.saveStudySet(onSuccess = {})
+                            viewModel.saveStudySet()
                         },
                         enabled = !uiState.isLoading && uiState.title.isNotBlank()
                     ) {
@@ -272,8 +270,7 @@ fun CreateEditStudySetScreen(
                 }
                 Button(
                     onClick = {
-                        hasSaved = true
-                        viewModel.saveStudySet(onSuccess = {})
+                        viewModel.saveStudySet()
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(

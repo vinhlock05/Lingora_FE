@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
@@ -28,6 +29,7 @@ import java.util.Locale
 
 @Composable
 fun StudySetCard(
+    currentUserId: Int,
     studySet: StudySet,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -123,11 +125,10 @@ fun StudySetCard(
                     color = NavBarText
                 )
             }
-
+            val isAccess = studySet.isPurchased == true || studySet.price == 0 || studySet.owner.id == currentUserId
             // Action Button
             val buttonText = when {
-                studySet.isPurchased == true -> "Học ngay"
-                studySet.price == 0 -> "Học ngay"
+                isAccess -> "Học ngay"
                 else -> "Mua ngay"
             }
 

@@ -184,6 +184,7 @@ fun StudySetListScreen(
                         } else {
                             // Use StudySetCard for "Kho học liệu" tab
                             StudySetCard(
+                                currentUserId = viewModel.currentUserId,
                                 studySet = studySet,
                                 onClick = {
                                     // Check access first

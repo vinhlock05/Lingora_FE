@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
 import com.example.lingora_fe.auth.domain.repository.AuthRepository
 import com.example.lingora_fe.core.network.TokenManager
+import com.example.lingora_fe.core.ui.components.FocusComponent
 import com.example.lingora_fe.core.ui.theme.Lingora_FETheme
 import com.example.lingora_fe.navigation.AppNavGraph
 import com.example.lingora_fe.navigation.Route
@@ -50,17 +51,19 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 val navController = rememberNavController()
-                Box(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize()
-                ) {
-                    AppNavGraph(
-                        navController = navController,
-                        startDestination = startDestination,
-                        authRepository = authRepository,
-                        tokenManager = tokenManager
-                    )
+                FocusComponent {
+                    Box(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.background)
+                            .fillMaxSize()
+                    ) {
+                        AppNavGraph(
+                            navController = navController,
+                            startDestination = startDestination,
+                            authRepository = authRepository,
+                            tokenManager = tokenManager
+                        )
+                    }
                 }
             }
         }

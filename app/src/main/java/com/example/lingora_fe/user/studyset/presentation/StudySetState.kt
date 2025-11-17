@@ -48,7 +48,8 @@ data class StudySetFormUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isEditMode: Boolean = false,
-    val studySetId: Int? = null
+    val studySetId: Int? = null,
+    val saveSuccess: Boolean = false
 )
 
 data class FlashcardFormItem(

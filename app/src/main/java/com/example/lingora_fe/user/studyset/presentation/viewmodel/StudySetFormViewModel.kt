@@ -57,7 +57,8 @@ class StudySetFormViewModel @Inject constructor(
                 ifLeft = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = error.message
+                        error = error.message,
+                        saveSuccess = false
                     )
                 },
                 ifRight = { studySet ->
@@ -85,7 +86,8 @@ class StudySetFormViewModel @Inject constructor(
                             )
                         },
                         isLoading = false,
-                        error = null
+                        error = null,
+                        saveSuccess = false
                     )
                 }
             )
@@ -157,7 +159,7 @@ class StudySetFormViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(quizzes = updated)
     }
 
-    fun saveStudySet(onSuccess: () -> Unit) {
+    fun saveStudySet() {
         viewModelScope.launch {
             val token = tokenManager.getAccessToken() ?: return@launch
             val state = _uiState.value
@@ -167,7 +169,7 @@ class StudySetFormViewModel @Inject constructor(
                 return@launch
             }
 
-            _uiState.value = state.copy(isLoading = true, error = null)
+        _uiState.value = state.copy(isLoading = true, error = null, saveSuccess = false)
 
             val flashcards = state.flashcards.map {
                 Flashcard(
@@ -223,13 +225,18 @@ class StudySetFormViewModel @Inject constructor(
 
             result.fold(
                 ifLeft = { error ->
-                    _uiState.value = state.copy(
+                    _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = error.message
+                        error = error.message,
+                        saveSuccess = false
                     )
                 },
                 ifRight = {
-                    onSuccess()
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = null,
+                        saveSuccess = true
+                    )
                 }
             )
         }
@@ -237,6 +244,10 @@ class StudySetFormViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun consumeSaveSuccess() {
+        _uiState.value = _uiState.value.copy(saveSuccess = false)
     }
 }
 

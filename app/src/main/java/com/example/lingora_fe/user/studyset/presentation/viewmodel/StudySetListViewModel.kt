@@ -29,6 +29,9 @@ class StudySetListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StudySetListUiState())
     val uiState: StateFlow<StudySetListUiState> = _uiState.asStateFlow()
 
+    val currentUserId: Int
+        get() = tokenManager.getUserId() ?: -1
+
     init {
         loadStudySets()
     }

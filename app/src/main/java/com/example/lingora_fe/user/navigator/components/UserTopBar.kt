@@ -3,8 +3,11 @@ package com.example.lingora_fe.user.navigator.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,7 +37,8 @@ fun UserTopBar(
     modifier: Modifier = Modifier,
     title: String,
     notificationCount: Int = 0,
-    onNotificationClick: (() -> Unit) = {}
+    onNotificationClick: (() -> Unit) = {},
+    extraActions: @Composable RowScope.() -> Unit = {}
 ) {
     Column(modifier = modifier) {
         TopAppBar(
@@ -49,42 +53,49 @@ fun UserTopBar(
             )
         },
         actions = {
-            Box(
+            Row(
                 modifier = Modifier
-                    .padding(end = 16.dp)
-                    .size(40.dp)
-                    .border(width = 1.31862.dp, color = Color(0x1A000000), shape = RoundedCornerShape(size = 8.dp))
-                    .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 8.dp))
-                    .clickable(onClick = onNotificationClick),
-                contentAlignment = Alignment.Center
+                    .padding(end = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_notification),
-                    contentDescription = "Notifications",
-                    tint = Color(0xFF000000),
-                    modifier = Modifier.size(24.dp)
-                )
-                if (notificationCount > 0) {
-                    // Notification badge
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .offset(x = 4.dp, y = (-4).dp)
-                            .size(18.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(
-                                Color(0xFFFB2C36),
-                                shape = androidx.compose.foundation.shape.CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = notificationCount.toString(),
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                extraActions()
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .border(width = 1.31862.dp, color = Color(0x1A000000), shape = RoundedCornerShape(size = 8.dp))
+                        .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 8.dp))
+                        .clickable(onClick = onNotificationClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_notification),
+                        contentDescription = "Notifications",
+                        tint = Color(0xFF000000),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    if (notificationCount > 0) {
+                        // Notification badge
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 4.dp, y = (-4).dp)
+                                .size(18.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(
+                                    Color(0xFFFB2C36),
+                                    shape = androidx.compose.foundation.shape.CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = notificationCount.toString(),
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

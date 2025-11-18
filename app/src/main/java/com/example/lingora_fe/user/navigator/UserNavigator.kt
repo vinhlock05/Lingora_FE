@@ -1,12 +1,19 @@
 package com.example.lingora_fe.user.navigator
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,6 +23,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -28,7 +37,7 @@ import androidx.navigation.navArgument
 import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.components.FloatingActionButton
 import com.example.lingora_fe.user.dictionary.presentation.DictionaryScreen
-import com.example.lingora_fe.user.forum.presentation.ForumScreen
+import com.example.lingora_fe.user.forum.presentation.*
 import com.example.lingora_fe.user.material.presentation.MaterialsScreen
 import com.example.lingora_fe.user.navigator.components.BottomNavigationBar
 import com.example.lingora_fe.user.navigator.components.UserTopBar
@@ -174,7 +183,8 @@ fun UserNavigator(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             if (isBottomVisible) {
-                val title = when (backStackState?.destination?.route) {
+                val currentRoute = backStackState?.destination?.route
+                val title = when (currentRoute) {
                     Route.VocabularyTab.route -> "Học từ vựng"
                     Route.PracticeTab.route -> "Luyện tập"
                     Route.MaterialsTab.route -> "Học liệu"
@@ -183,10 +193,35 @@ fun UserNavigator(
                     Route.ProfileTab.route -> "Cá nhân"
                     else -> ""
                 }
+                val extraActions: @Composable RowScope.() -> Unit = when (currentRoute) {
+                    Route.ForumTab.route -> {
+                        {
+                            Button(
+                                onClick = { navController.navigate(Route.CreatePost.route) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF10B981),
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(38.dp)
+                            ) {
+                                Text(
+                                    text = "+ Viết bài",
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        { }
+                    }
+                }
                 UserTopBar(
                     title = title,
                     notificationCount = 1, //TODO: get actual count from ViewModel
-                    onNotificationClick = { navController.navigate(Route.Notification.route) }
+                    onNotificationClick = { navController.navigate(Route.Notification.route) },
+                    extraActions = extraActions
                 )
             }
         },
@@ -429,7 +464,46 @@ fun UserNavigator(
 
             // Forum Tab
             composable(Route.ForumTab.route) {
-                ForumScreen()
+                ForumScreen(
+                    navController = navController
+                )
+            }
+            
+            // Forum Navigation
+            composable(Route.CreatePost.route) {
+                val parentEntry = navController.previousBackStackEntry
+                val savedStateHandle = parentEntry?.savedStateHandle
+                CreatePostScreen(
+                    navController = navController,
+                    onPostCreated = {
+                        savedStateHandle?.set("shouldRefreshPosts", true)
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            composable(
+                route = Route.PostDetail.route,
+                arguments = listOf(
+                    navArgument("postId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val postId = backStackEntry.arguments?.getInt("postId") ?: 0
+                PostDetailScreen(
+                    postId = postId,
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.EditPost.route,
+                arguments = listOf(
+                    navArgument("postId") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                EditPostScreen(navController = navController)
             }
 
             // Profile Tab

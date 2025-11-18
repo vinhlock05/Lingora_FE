@@ -63,6 +63,11 @@ sealed class Route(
     object ReadingPractice : Route("practice/test/{testId}/reading")
     object WritingPractice : Route("practice/test/{testId}/writing")
     
+    // Forum Navigation
+    object CreatePost : Route("forum/create")
+    object PostDetail : Route("forum/post/{postId}")
+    object EditPost : Route("forum/post/{postId}/edit")
+    
     companion object {
         // Auth routes
         fun otpScreen(email: String) = "otpScreen/$email"
@@ -86,6 +91,10 @@ sealed class Route(
         fun readingPractice(testId: String) = "practice/test/$testId/reading"
         fun writingPractice(testId: String) = "practice/test/$testId/writing"
         fun reviewPractice(limit: Int, gameTypes: String) = "practice/review/$limit/$gameTypes"
+        
+        // Forum routes
+        fun postDetail(postId: Int) = "forum/post/$postId"
+        fun editPost(postId: Int) = "forum/post/$postId/edit"
     }
 
 }

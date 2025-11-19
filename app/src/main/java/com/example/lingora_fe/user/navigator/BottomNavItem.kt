@@ -15,7 +15,7 @@ sealed class BottomNavItem(
         icon = com.example.lingora_fe.R.drawable.ic_practice,
         selectedIcon = com.example.lingora_fe.R.drawable.ic_practice_selected
     )
-    object Materials : BottomNavItem(
+    object StudySet : BottomNavItem(
         label = "Học liệu",
         icon = com.example.lingora_fe.R.drawable.ic_material,
         selectedIcon = com.example.lingora_fe.R.drawable.ic_material_selected

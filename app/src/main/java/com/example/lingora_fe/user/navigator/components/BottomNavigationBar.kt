@@ -37,7 +37,7 @@ fun BottomNavigationBar(
     val items = listOf(
         BottomNavItem.Vocabulary,
         BottomNavItem.Practice,
-        BottomNavItem.Materials,
+        BottomNavItem.StudySet,
         BottomNavItem.Dictionary,
         BottomNavItem.Forum,
         BottomNavItem.Profile
@@ -55,7 +55,7 @@ fun BottomNavigationBar(
             val route = when (item) {
                 BottomNavItem.Vocabulary -> Route.VocabularyTab.route
                 BottomNavItem.Practice -> Route.PracticeTab.route
-                BottomNavItem.Materials -> Route.MaterialsTab.route
+                BottomNavItem.StudySet -> Route.StudySetList.route
                 BottomNavItem.Dictionary -> Route.DictionaryTab.route
                 BottomNavItem.Forum -> Route.ForumTab.route
                 BottomNavItem.Profile -> Route.ProfileTab.route

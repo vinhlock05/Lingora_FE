@@ -37,7 +37,6 @@ sealed class Route(
     // Bottom Navigation Tabs
     object VocabularyTab : Route("vocabulary")
     object PracticeTab : Route("practice")
-    object MaterialsTab : Route("materials")
     object DictionaryTab : Route("dictionary")
     object ForumTab : Route("forum")
     object ProfileTab : Route("profile")
@@ -47,6 +46,14 @@ sealed class Route(
     
     // Vocabulary Navigation
     object CategoryDetail : Route("vocabulary/category/{categoryId}")
+    
+    // StudySet Navigation
+    object StudySetList : Route("studyset/list")
+    object StudySetDetail : Route("studyset/detail/{studySetId}")
+    object StudySetCreate : Route("studyset/create")
+    object StudySetEdit : Route("studyset/edit/{studySetId}")
+    object StudySetFlashcard : Route("studyset/{studySetId}/flashcard")
+    object StudySetQuiz : Route("studyset/{studySetId}/quiz")
     object TopicDetail : Route("vocabulary/topic/{topicId}?topicName={topicName}")
     object LearnWord : Route("vocabulary/learn/{topicId}/{wordCount}/{gameTypes}")
     object Practice : Route("vocabulary/practice/{topicId}")
@@ -92,6 +99,11 @@ sealed class Route(
         fun writingPractice(testId: String) = "practice/test/$testId/writing"
         fun reviewPractice(limit: Int, gameTypes: String) = "practice/review/$limit/$gameTypes"
         
+        // StudySet routes
+        fun studySetDetail(studySetId: Int) = "studyset/detail/$studySetId"
+        fun studySetEdit(studySetId: Int) = "studyset/edit/$studySetId"
+        fun studySetFlashcard(studySetId: Int) = "studyset/$studySetId/flashcard"
+        fun studySetQuiz(studySetId: Int) = "studyset/$studySetId/quiz"
         // Forum routes
         fun postDetail(postId: Int) = "forum/post/$postId"
         fun editPost(postId: Int) = "forum/post/$postId/edit"

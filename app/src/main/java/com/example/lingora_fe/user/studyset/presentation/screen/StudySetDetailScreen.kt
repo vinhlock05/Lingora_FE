@@ -7,10 +7,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -64,16 +67,7 @@ fun StudySetDetailScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
-                actions = {
-                    if (isOwner && uiState.studySet != null) {
-                        IconButton(onClick = { onEditClick(uiState.studySet!!.id) }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Chỉnh sửa")
-                        }
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Xóa", tint = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.White
                 )
@@ -125,7 +119,11 @@ fun StudySetDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     // Study Set Info Card
-                    StudySetInfoCard(studySet = studySet)
+                    StudySetInfoCard(
+                        studySet = studySet,
+                        isLiking = uiState.isLiking,
+                        onLikeClick = { viewModel.toggleLike(studySet.id) }
+                    )
 
                     // Learning Mode Selection
                     Text(
@@ -191,7 +189,9 @@ fun StudySetDetailScreen(
 
 @Composable
 private fun StudySetInfoCard(
-    studySet: com.example.lingora_fe.user.studyset.domain.model.StudySet
+    studySet: com.example.lingora_fe.user.studyset.domain.model.StudySet,
+    isLiking: Boolean = false,
+    onLikeClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -233,7 +233,7 @@ private fun StudySetInfoCard(
             // Owner and Stats
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -241,11 +241,32 @@ private fun StudySetInfoCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = NavBarText
                 )
-                Text(
-                    text = "${studySet.likeCount} lượt thích",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = NavBarText
-                )
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable(onClick = onLikeClick)
+                ) {
+                    if (isLiking) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (studySet.isAlreadyLike) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Like",
+                            tint = if (studySet.isAlreadyLike) Color(0xFFEF4444) else NavBarText,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Text(
+                        text = "${studySet.likeCount}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NavBarText,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
     }

@@ -15,7 +15,8 @@ data class StudySet(
     val quizzes: List<Quiz> = emptyList(),
     val totalFlashcards: Int? = null,
     val totalQuizzes: Int? = null,
-    val isPurchased: Boolean? = null
+    val isPurchased: Boolean? = null,
+    val isAlreadyLike: Boolean = false
 )
 
 data class Owner(

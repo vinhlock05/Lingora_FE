@@ -5,13 +5,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -32,8 +39,13 @@ import java.util.Locale
 fun MyStudySetCard(
     studySet: StudySet,
     onClick: () -> Unit,
+    onLikeClick: () -> Unit = {},
+    onEditClick: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val menuExpanded = remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -48,7 +60,8 @@ fun MyStudySetCard(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
@@ -57,12 +70,53 @@ fun MyStudySetCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Title
-            Text(
-                text = studySet.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MainText
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = studySet.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MainText,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (onEditClick != null || onDeleteClick != null) {
+                    Box {
+                        IconButton(onClick = { menuExpanded.value = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More actions"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded.value,
+                            onDismissRequest = { menuExpanded.value = false }
+                        ) {
+                            onEditClick?.let { edit ->
+                                DropdownMenuItem(
+                                    text = { Text("Chỉnh sửa") },
+                                    onClick = {
+                                        menuExpanded.value = false
+                                        edit()
+                                    }
+                                )
+                            }
+                            onDeleteClick?.let { delete ->
+                                DropdownMenuItem(
+                                    text = { Text("Xóa") },
+                                    onClick = {
+                                        menuExpanded.value = false
+                                        delete()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             // Description
             if (!studySet.description.isNullOrBlank()) {
@@ -130,17 +184,23 @@ fun MyStudySetCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = null,
-                    tint = Color(0xFFFFB800),
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = "${studySet.likeCount} lượt thích",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = NavBarText
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable(onClick = onLikeClick)
+                ) {
+                    Icon(
+                        imageVector = if (studySet.isAlreadyLike) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Like",
+                        tint = if (studySet.isAlreadyLike) Color(0xFFEF4444) else NavBarText,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "${studySet.likeCount}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NavBarText
+                    )
+                }
             }
         }
     }

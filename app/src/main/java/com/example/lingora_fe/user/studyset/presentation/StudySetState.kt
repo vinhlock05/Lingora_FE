@@ -20,7 +20,8 @@ data class StudySetListUiState(
     val purchaseStudySet: StudySet? = null,
     val isCheckingAccess: Boolean = false,
     val purchaseError: String? = null,
-    val isPurchasing: Boolean = false
+    val isPurchasing: Boolean = false,
+    val deletingStudySetId: Int? = null
 )
 
 enum class StudySetTab {
@@ -32,7 +33,8 @@ enum class StudySetTab {
 data class StudySetDetailUiState(
     val studySet: StudySet? = null,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val isLiking: Boolean = false
 )
 
 // Create/Edit StudySet State

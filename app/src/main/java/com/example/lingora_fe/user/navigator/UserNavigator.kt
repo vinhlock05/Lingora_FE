@@ -64,6 +64,16 @@ fun UserNavigator(
     viewModel: AuthRepositoryViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+    fun notifyStudySetList(message: String, refresh: Boolean = false) {
+        if (message.isBlank()) return
+        runCatching {
+            val listEntry = navController.getBackStackEntry(Route.StudySetList.route)
+            if (refresh) {
+                listEntry.savedStateHandle.set("refreshStudySetList", true)
+            }
+            listEntry.savedStateHandle.set("studySetMessage", message)
+        }
+    }
     val backStackState = navController.currentBackStackEntryAsState().value
     var isCheckingProficiency by remember { mutableStateOf(true) }
     var hasProficiency by remember { mutableStateOf(false) }
@@ -473,8 +483,7 @@ fun UserNavigator(
                         navController.navigate(Route.studySetEdit(id))
                     },
                     onDeleteSuccess = {
-                        // Refresh list after delete
-                        navController.previousBackStackEntry?.savedStateHandle?.set("refreshStudySetList", true)
+                        notifyStudySetList("Đã xóa học liệu", refresh = true)
                         navController.popBackStack()
                     }
                 )
@@ -483,9 +492,8 @@ fun UserNavigator(
             composable(Route.StudySetCreate.route) { backStackEntry ->
                 com.example.lingora_fe.user.studyset.presentation.screen.CreateEditStudySetScreen(
                     onBackClick = { navController.popBackStack() },
-                    onSaveSuccess = {
-                        // Set refresh flag before navigating back
-                        navController.previousBackStackEntry?.savedStateHandle?.set("refreshStudySetList", true)
+                    onSaveSuccess = { message ->
+                        notifyStudySetList(message, refresh = true)
                         navController.popBackStack()
                     }
                 )
@@ -501,9 +509,8 @@ fun UserNavigator(
             ) { backStackEntry ->
                 com.example.lingora_fe.user.studyset.presentation.screen.CreateEditStudySetScreen(
                     onBackClick = { navController.popBackStack() },
-                    onSaveSuccess = {
-                        // Set refresh flag before navigating back
-                        navController.previousBackStackEntry?.savedStateHandle?.set("refreshStudySetList", true)
+                    onSaveSuccess = { message ->
+                        notifyStudySetList(message, refresh = true)
                         navController.popBackStack()
                     }
                 )

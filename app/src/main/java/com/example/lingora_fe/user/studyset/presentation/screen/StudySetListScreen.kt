@@ -24,9 +24,12 @@ import androidx.navigation.NavController
 import com.example.lingora_fe.admin.common.presentation.components.SearchBar
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.navigation.Route
+import com.example.lingora_fe.user.studyset.domain.model.StudySet
 import com.example.lingora_fe.user.studyset.presentation.components.StudySetCard
 import com.example.lingora_fe.user.studyset.presentation.viewmodel.StudySetListViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun StudySetListScreen(
@@ -39,6 +42,9 @@ fun StudySetListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    var studySetPendingDelete by remember { mutableStateOf<StudySet?>(null) }
     
     // Refresh when coming back from create/edit screen
     val savedStateHandle = navController?.currentBackStackEntry?.savedStateHandle
@@ -48,6 +54,15 @@ fun StudySetListScreen(
             if (shouldRefresh) {
                 viewModel.refresh()
                 savedStateHandle.set("refreshStudySetList", false)
+            }
+        }
+    }
+
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getStateFlow<String?>("studySetMessage", null)?.collect { message ->
+            if (!message.isNullOrBlank()) {
+                snackbarHostState.showSnackbar(message)
+                savedStateHandle.set("studySetMessage", null)
             }
         }
     }
@@ -71,9 +86,12 @@ fun StudySetListScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
         // Tabs
         Row(
             modifier = Modifier
@@ -179,6 +197,15 @@ fun StudySetListScreen(
                                 onClick = {
                                     // For own study sets, navigate directly without access check
                                     onStudySetClick(studySet.id)
+                                },
+                                onLikeClick = {
+                                    viewModel.toggleLike(studySet.id)
+                                },
+                                onEditClick = {
+                                    navController?.navigate(Route.studySetEdit(studySet.id))
+                                },
+                                onDeleteClick = {
+                                    studySetPendingDelete = studySet
                                 }
                             )
                         } else {
@@ -191,6 +218,15 @@ fun StudySetListScreen(
                                     viewModel.checkAccessAndNavigate(studySet.id) { studySetId ->
                                         onStudySetClick(studySetId)
                                     }
+                                },
+                                onLikeClick = {
+                                    viewModel.toggleLike(studySet.id)
+                                },
+                                onEditClick = {
+                                    navController?.navigate(Route.studySetEdit(studySet.id))
+                                },
+                                onDeleteClick = {
+                                    studySetPendingDelete = studySet
                                 }
                             )
                         }
@@ -199,25 +235,79 @@ fun StudySetListScreen(
             }
         }
 
-        // Purchase Modal
-        if (uiState.showPurchaseModal && uiState.purchaseStudySet != null) {
-            com.example.lingora_fe.user.studyset.presentation.components.PurchaseModal(
-                studySet = uiState.purchaseStudySet,
-                isLoading = uiState.isPurchasing || uiState.isCheckingAccess,
-                error = uiState.purchaseError,
-                onDismiss = { viewModel.hidePurchaseModal() },
-                onPurchase = {
-                    viewModel.buyStudySet(uiState.purchaseStudySet!!.id) { paymentUrl ->
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl))
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            // Handle error opening browser
-                        }
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+        )
+    }
+
+    // Purchase Modal
+    if (uiState.showPurchaseModal && uiState.purchaseStudySet != null) {
+        com.example.lingora_fe.user.studyset.presentation.components.PurchaseModal(
+            studySet = uiState.purchaseStudySet,
+            isLoading = uiState.isPurchasing || uiState.isCheckingAccess,
+            error = uiState.purchaseError,
+            onDismiss = { viewModel.hidePurchaseModal() },
+            onPurchase = {
+                viewModel.buyStudySet(uiState.purchaseStudySet!!.id) { paymentUrl ->
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl))
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        // Handle error opening browser
                     }
                 }
-            )
-        }
+            }
+        )
+    }
+
+    if (studySetPendingDelete != null) {
+        val target = studySetPendingDelete!!
+        val isDeleting = uiState.deletingStudySetId == target.id
+        AlertDialog(
+            onDismissRequest = {
+                if (!isDeleting) {
+                    studySetPendingDelete = null
+                }
+            },
+            title = { Text("Xóa học liệu") },
+            text = { Text("Bạn có chắc chắn muốn xóa học liệu \"${target.title}\"? Hành động này không thể hoàn tác.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteStudySet(target.id) {
+                            val deletedTitle = target.title
+                            studySetPendingDelete = null
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Đã xóa học liệu \"$deletedTitle\"")
+                            }
+                        }
+                    },
+                    enabled = !isDeleting
+                ) {
+                    if (isDeleting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Xóa")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { studySetPendingDelete = null },
+                    enabled = !isDeleting
+                ) {
+                    Text("Hủy")
+                }
+            }
+        )
     }
 }
 

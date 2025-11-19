@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.core.network.TokenManager
+import com.example.lingora_fe.user.forum.domain.repository.ForumRepository
 import com.example.lingora_fe.user.studyset.domain.model.StudySet
 import com.example.lingora_fe.user.studyset.domain.model.StudySetFilterOptions
 import com.example.lingora_fe.user.studyset.domain.model.StudySetStatus
@@ -22,6 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class StudySetListViewModel @Inject constructor(
     private val repository: StudySetRepository,
+    private val forumRepository: ForumRepository,
     private val tokenManager: TokenManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -189,6 +191,71 @@ class StudySetListViewModel @Inject constructor(
                             )
                         }
                     }
+                }
+            )
+        }
+    }
+
+    fun toggleLike(studySetId: Int) {
+        viewModelScope.launch {
+            val currentStudySets = _uiState.value.studySets
+            val targetStudySet = currentStudySets.find { it.id == studySetId } ?: return@launch
+            
+            val isCurrentlyLiked = targetStudySet.isAlreadyLike
+            val delta = if (isCurrentlyLiked) -1 else 1
+            
+            // Optimistic update
+            val updatedStudySets = currentStudySets.map { studySet ->
+                if (studySet.id == studySetId) {
+                    studySet.copy(
+                        isAlreadyLike = !isCurrentlyLiked,
+                        likeCount = (studySet.likeCount + delta).coerceAtLeast(0)
+                    )
+                } else studySet
+            }
+            
+            _uiState.value = _uiState.value.copy(studySets = updatedStudySets)
+            
+            val action = if (isCurrentlyLiked) {
+                forumRepository.unlike(studySetId, "STUDY_SET")
+            } else {
+                forumRepository.like(studySetId, "STUDY_SET")
+            }
+            
+            action.fold(
+                ifLeft = { error ->
+                    // Revert optimistic update on error
+                    _uiState.value = _uiState.value.copy(
+                        studySets = currentStudySets,
+                        error = error.message ?: "Failed to toggle like"
+                    )
+                },
+                ifRight = {
+                    // Refresh to get accurate state
+                    loadStudySets(_uiState.value.currentPage)
+                }
+            )
+        }
+    }
+
+    fun deleteStudySet(studySetId: Int, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            val token = tokenManager.getAccessToken() ?: return@launch
+            _uiState.value = _uiState.value.copy(deletingStudySetId = studySetId, error = null)
+
+            repository.deleteStudySet(token, studySetId).fold(
+                ifLeft = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        deletingStudySetId = null,
+                        error = error.message
+                    )
+                },
+                ifRight = {
+                    _uiState.value = _uiState.value.copy(
+                        studySets = _uiState.value.studySets.filterNot { it.id == studySetId },
+                        deletingStudySetId = null
+                    )
+                    onSuccess()
                 }
             )
         }

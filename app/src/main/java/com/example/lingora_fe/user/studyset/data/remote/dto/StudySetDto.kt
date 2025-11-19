@@ -44,7 +44,9 @@ data class StudySetDto(
     @SerializedName("totalQuizzes")
     val totalQuizzes: Int? = null,
     @SerializedName("isPurchased")
-    val isPurchased: Boolean? = null
+    val isPurchased: Boolean? = null,
+    @SerializedName("isAlreadyLike")
+    val isAlreadyLike: Boolean? = null
 )
 
 data class OwnerDto(

@@ -29,7 +29,8 @@ fun StudySetDto.toDomain(): StudySet {
         quizzes = quizzes?.map { it.toDomain() } ?: emptyList(),
         totalFlashcards = totalFlashcards,
         totalQuizzes = totalQuizzes,
-        isPurchased = isPurchased
+        isPurchased = isPurchased,
+        isAlreadyLike = isAlreadyLike ?: false
     )
 }
 

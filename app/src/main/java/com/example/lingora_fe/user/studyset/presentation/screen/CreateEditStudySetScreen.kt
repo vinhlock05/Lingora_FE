@@ -37,7 +37,7 @@ import com.example.lingora_fe.user.studyset.presentation.viewmodel.StudySetFormV
 @Composable
 fun CreateEditStudySetScreen(
     onBackClick: () -> Unit,
-    onSaveSuccess: () -> Unit,
+    onSaveSuccess: (String) -> Unit,
     viewModel: StudySetFormViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -47,9 +47,8 @@ fun CreateEditStudySetScreen(
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
             val message = if (uiState.isEditMode) "Đã cập nhật học liệu thành công" else "Đã tạo học liệu thành công"
-            snackbarHostState.showSnackbar(message)
             viewModel.consumeSaveSuccess()
-            onSaveSuccess()
+            onSaveSuccess(message)
         }
     }
 

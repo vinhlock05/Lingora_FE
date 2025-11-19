@@ -25,8 +25,6 @@ sealed class Route(
     object AdminUserCreate : Route("admin_user_management/create")
     object AdminUserEdit : Route("admin_user_management/edit/{userId}")
     object AdminUserDetails : Route("admin_user_management/details/{userId}")
-    object AdminStudySetManagement : Route("admin_studyset_management")
-    object AdminStudySetDetail : Route("admin_studyset_management/detail/{studySetId}")
     object AdminContentManagement : Route("admin_content")
     object AdminForumManagement : Route("admin_forum")
     object AdminAnalytics : Route("admin_analytics")

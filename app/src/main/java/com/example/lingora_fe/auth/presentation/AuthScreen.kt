@@ -118,7 +118,7 @@ fun AuthScreen(
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize().imePadding()
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(GradientStart, GradientEnd)

@@ -35,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.lingora_fe.navigation.Route
+import com.example.lingora_fe.user.chatbot.presentation.ChatbotScreen
 import com.example.lingora_fe.user.components.FloatingActionButton
 import com.example.lingora_fe.user.dictionary.presentation.DictionaryScreen
 import com.example.lingora_fe.user.forum.presentation.ForumScreen
@@ -161,20 +162,9 @@ fun UserNavigator(
         }
     }
 
-    // FAB action based on current route
-    val fabAction: () -> Unit = remember(backStackState) {
-        val route = backStackState?.destination?.route ?: ""
-        when {
-            route == Route.VocabularyTab.route -> { 
-                { /* TODO: Chat action for vocabulary screen */ }
-            }
-            route.startsWith("vocabulary/category/") -> { 
-                { /* TODO: Chat action for category detail */ }
-            }
-            else -> { 
-                { /* No action */ }
-            }
-        }
+    // FAB action navigates to chatbot from supported screens
+    val fabAction: () -> Unit = {
+        navController.navigate(Route.Chatbot.route)
     }
 
     // Show loading while checking proficiency
@@ -286,6 +276,12 @@ fun UserNavigator(
             // Notification
             composable(Route.Notification.route) {
                 NotificationScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(Route.Chatbot.route) {
+                ChatbotScreen(
                     onBackClick = { navController.popBackStack() }
                 )
             }

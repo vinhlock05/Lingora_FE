@@ -163,6 +163,7 @@ class WordManagementViewModel @Inject constructor(
                 cefrLevel = e.cefrLevel,
                 type = e.type,
                 meaning = e.meaning,
+                vnMeaning = e.vnMeaning,
                 example = e.example,
                 exampleTranslation = e.exampleTranslation,
                 audioUrl = e.audioUrl,
@@ -189,6 +190,7 @@ class WordManagementViewModel @Inject constructor(
             val word = base.copy(
                 word = e.word ?: base.word,
                 meaning = e.meaning ?: base.meaning,
+                vnMeaning = e.vnMeaning ?: base.vnMeaning,
                 phonetic = e.phonetic ?: base.phonetic,
                 cefrLevel = e.cefrLevel ?: base.cefrLevel,
                 type = e.type ?: base.type,

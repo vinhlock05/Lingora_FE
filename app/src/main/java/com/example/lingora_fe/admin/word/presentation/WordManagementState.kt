@@ -38,6 +38,7 @@ data class WordFormState(
     val id: Int? = null,
     val word: String = "",
     val meaning: String = "",
+    val vnMeaning: String? = null,
     val phonetic: String? = null,
     val cefrLevel: String = "A1",
     val type: String = "noun",
@@ -75,6 +76,7 @@ sealed class WordManagementEvent {
     data class Create(
         val word: String,
         val meaning: String,
+        val vnMeaning: String?,
         val phonetic: String?,
         val cefrLevel: String,
         val type: String,
@@ -89,6 +91,7 @@ sealed class WordManagementEvent {
         val wordId: Int,
         val word: String?,
         val meaning: String?,
+        val vnMeaning: String?,
         val phonetic: String?,
         val cefrLevel: String?,
         val type: String?,

@@ -52,6 +52,7 @@ class WordRepositoryImpl @Inject constructor(
                     cefrLevel = dto.cefrLevel,
                     type = dto.type,
                     meaning = dto.meaning,
+                    vnMeaning = dto.vnMeaning,
                     example = dto.example,
                     exampleTranslation = dto.exampleTranslation,
                     audioUrl = dto.audioUrl,
@@ -116,6 +117,7 @@ class WordRepositoryImpl @Inject constructor(
                             cefrLevel = dto.cefrLevel?.name ?: "A1", // Convert enum to string
                             type = dto.type ?: "noun", // Use type from DTO, default to "noun" if null
                             meaning = dto.meaning,
+                            vnMeaning = dto.vnMeaning,
                             example = dto.example,
                             exampleTranslation = dto.exampleTranslation,
                             audioUrl = dto.audioUrl,

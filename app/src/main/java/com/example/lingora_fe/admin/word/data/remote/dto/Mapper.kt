@@ -11,6 +11,7 @@ fun WordDto.toDomain(): Word {
         cefrLevel = cefrLevel,
         type = type,
         meaning = meaning,
+        vnMeaning = vnMeaning,
         example = example,
         exampleTranslation = exampleTranslation,
         audioUrl = audioUrl,

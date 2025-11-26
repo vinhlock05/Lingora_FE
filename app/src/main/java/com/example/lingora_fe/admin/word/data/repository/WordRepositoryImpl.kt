@@ -59,6 +59,7 @@ class WordRepositoryImpl @Inject constructor(
                 CreateWordRequest(
                     word = word.word,
                     meaning = word.meaning,
+                    vnMeaning = word.vnMeaning,
                     phonetic = word.phonetic,
                     cefrLevel = word.cefrLevel,
                     type = word.type,
@@ -80,6 +81,7 @@ class WordRepositoryImpl @Inject constructor(
                 UpdateWordRequest(
                     word = word.word,
                     meaning = word.meaning,
+                    vnMeaning = word.vnMeaning,
                     phonetic = word.phonetic,
                     cefrLevel = word.cefrLevel,
                     type = word.type,

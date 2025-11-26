@@ -67,6 +67,7 @@ fun CreateEditWordScreen(
                     id = w.id,
                     word = w.word,
                     meaning = w.meaning,
+                    vnMeaning = w.vnMeaning,
                     phonetic = w.phonetic,
                     cefrLevel = w.cefrLevel,
                     type = w.type,
@@ -292,6 +293,25 @@ fun CreateEditWordScreen(
                 maxLines = 4,
                 isError = form.meaningError != null,
                 supportingText = form.meaningError?.let { { Text(it) } }
+            )
+
+            // Vietnamese Meaning
+            OutlinedTextField(
+                value = form.vnMeaning ?: "",
+                onValueChange = { value ->
+                    viewModel.updateFormState(form.copy(vnMeaning = value.takeIf { it.isNotBlank() }))
+                },
+                label = { Text("Vietnamese Meaning") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Language,
+                        "Vietnamese Meaning",
+                        tint = GradientStart
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
+                maxLines = 4
             )
 
             // Example
@@ -605,6 +625,7 @@ fun CreateEditWordScreen(
                                 WordManagementEvent.Create(
                                     word = form.word,
                                     meaning = form.meaning,
+                                    vnMeaning = form.vnMeaning,
                                     phonetic = form.phonetic,
                                     cefrLevel = form.cefrLevel,
                                     type = form.type,
@@ -621,6 +642,7 @@ fun CreateEditWordScreen(
                                     wordId = wordId,
                                     word = form.word,
                                     meaning = form.meaning,
+                                    vnMeaning = form.vnMeaning,
                                     phonetic = form.phonetic,
                                     cefrLevel = form.cefrLevel,
                                     type = form.type,

@@ -44,6 +44,9 @@ sealed class Route(
     // Notification
     object Notification : Route("notification")
     
+    // Chatbot
+    object Chatbot : Route("chatbot")
+    
     // Vocabulary Navigation
     object CategoryDetail : Route("vocabulary/category/{categoryId}")
     

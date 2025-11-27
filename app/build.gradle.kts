@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.material3.window.size)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation("com.github.jeziellago:compose-markdown:0.5.0")
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 

@@ -29,6 +29,8 @@ interface WordRepository {
     suspend fun createWord(token: String, word: Word): Either<AppFailure, Word>
     suspend fun updateWord(token: String, wordId: Int, word: Word): Either<AppFailure, Word>
     suspend fun deleteWord(token: String, wordId: Int): Either<AppFailure, Unit>
+    suspend fun lookupWord(token: String, term: String): Either<AppFailure, Word>
+    suspend fun suggestWords(token: String, term: String, limit: Int = 10): Either<AppFailure, List<Word>>
 }
 
 

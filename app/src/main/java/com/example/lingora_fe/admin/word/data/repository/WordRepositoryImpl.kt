@@ -99,6 +99,23 @@ class WordRepositoryImpl @Inject constructor(
     override suspend fun deleteWord(token: String, wordId: Int): Either<AppFailure, Unit> {
         return Either.catch { api.deleteWord(wordId); Unit }.mapLeft { it.toAppFailure() }
     }
+
+    override suspend fun lookupWord(token: String, term: String): Either<AppFailure, Word> {
+        return Either.catch {
+            api.lookupWord(term).metaData!!.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun suggestWords(
+        token: String,
+        term: String,
+        limit: Int
+    ): Either<AppFailure, List<Word>> {
+        return Either.catch {
+            val res = api.suggestWords(term = term, limit = limit)
+            res.metaData!!.map { it.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
 }
 
 // Mapper from API metadata to domain metadata

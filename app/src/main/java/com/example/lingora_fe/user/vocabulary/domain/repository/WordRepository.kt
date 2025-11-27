@@ -20,6 +20,16 @@ interface WordRepository {
         limit: Int = 20,
         page: Int = 1
     ): Either<AppFailure, List<WordWithProgress>>
+
+    // Dictionary: suggestions and lookup
+    suspend fun suggestWords(
+        term: String,
+        limit: Int = 10
+    ): Either<AppFailure, List<Word>>
+
+    suspend fun lookupWord(
+        term: String
+    ): Either<AppFailure, Word>
 }
 
 data class TopicWordProgressMeta(

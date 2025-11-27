@@ -138,6 +138,23 @@ class WordRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun suggestWords(
+        term: String,
+        limit: Int
+    ): Either<AppFailure, List<Word>> {
+        return Either.catch {
+            val response = remoteDataSource.suggestWords(term = term, limit = limit)
+            (response.metaData ?: emptyList()).map { dto -> dto.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun lookupWord(term: String): Either<AppFailure, Word> {
+        return Either.catch {
+            val response = remoteDataSource.lookupWord(term)
+            response.metaData!!.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
     private fun parseDate(dateString: String): java.util.Date? {
         return try {
             val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {

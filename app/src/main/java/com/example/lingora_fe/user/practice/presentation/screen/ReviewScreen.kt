@@ -551,6 +551,7 @@ private fun WordWithProgress.toDomainWord(): Word {
         phonetic = phonetic,
         word = word,
         meaning = meaning,
+        vnMeaning = vnMeaning,
         example = example,
         exampleTranslation = exampleTranslation,
         audioUrl = audioUrl,

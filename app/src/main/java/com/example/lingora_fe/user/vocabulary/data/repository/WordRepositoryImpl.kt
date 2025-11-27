@@ -52,6 +52,7 @@ class WordRepositoryImpl @Inject constructor(
                     cefrLevel = dto.cefrLevel,
                     type = dto.type,
                     meaning = dto.meaning,
+                    vnMeaning = dto.vnMeaning,
                     example = dto.example,
                     exampleTranslation = dto.exampleTranslation,
                     audioUrl = dto.audioUrl,
@@ -116,6 +117,7 @@ class WordRepositoryImpl @Inject constructor(
                             cefrLevel = dto.cefrLevel?.name ?: "A1", // Convert enum to string
                             type = dto.type ?: "noun", // Use type from DTO, default to "noun" if null
                             meaning = dto.meaning,
+                            vnMeaning = dto.vnMeaning,
                             example = dto.example,
                             exampleTranslation = dto.exampleTranslation,
                             audioUrl = dto.audioUrl,
@@ -134,6 +136,23 @@ class WordRepositoryImpl @Inject constructor(
             android.util.Log.e("WordRepositoryImpl", "Error fetching words for review", e)
             Either.Left(e.toAppFailure())
         }
+    }
+
+    override suspend fun suggestWords(
+        term: String,
+        limit: Int
+    ): Either<AppFailure, List<Word>> {
+        return Either.catch {
+            val response = remoteDataSource.suggestWords(term = term, limit = limit)
+            (response.metaData ?: emptyList()).map { dto -> dto.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun lookupWord(term: String): Either<AppFailure, Word> {
+        return Either.catch {
+            val response = remoteDataSource.lookupWord(term)
+            response.metaData!!.toDomain()
+        }.mapLeft { it.toAppFailure() }
     }
 
     private fun parseDate(dateString: String): java.util.Date? {

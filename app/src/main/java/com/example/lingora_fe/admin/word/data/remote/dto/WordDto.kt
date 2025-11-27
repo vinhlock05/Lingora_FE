@@ -16,6 +16,8 @@ data class WordDto(
     val type: String,
     @SerializedName("meaning")
     val meaning: String,
+    @SerializedName("vnMeaning")
+    val vnMeaning: String?,
     @SerializedName("example")
     val example: String?,
     @SerializedName("exampleTranslation")
@@ -50,6 +52,7 @@ data class WordListMetaData(
 data class CreateWordRequest(
     val word: String,
     val meaning: String,
+    val vnMeaning: String?,
     val phonetic: String?,
     val cefrLevel: String,
     val type: String,
@@ -63,6 +66,7 @@ data class CreateWordRequest(
 data class UpdateWordRequest(
     val word: String? = null,
     val meaning: String? = null,
+    val vnMeaning: String? = null,
     val phonetic: String? = null,
     val cefrLevel: String? = null,
     val type: String? = null,

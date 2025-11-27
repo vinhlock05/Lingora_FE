@@ -19,6 +19,8 @@ data class WordDto(
     val word: String,
     @SerializedName("meaning")
     val meaning: String?,
+    @SerializedName("vnMeaning")
+    val vnMeaning: String?,
     @SerializedName("example")
     val example: String?,
     @SerializedName("exampleTranslation")
@@ -37,6 +39,7 @@ data class WordDto(
             type = type,
             word = word,
             meaning = meaning,
+            vnMeaning = vnMeaning,
             example = example,
             exampleTranslation = exampleTranslation,
             audioUrl = audioUrl,

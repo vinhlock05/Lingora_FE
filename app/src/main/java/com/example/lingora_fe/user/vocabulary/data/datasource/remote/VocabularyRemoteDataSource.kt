@@ -70,5 +70,18 @@ class VocabularyRemoteDataSource @Inject constructor(
     ): ReviewWordsResponse {
         return apiService.getWordsForReview(limit, page)
     }
+
+    // Dictionary suggestions
+    suspend fun suggestWords(
+        term: String,
+        limit: Int = 10
+    ): ApiResponse<List<WordDto>> {
+        return apiService.suggestWords(term = term, limit = limit)
+    }
+
+    // Dictionary lookup
+    suspend fun lookupWord(term: String): ApiResponse<WordDto> {
+        return apiService.lookupWord(term = term)
+    }
 }
 

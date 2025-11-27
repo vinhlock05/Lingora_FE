@@ -43,6 +43,19 @@ interface WordApiService {
 
     @DELETE("words/{id}")
     suspend fun deleteWord(@Path("id") wordId: Int): ApiResponse<Any>
+
+    // Dictionary lookup (public)
+    @GET("words/dictionary")
+    suspend fun lookupWord(
+        @Query("term") term: String
+    ): ApiResponse<WordDto>
+
+    // Suggestions for autocomplete (public)
+    @GET("words/suggest")
+    suspend fun suggestWords(
+        @Query("term") term: String,
+        @Query("limit") limit: Int = 10
+    ): ApiResponse<List<WordDto>>
 }
 
 

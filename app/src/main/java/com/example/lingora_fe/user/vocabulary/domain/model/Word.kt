@@ -10,6 +10,7 @@ data class Word(
     val type: String?,
     val word: String,
     val meaning: String?,
+    val vnMeaning: String?,
     val example: String?,
     val exampleTranslation: String?,
     val audioUrl: String?,

@@ -61,5 +61,17 @@ interface VocabularyApiService {
         @Query("limit") limit: Int = 20,
         @Query("page") page: Int = 1
     ): ReviewWordsResponse
+
+    // Public dictionary endpoints (shared with admin)
+    @GET("words/suggest")
+    suspend fun suggestWords(
+        @Query("term") term: String,
+        @Query("limit") limit: Int = 10
+    ): ApiResponse<List<WordDto>>
+
+    @GET("words/dictionary")
+    suspend fun lookupWord(
+        @Query("term") term: String
+    ): ApiResponse<WordDto>
 }
 

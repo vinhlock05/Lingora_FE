@@ -96,6 +96,11 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
+    // --- ExoPlayer (Media3) ---
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
+    implementation("androidx.media3:media3-common:1.2.1")
+
     // --- Google Auth ---
     implementation(libs.google.auth)
 

@@ -8,13 +8,15 @@ import com.example.lingora_fe.core.error.AppFailure
 import com.example.lingora_fe.core.error.toAppFailure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.util.concurrent.TimeUnit
 
 object FileUploadHelper {
     private const val TAG = "FileUploadHelper"
@@ -34,11 +36,12 @@ object FileUploadHelper {
         accessToken: String,
         baseUrl: String = Constant.BASE_URL
     ): Either<AppFailure, String> = withContext(Dispatchers.IO) {
-        Either.catch {
-            val file = uriToFile(context, imageUri) ?: throw Exception("Failed to convert URI to file")
-            
+        Either.Companion.catch {
+            val file =
+                uriToFile(context, imageUri) ?: throw Exception("Failed to convert URI to file")
+
             val requestBody = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
+                .setType(MultipartBody.Companion.FORM)
                 .addFormDataPart(
                     "file",
                     file.name,
@@ -53,13 +56,13 @@ object FileUploadHelper {
                 .build()
 
             val client = OkHttpClient.Builder()
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
                 .build()
 
             val response = client.newCall(request).execute()
-            
+
             if (!response.isSuccessful) {
                 throw Exception("Upload failed: ${response.code} ${response.message}")
             }
@@ -69,10 +72,10 @@ object FileUploadHelper {
             // Adjust based on your API response format
             // For now, assuming response contains URL directly or in JSON
             val imageUrl = responseBody ?: throw Exception("Empty response from server")
-            
+
             // Clean up temp file
             file.delete()
-            
+
             Log.d(TAG, "Image uploaded successfully: $imageUrl")
             imageUrl
         }.mapLeft { it.toAppFailure() }
@@ -92,11 +95,12 @@ object FileUploadHelper {
         accessToken: String,
         baseUrl: String = Constant.BASE_URL
     ): Either<AppFailure, String> = withContext(Dispatchers.IO) {
-        Either.catch {
-            val file = uriToFile(context, audioUri) ?: throw Exception("Failed to convert URI to file")
-            
+        Either.Companion.catch {
+            val file =
+                uriToFile(context, audioUri) ?: throw Exception("Failed to convert URI to file")
+
             val requestBody = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
+                .setType(MultipartBody.Companion.FORM)
                 .addFormDataPart(
                     "file",
                     file.name,
@@ -111,13 +115,13 @@ object FileUploadHelper {
                 .build()
 
             val client = OkHttpClient.Builder()
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
                 .build()
 
             val response = client.newCall(request).execute()
-            
+
             if (!response.isSuccessful) {
                 throw Exception("Upload failed: ${response.code} ${response.message}")
             }
@@ -126,10 +130,10 @@ object FileUploadHelper {
             // Parse response to get URL
             // Adjust based on your API response format
             val audioUrl = responseBody ?: throw Exception("Empty response from server")
-            
+
             // Clean up temp file
             file.delete()
-            
+
             Log.d(TAG, "Audio uploaded successfully: $audioUrl")
             audioUrl
         }.mapLeft { it.toAppFailure() }
@@ -187,4 +191,3 @@ object FileUploadHelper {
         }
     }
 }
-

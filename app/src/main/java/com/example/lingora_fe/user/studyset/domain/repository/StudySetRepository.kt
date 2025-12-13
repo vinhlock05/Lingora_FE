@@ -67,5 +67,18 @@ interface StudySetRepository {
         token: String,
         studySetId: Int
     ): Either<AppFailure, BuyStudySetResponse>
+    
+    /**
+     * Verify VNPay payment return
+     */
+    suspend fun verifyVNPayPayment(
+        token: String,
+        vnpParams: Map<String, String>
+    ): Either<AppFailure, VNPayVerifyResponse>
 }
+
+data class VNPayVerifyResponse(
+    val success: Boolean,
+    val message: String?
+)
 

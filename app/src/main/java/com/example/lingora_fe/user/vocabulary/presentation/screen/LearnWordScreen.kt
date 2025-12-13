@@ -40,7 +40,6 @@ import androidx.compose.runtime.DisposableEffect
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
-import com.example.lingora_fe.user.vocabulary.presentation.components.FlashcardComponent
 import com.example.lingora_fe.user.vocabulary.presentation.components.LearnPhaseContent
 import com.example.lingora_fe.user.vocabulary.presentation.components.QuizPhaseContent
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.LearningPhase

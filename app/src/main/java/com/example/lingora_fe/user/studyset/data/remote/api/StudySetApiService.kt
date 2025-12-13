@@ -65,5 +65,24 @@ interface StudySetApiService {
     suspend fun buyStudySet(
         @Path("id") studySetId: Int
     ): ApiResponse<BuyStudySetResponseDto>
+    
+    @POST("vnpay/return")
+    suspend fun verifyVNPayPayment(
+        @Body vnpParams: Map<String, String>
+    ): VNPayVerifyApiResponse
 }
+
+data class VNPayVerifyApiResponse(
+    val message: String?,
+    val metaData: VNPayVerifyMetaData?
+)
+
+data class VNPayVerifyMetaData(
+    val success: Boolean?,
+    val message: String?,
+    val studySetId: Int?,
+    val userId: Int?,
+    val amount: Int?,
+    val transactionId: Int?
+)
 

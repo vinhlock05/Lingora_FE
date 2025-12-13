@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +46,68 @@ fun StudySetListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var studySetPendingDelete by remember { mutableStateOf<StudySet?>(null) }
+    
+    // Payment verification dialog states
+    var showVerifyingDialog by remember { mutableStateOf(false) }
+    var showResultDialog by remember { mutableStateOf(false) }
+    var verificationSuccess by remember { mutableStateOf(false) }
+    var verificationMessage by remember { mutableStateOf("") }
+    
+    // Activity launcher for payment
+    val paymentLauncher = rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        when (result.resultCode) {
+            android.app.Activity.RESULT_OK -> {
+                val needVerification = result.data?.getBooleanExtra("needVerification", false) ?: false
+                
+                if (needVerification) {
+                    // Extract all VNPay params
+                    val vnpParams = mutableMapOf<String, String>()
+                    result.data?.extras?.keySet()?.forEach { key ->
+                        if (key.startsWith("vnp_")) {
+                            result.data?.getStringExtra(key)?.let { value ->
+                                vnpParams[key] = value
+                            }
+                        }
+                    }
+                    
+                    val responseCode = vnpParams["vnp_ResponseCode"]
+                    
+                    // Show loading dialog
+                    showVerifyingDialog = true
+                    
+                    // Call backend to verify payment
+                    viewModel.verifyPayment(vnpParams) { success, message ->
+                        // Hide loading dialog
+                        showVerifyingDialog = false
+                        
+                        // Show result dialog
+                        verificationSuccess = success
+                        verificationMessage = message
+                        showResultDialog = true
+                    }
+                } else {
+                    // Fallback for old flow (shouldn't happen)
+                    val isSuccess = result.data?.getBooleanExtra("isSuccess", false) ?: false
+                    val responseCode = result.data?.getStringExtra("vnp_ResponseCode")
+                    
+                    verificationSuccess = isSuccess && responseCode == "00"
+                    verificationMessage = if (verificationSuccess) {
+                        "Thanh toán thành công!"
+                    } else {
+                        "Thanh toán thất bại (Mã lỗi: $responseCode)"
+                    }
+                    showResultDialog = true
+                }
+            }
+            android.app.Activity.RESULT_CANCELED -> {
+                verificationSuccess = false
+                verificationMessage = "Đã hủy thanh toán"
+                showResultDialog = true
+            }
+        }
+    }
     
     // Refresh when coming back from create/edit screen
     val savedStateHandle = navController?.currentBackStackEntry?.savedStateHandle
@@ -254,12 +317,11 @@ fun StudySetListScreen(
             onDismiss = { viewModel.hidePurchaseModal() },
             onPurchase = {
                 viewModel.buyStudySet(uiState.purchaseStudySet!!.id) { paymentUrl ->
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl))
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        // Handle error opening browser
+                    val intent = Intent(context, com.example.lingora_fe.user.studyset.presentation.PaymentWebViewActivity::class.java).apply {
+                        putExtra(com.example.lingora_fe.user.studyset.presentation.PaymentWebViewActivity.EXTRA_PAYMENT_URL, paymentUrl)
+                        putExtra(com.example.lingora_fe.user.studyset.presentation.PaymentWebViewActivity.EXTRA_STUDY_SET_ID, uiState.purchaseStudySet!!.id)
                     }
+                    paymentLauncher.launch(intent)
                 }
             }
         )
@@ -305,6 +367,76 @@ fun StudySetListScreen(
                     enabled = !isDeleting
                 ) {
                     Text("Hủy")
+                }
+            }
+        )
+    }
+    
+    // Verifying payment dialog (loading)
+    if (showVerifyingDialog) {
+        AlertDialog(
+            onDismissRequest = { }, // Cannot dismiss while verifying
+            title = {
+                Text("Đang xác thực thanh toán")
+            },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text("Vui lòng đợi...")
+                }
+            },
+            confirmButton = { }
+        )
+    }
+    
+    // Payment result dialog
+    if (showResultDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showResultDialog = false
+                if (verificationSuccess) {
+                    viewModel.refresh()
+                }
+            },
+            icon = {
+                Text(
+                    text = if (verificationSuccess) "✅" else "❌",
+                    style = MaterialTheme.typography.displayMedium
+                )
+            },
+            title = {
+                Text(
+                    text = if (verificationSuccess) "Thành công!" else "Thất bại",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = {
+                Text(
+                    text = verificationMessage,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showResultDialog = false
+                        if (verificationSuccess) {
+                            viewModel.refresh()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (verificationSuccess) GradientStart else MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("OK")
                 }
             }
         )

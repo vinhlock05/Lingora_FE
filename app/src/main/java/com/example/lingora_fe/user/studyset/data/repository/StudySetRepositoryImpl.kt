@@ -107,5 +107,24 @@ class StudySetRepositoryImpl @Inject constructor(
             response.metaData?.toDomain() ?: throw Exception(response.message)
         }.mapLeft { it.toAppFailure() }
     }
+    
+    override suspend fun verifyVNPayPayment(
+        token: String,
+        vnpParams: Map<String, String>
+    ): Either<AppFailure, com.example.lingora_fe.user.studyset.domain.repository.VNPayVerifyResponse> {
+        return Either.catch {
+            val response = apiService.verifyVNPayPayment(vnpParams)
+            
+            // Extract from metaData
+            val metaData = response.metaData
+            val success = metaData?.success ?: false
+            val message = metaData?.message ?: response.message ?: "Unknown error"
+            
+            com.example.lingora_fe.user.studyset.domain.repository.VNPayVerifyResponse(
+                success = success,
+                message = message
+            )
+        }.mapLeft { it.toAppFailure() }
+    }
 }
 

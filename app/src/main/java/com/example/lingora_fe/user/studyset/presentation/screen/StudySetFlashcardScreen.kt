@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.studyset.presentation.screen
 
+import android.media.MediaPlayer
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,7 @@ import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
+import com.example.lingora_fe.R
 import com.example.lingora_fe.user.studyset.presentation.viewmodel.StudySetFlashcardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,6 +64,21 @@ fun StudySetFlashcardScreen(
     val currentFlashcard = flashcards.getOrNull(uiState.currentIndex) ?: return
     val density = LocalDensity.current
     val cameraDistance = 8f * density.density
+    val context = LocalContext.current
+    val flipPlayer = remember { MediaPlayer.create(context, R.raw.flip) }
+    val playFlip = remember {
+        {
+            try {
+                flipPlayer.seekTo(0)
+                flipPlayer.start()
+            } catch (_: Exception) { }
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            try { flipPlayer.release() } catch (_: Exception) { }
+        }
+    }
 
     // Flip animation
     val rotation by animateFloatAsState(
@@ -109,6 +127,7 @@ fun StudySetFlashcardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(Color.White)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -122,11 +141,6 @@ fun StudySetFlashcardScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = NavBarText
                 )
-                Text(
-                    text = "${uiState.learnedCount}/${flashcards.size} đã học",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = NavBarText
-                )
             }
 
             // Flashcard with flip animation
@@ -134,7 +148,7 @@ fun StudySetFlashcardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(400.dp)
-                    .clickable(onClick = { viewModel.flipCard() }),
+                    .clickable(onClick = { playFlip(); viewModel.flipCard() }),
                 contentAlignment = Alignment.Center
             ) {
                 // Front side
@@ -178,7 +192,7 @@ fun StudySetFlashcardScreen(
                                 
                                 Text(
                                     text = "Nhấn để xem nghĩa",
-                                    style = MaterialTheme.typography.bodySmall,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
@@ -241,14 +255,20 @@ fun StudySetFlashcardScreen(
 
             // Flip button
             Button(
-                onClick = { viewModel.flipCard() },
+                onClick = {
+                    val isLast = uiState.currentIndex == flashcards.size - 1
+                    if (isLast) onBackClick() else { playFlip(); viewModel.flipCard() }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = GradientStart
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(if (uiState.isFlipped) "Lật lại" else "Lật thẻ")
+                val isLast = uiState.currentIndex == flashcards.size - 1
+                Text(
+                    text = if (isLast) "Xong" else if (uiState.isFlipped) "Lật lại" else "Lật thẻ"
+                )
             }
 
             // Navigation

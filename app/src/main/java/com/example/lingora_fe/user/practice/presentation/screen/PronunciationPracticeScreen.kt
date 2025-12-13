@@ -29,7 +29,7 @@ import androidx.navigation.NavController
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
-import com.example.lingora_fe.util.AudioRecorder
+import com.example.lingora_fe.util.AudioRecorderManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,8 +43,8 @@ fun PronunciationPracticeScreen(
     var showWordCard by remember { mutableStateOf(false) }
     var hasAudioPermission by remember { mutableStateOf(false) }
     
-    // Initialize AudioRecorder
-    val audioRecorder = remember { AudioRecorder(context) }
+    // Initialize AudioRecorderManager
+    val audioRecorder = remember { AudioRecorderManager(context) }
     
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -67,7 +67,7 @@ fun PronunciationPracticeScreen(
     DisposableEffect(Unit) {
         onDispose {
             audioRecorder.release()
-            Log.d("PronunciationPractice", "AudioRecorder released")
+            Log.d("PronunciationPractice", "AudioRecorderManager released")
         }
     }
 
@@ -119,7 +119,8 @@ fun PronunciationPracticeScreen(
                 },
                 onStartRecording = {
                     if (hasAudioPermission) {
-                        val success = audioRecorder.startRecording()
+                        // Use 0 as questionId for custom word practice
+                        val success = audioRecorder.startRecording(0)
                         if (success) {
                             isRecording = true
                             Log.d("PronunciationPractice", "🎤 Started recording for word: $customWord")
@@ -132,12 +133,13 @@ fun PronunciationPracticeScreen(
                     }
                 },
                 onStopRecording = {
-                    val filePath = audioRecorder.stopRecording()
+                    val recordingInfo = audioRecorder.stopRecording()
                     isRecording = false
-                    if (filePath != null) {
+                    if (recordingInfo != null) {
                         hasRecorded = true
                         Log.d("PronunciationPractice", "⏹️ Recording stopped")
-                        Log.d("PronunciationPractice", "📁 Audio saved at: $filePath")
+                        Log.d("PronunciationPractice", "📁 Audio saved at: ${recordingInfo.filePath}")
+                        Log.d("PronunciationPractice", "⏱️ Duration: ${recordingInfo.durationFormatted}")
                     } else {
                         Log.e("PronunciationPractice", "Failed to stop recording")
                     }
@@ -147,7 +149,7 @@ fun PronunciationPracticeScreen(
                     Log.d("PronunciationPractice", "🔄 Retry recording")
                 },
                 onReset = {
-                    audioRecorder.cancelRecording()
+                    audioRecorder.reset()
                     customWord = ""
                     showWordCard = false
                     hasRecorded = false
@@ -168,7 +170,7 @@ fun CustomWordInputContent(
     hasRecorded: Boolean,
     showWordCard: Boolean,
     hasAudioPermission: Boolean,
-    audioRecorder: AudioRecorder,
+    audioRecorder: AudioRecorderManager,
     onAddWord: () -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,

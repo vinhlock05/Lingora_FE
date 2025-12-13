@@ -260,5 +260,31 @@ class StudySetListViewModel @Inject constructor(
             )
         }
     }
+    
+    fun verifyPayment(vnpParams: Map<String, String>, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val token = tokenManager.getAccessToken() ?: run {
+                onResult(false, "Không tìm thấy token xác thực")
+                return@launch
+            }
+            
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            
+            repository.verifyVNPayPayment(token, vnpParams).fold(
+                ifLeft = { error ->
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onResult(false, "Xác thực thất bại: ${error.message}")
+                },
+                ifRight = { response ->
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    if (response.success) {
+                        onResult(true, response.message ?: "Thanh toán thành công!")
+                    } else {
+                        onResult(false, response.message ?: "Thanh toán thất bại")
+                    }
+                }
+            )
+        }
+    }
 }
 

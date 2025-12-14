@@ -28,7 +28,7 @@ class NotificationSocketManager @Inject constructor(
     /**
      * Connect to Socket.IO server with authentication token
      */
-    fun connect(accessToken: String, baseUrl: String = "http://10.0.2.2:4000") {
+    fun connect(accessToken: String, baseUrl: String = com.example.lingora_fe.util.Constant.BASE_URL, userId: Int? = null) {
         if (socket?.connected() == true) {
             return
         }
@@ -39,10 +39,12 @@ class NotificationSocketManager @Inject constructor(
                 reconnection = true
                 reconnectionDelay = 1000
                 reconnectionAttempts = 5
+                transports = arrayOf("websocket")
             }
 
-            socket = IO.socket(baseUrl, options)
-            setupListeners()
+            val normalizedUrl = if (baseUrl.endsWith("/")) baseUrl.dropLast(1) else baseUrl
+            socket = IO.socket(normalizedUrl, options)
+            setupListeners(userId)
             socket?.connect()
         } catch (e: Exception) {
             _connectionState.value = ConnectionState.Error(e.message ?: "Connection failed")
@@ -84,9 +86,14 @@ class NotificationSocketManager @Inject constructor(
         }
     }
 
-    private fun setupListeners() {
+    private fun setupListeners(userId: Int?) {
         socket?.on(Socket.EVENT_CONNECT) {
             _connectionState.value = ConnectionState.Connected
+            if (userId != null) {
+                try {
+                    socket?.emit("register", userId.toString())
+                } catch (_: Exception) { }
+            }
         }
 
         socket?.on(Socket.EVENT_DISCONNECT) {

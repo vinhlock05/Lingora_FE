@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.auth.domain.repository.AuthRepository
 import com.example.lingora_fe.navigation.Route
+import com.example.lingora_fe.user.notification.data.socket.NotificationSocketManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    val tokenManager: TokenManager
+    val tokenManager: TokenManager,
+    private val socketManager: NotificationSocketManager
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow(AuthState())
@@ -406,6 +408,7 @@ class AuthViewModel @Inject constructor(
 
     fun clearAuthData() {
         Log.d("AuthViewModel", "Clearing auth data")
+        runCatching { socketManager.disconnect() }
         tokenManager.clearTokens()
         _authState.value = AuthState()
     }

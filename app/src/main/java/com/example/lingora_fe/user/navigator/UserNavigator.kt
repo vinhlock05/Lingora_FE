@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,7 +43,8 @@ import com.example.lingora_fe.user.forum.presentation.ForumScreen
 import com.example.lingora_fe.user.forum.presentation.*
 import com.example.lingora_fe.user.navigator.components.BottomNavigationBar
 import com.example.lingora_fe.user.navigator.components.UserTopBar
-import com.example.lingora_fe.user.notification.presentation.screen.NotificationScreen
+import com.example.lingora_fe.user.notification.presentation.NotificationScreen
+import com.example.lingora_fe.user.notification.presentation.NotificationViewModel
 import com.example.lingora_fe.user.practice.presentation.screen.ListeningPracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.PracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.PronunciationPracticeScreen
@@ -217,12 +219,18 @@ fun UserNavigator(
                         { }
                     }
                 }
-                UserTopBar(
-                    title = title,
-                    notificationCount = 1, //TODO: get actual count from ViewModel
-                    onNotificationClick = { navController.navigate(Route.Notification.route) },
-                    extraActions = extraActions
-                )
+                run {
+                    val startRoute = navController.graph.startDestinationRoute ?: Route.VocabularyTab.route
+                    val parentEntry = navController.getBackStackEntry(startRoute)
+                    val notiViewModel: NotificationViewModel = hiltViewModel(parentEntry)
+                    val notiState = notiViewModel.state.collectAsState().value
+                    UserTopBar(
+                        title = title,
+                        notificationCount = notiState.unreadCount,
+                        onNotificationClick = { navController.navigate(Route.Notification.route) },
+                        extraActions = extraActions
+                    )
+                }
             }
         },
         bottomBar = {
@@ -275,8 +283,13 @@ fun UserNavigator(
         ) {
             // Notification
             composable(Route.Notification.route) {
+                val startRoute = navController.graph.startDestinationRoute ?: Route.VocabularyTab.route
+                val parentEntry = navController.getBackStackEntry(startRoute)
+                val notiViewModel: NotificationViewModel = hiltViewModel(parentEntry)
                 NotificationScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateTo = { route -> navController.navigate(route) },
+                    viewModel = notiViewModel
                 )
             }
 

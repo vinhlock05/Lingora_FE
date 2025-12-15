@@ -182,30 +182,36 @@ fun StudySetCard(
                 )
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onLikeClick)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (studySet.isAlreadyLike) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Like",
-                        tint = if (studySet.isAlreadyLike) Color(0xFFEF4444) else NavBarText,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable(onClick = onLikeClick)
+                    ) {
+                        Icon(
+                            imageVector = if (studySet.isAlreadyLike) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Like",
+                            tint = if (studySet.isAlreadyLike) Color(0xFFEF4444) else NavBarText,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "${studySet.likeCount}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NavBarText
+                        )
+                    }
+
                     Text(
-                        text = "${studySet.likeCount}",
+                        text = "${studySet.commentCount} bình luận",
                         style = MaterialTheme.typography.bodySmall,
                         color = NavBarText
                     )
                 }
             }
-            val isAccess = studySet.isPurchased == true || studySet.price == 0 || studySet.owner.id == currentUserId
-            // Action Button
-            val buttonText = when {
-                isAccess -> "Học ngay"
-                else -> "Mua ngay"
-            }
 
+            // Action Button: always view detail, purchase handled in detail screen
             androidx.compose.material3.Button(
                 onClick = onClick,
                 modifier = Modifier.fillMaxWidth(),
@@ -215,7 +221,7 @@ fun StudySetCard(
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
-                    text = buttonText,
+                    text = "Xem chi tiết",
                     fontWeight = FontWeight.SemiBold
                 )
             }

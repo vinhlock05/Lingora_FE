@@ -45,36 +45,13 @@ fun EditPostScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val parentEntry = navController.previousBackStackEntry
+    var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            scope.launch {
-                viewModel.setUploading(true)
-                val sharedPrefs = context.getSharedPreferences("lingora_prefs", Context.MODE_PRIVATE)
-                val token = sharedPrefs.getString("access_token", null)
-                if (token != null) {
-                    FileUploadHelper.uploadImage(context, it, token, Constant.BASE_URL)
-                        .fold(
-                            ifLeft = { error ->
-                                snackbarHostState.showSnackbar(
-                                    message = error.message ?: "Không thể tải ảnh",
-                                    duration = SnackbarDuration.Short
-                                )
-                            },
-                            ifRight = { url ->
-                                viewModel.addThumbnail(url)
-                            }
-                        )
-                } else {
-                    snackbarHostState.showSnackbar(
-                        message = "Vui lòng đăng nhập lại",
-                        duration = SnackbarDuration.Short
-                    )
-                }
-                viewModel.setUploading(false)
-            }
+            selectedImageUris = selectedImageUris + it
         }
     }
     
@@ -122,8 +99,38 @@ fun EditPostScreen(
                 },
                 actions = {
                     Button(
-                        onClick = { viewModel.submitEdit() },
-                        enabled = !state.isSaving && state.title.isNotBlank() && state.content.isNotBlank(),
+                        onClick = {
+                            scope.launch {
+                                if (state.isSaving || state.isUploading) return@launch
+                                viewModel.setUploading(true)
+                                val uploadedUrls = mutableListOf<String>()
+                                
+                                for (uri in selectedImageUris) {
+                                    FileUploadHelper.uploadImage(context, uri)
+                                        .fold(
+                                            ifLeft = { error ->
+                                                snackbarHostState.showSnackbar(
+                                                    message = error.message ?: "Không thể tải ảnh",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            },
+                                            ifRight = { url ->
+                                                uploadedUrls.add(url)
+                                            }
+                                        )
+                                }
+                                
+                                if (uploadedUrls.isNotEmpty()) {
+                                    val finalThumbnails = state.thumbnails + uploadedUrls
+                                    viewModel.setThumbnails(finalThumbnails)
+                                }
+                                
+                                viewModel.submitEdit()
+                                selectedImageUris = emptyList()
+                                viewModel.setUploading(false)
+                            }
+                        },
+                        enabled = !state.isSaving && !state.isUploading && state.title.isNotBlank() && state.content.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF10B981)
                         ),
@@ -356,12 +363,20 @@ fun EditPostScreen(
                         color = MainText
                     )
                     
-                    if (state.thumbnails.isNotEmpty()) {
+                    if (state.thumbnails.isNotEmpty() || selectedImageUris.isNotEmpty()) {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(state.thumbnails.size) { index ->
                                 ThumbnailItem(
                                     imageUrl = state.thumbnails[index],
                                     onRemove = { viewModel.removeThumbnail(index) }
+                                )
+                            }
+                            items(selectedImageUris.size) { index ->
+                                ThumbnailItem(
+                                    imageUrl = selectedImageUris[index].toString(),
+                                    onRemove = {
+                                        selectedImageUris = selectedImageUris.filterIndexed { i, _ -> i != index }
+                                    }
                                 )
                             }
                         }

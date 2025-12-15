@@ -39,10 +39,10 @@ fun StudySetQuizScreen(
     studySetId: Int,
     onBackClick: () -> Unit,
     viewModel: StudySetQuizViewModel = hiltViewModel()
-) {
-    val uiState by viewModel.uiState.collectAsState()
-    val studySet = uiState.studySet
-    val quizzes = studySet?.quizzes ?: emptyList()
+    ) {
+        val uiState by viewModel.uiState.collectAsState()
+        val studySet = uiState.studySet
+        val quizzes = studySet?.quizzes ?: emptyList()
 
     if (quizzes.isEmpty()) {
         Box(
@@ -86,6 +86,14 @@ fun StudySetQuizScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            GradientStart.copy(alpha = 0.06f),
+                            GradientEnd.copy(alpha = 0.02f)
+                        )
+                    )
+                )
                 .padding(paddingValues)
         ) {
             Column(

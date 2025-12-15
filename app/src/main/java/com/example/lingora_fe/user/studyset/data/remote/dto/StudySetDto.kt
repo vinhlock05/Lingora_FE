@@ -1,6 +1,7 @@
 package com.example.lingora_fe.user.studyset.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
+import com.example.lingora_fe.user.forum.data.remote.dto.CommentDto
 
 // MetaData DTOs
 data class StudySetListMetaData(
@@ -29,6 +30,8 @@ data class StudySetDto(
     val status: String,
     @SerializedName("likeCount")
     val likeCount: Int,
+    @SerializedName("commentCount")
+    val commentCount: Int? = null,
     @SerializedName("createdAt")
     val createdAt: String,
     @SerializedName("updatedAt")
@@ -46,7 +49,9 @@ data class StudySetDto(
     @SerializedName("isPurchased")
     val isPurchased: Boolean? = null,
     @SerializedName("isAlreadyLike")
-    val isAlreadyLike: Boolean? = null
+    val isAlreadyLike: Boolean? = null,
+    @SerializedName("comments")
+    val comments: List<CommentDto>? = null
 )
 
 data class OwnerDto(

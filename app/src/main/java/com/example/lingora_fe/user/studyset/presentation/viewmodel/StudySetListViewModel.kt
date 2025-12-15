@@ -112,26 +112,25 @@ class StudySetListViewModel @Inject constructor(
             
             repository.getStudySetById(token, studySetId).fold(
                 ifLeft = { error ->
-                    // If error (likely 403 Forbidden), show purchase modal
-                    val studySet = _uiState.value.studySets.find { it.id == studySetId }
-                    if (studySet != null) {
+                    _uiState.value = _uiState.value.copy(
+                        isCheckingAccess = false,
+                        error = error.message
+                    )
+                },
+                ifRight = { studySet ->
+                    val isAccess = studySet.isPurchased == true || studySet.price == 0 || studySet.owner.id == currentUserId
+                    if (isAccess) {
+                        _uiState.value = _uiState.value.copy(isCheckingAccess = false)
+                        onSuccess(studySetId)
+                    } else {
+                        val cachedStudySet = _uiState.value.studySets.find { it.id == studySetId } ?: studySet
                         _uiState.value = _uiState.value.copy(
                             isCheckingAccess = false,
                             showPurchaseModal = true,
-                            purchaseStudySet = studySet,
+                            purchaseStudySet = cachedStudySet,
                             purchaseError = null
                         )
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            isCheckingAccess = false,
-                            error = error.message
-                        )
                     }
-                },
-                ifRight = { studySet ->
-                    // Success - can access, navigate to detail
-                    _uiState.value = _uiState.value.copy(isCheckingAccess = false)
-                    onSuccess(studySetId)
                 }
             )
         }
@@ -256,6 +255,32 @@ class StudySetListViewModel @Inject constructor(
                         deletingStudySetId = null
                     )
                     onSuccess()
+                }
+            )
+        }
+    }
+    
+    fun verifyPayment(vnpParams: Map<String, String>, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val token = tokenManager.getAccessToken() ?: run {
+                onResult(false, "Không tìm thấy token xác thực")
+                return@launch
+            }
+            
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            
+            repository.verifyVNPayPayment(token, vnpParams).fold(
+                ifLeft = { error ->
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onResult(false, "Xác thực thất bại: ${error.message}")
+                },
+                ifRight = { response ->
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    if (response.success) {
+                        onResult(true, response.message ?: "Thanh toán thành công!")
+                    } else {
+                        onResult(false, response.message ?: "Thanh toán thất bại")
+                    }
                 }
             )
         }

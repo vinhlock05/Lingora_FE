@@ -22,6 +22,7 @@ fun StudySetDto.toDomain(): StudySet {
         price = price,
         status = StudySetStatus.values().find { it.value == status } ?: StudySetStatus.DRAFT,
         likeCount = likeCount,
+        commentCount = commentCount ?: 0,
         createdAt = createdAt,
         updatedAt = updatedAt,
         owner = owner.toDomain(),
@@ -30,7 +31,8 @@ fun StudySetDto.toDomain(): StudySet {
         totalFlashcards = totalFlashcards,
         totalQuizzes = totalQuizzes,
         isPurchased = isPurchased,
-        isAlreadyLike = isAlreadyLike ?: false
+        isAlreadyLike = isAlreadyLike ?: false,
+        comments = comments?.map { it.toDomain() } ?: emptyList()
     )
 }
 

@@ -1,16 +1,22 @@
 package com.example.lingora_fe.user.vocabulary.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.lingora_fe.admin.common.presentation.components.SearchBar
+import com.example.lingora_fe.core.ui.theme.GradientEnd
+import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.user.vocabulary.presentation.components.CategoryCard
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.VocabularyCategoriesViewModel
 import kotlinx.coroutines.delay
@@ -48,17 +54,32 @@ fun VocabularyCategoriesScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        GradientStart.copy(alpha = 0.06f),
+                        GradientEnd.copy(alpha = 0.02f)
+                    )
+                )
+            )
     ) {
-        // Search Bar
-        SearchBar(
-            query = searchQuery,
-            onQueryChange = { searchQuery = it },
-            placeholder = "Tìm kiếm danh mục...",
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            shadowElevation = 4.dp
+        ) {
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholder = "Tìm kiếm danh mục...",
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         // Content
         when {

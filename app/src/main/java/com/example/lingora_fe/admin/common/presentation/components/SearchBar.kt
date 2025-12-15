@@ -1,6 +1,5 @@
 package com.example.lingora_fe.admin.common.presentation.components
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -8,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.lingora_fe.core.ui.theme.GradientStart
 
 @Composable
 fun SearchBar(
@@ -30,7 +30,11 @@ fun SearchBar(
             }
         },
         singleLine = true,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = GradientStart,
+            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+        )
     )
 }
 

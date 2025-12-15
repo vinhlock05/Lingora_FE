@@ -97,27 +97,6 @@ fun CreatePostScreen(
     ) { uri: Uri? ->
         uri?.let {
             selectedImageUris = selectedImageUris + it
-            // Upload image
-            scope.launch {
-                isUploading = true
-                val sharedPrefs = context.getSharedPreferences("lingora_prefs", Context.MODE_PRIVATE)
-                val token = sharedPrefs.getString("access_token", null)
-                if (token != null) {
-                    FileUploadHelper.uploadImage(context, it, token, Constant.BASE_URL)
-                        .fold(
-                            ifLeft = { error ->
-                                snackbarHostState.showSnackbar(
-                                    message = error.message ?: "Upload failed",
-                                    duration = SnackbarDuration.Short
-                                )
-                            },
-                            ifRight = { imageUrl ->
-                                viewModel.addThumbnail(imageUrl)
-                            }
-                        )
-                }
-                isUploading = false
-            }
         }
     }
     
@@ -163,9 +142,32 @@ fun CreatePostScreen(
                 actions = {
                     Button(
                         onClick = {
-                            viewModel.createPost()
+                            scope.launch {
+                                if (state.isLoading || isUploading) return@launch
+                                isUploading = true
+                                val uploadedUrls = mutableListOf<String>()
+                                
+                                for (uri in selectedImageUris) {
+                                    FileUploadHelper.uploadImage(context, uri)
+                                        .fold(
+                                            ifLeft = { error ->
+                                                snackbarHostState.showSnackbar(
+                                                    message = error.message ?: "Upload failed",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            },
+                                            ifRight = { imageUrl ->
+                                                uploadedUrls.add(imageUrl)
+                                            }
+                                        )
+                                }
+                                
+                                viewModel.setThumbnails(uploadedUrls)
+                                viewModel.createPost()
+                                isUploading = false
+                            }
                         },
-                        enabled = !state.isLoading && state.title.isNotEmpty() && state.content.isNotEmpty() && state.selectedTopic != null,
+                        enabled = !state.isLoading && !isUploading && state.title.isNotEmpty() && state.content.isNotEmpty() && state.selectedTopic != null,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF10B981)
                         ),
@@ -393,14 +395,16 @@ fun CreatePostScreen(
                         color = MainText
                     )
                     
-                    if (state.thumbnails.isNotEmpty()) {
+                    if (selectedImageUris.isNotEmpty()) {
                         LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(state.thumbnails.size) { index ->
+                            items(selectedImageUris.size) { index ->
                                 ThumbnailItem(
-                                    imageUrl = state.thumbnails[index],
-                                    onRemove = { viewModel.removeThumbnail(index) }
+                                    imageUrl = selectedImageUris[index].toString(),
+                                    onRemove = {
+                                        selectedImageUris = selectedImageUris.filterIndexed { i, _ -> i != index }
+                                    }
                                 )
                             }
                         }

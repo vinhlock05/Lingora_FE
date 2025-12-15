@@ -97,23 +97,6 @@ fun CreateEditWordScreen(
     ) { uri: Uri? ->
         uri?.let {
             selectedImageUri = it
-            // Upload image immediately when selected
-            scope.launch {
-                isUploading = true
-                val token = sharedPreferences.getString("access_token", null)
-                if (token != null) {
-                    FileUploadHelper.uploadImage(context, it, token)
-                        .onRight { imageUrl ->
-                            viewModel.updateFormState(form.copy(imageUrl = imageUrl))
-                            selectedImageUri = null // Clear URI after upload
-                        }
-                        .onLeft { error ->
-                            // Handle error - show in state
-                            viewModel.setActionError(error.message)
-                        }
-                }
-                isUploading = false
-            }
         }
     }
 
@@ -122,23 +105,6 @@ fun CreateEditWordScreen(
     ) { uri: Uri? ->
         uri?.let {
             selectedAudioUri = it
-            // Upload audio immediately when selected
-            scope.launch {
-                isUploading = true
-                val token = sharedPreferences.getString("access_token", null)
-                if (token != null) {
-                    FileUploadHelper.uploadAudio(context, it, token)
-                        .onRight { audioUrl ->
-                            viewModel.updateFormState(form.copy(audioUrl = audioUrl))
-                            selectedAudioUri = null // Clear URI after upload
-                        }
-                        .onLeft { error ->
-                            // Handle error - show in state
-                            viewModel.setActionError(error.message)
-                        }
-                }
-                isUploading = false
-            }
         }
     }
 
@@ -619,40 +585,78 @@ fun CreateEditWordScreen(
                 }
                 Button(
                     onClick = {
-                        // Use URLs from form (already uploaded) or existing URLs
-                        if (wordId == null) {
-                            viewModel.onEvent(
-                                WordManagementEvent.Create(
-                                    word = form.word,
-                                    meaning = form.meaning,
-                                    vnMeaning = form.vnMeaning,
-                                    phonetic = form.phonetic,
-                                    cefrLevel = form.cefrLevel,
-                                    type = form.type,
-                                    example = form.example,
-                                    exampleTranslation = form.exampleTranslation,
-                                    audioUrl = form.audioUrl,
-                                    imageUrl = form.imageUrl,
-                                    topicId = form.topicId
+                        scope.launch {
+                            isUploading = true
+
+                            var finalImageUrl = form.imageUrl
+                            var finalAudioUrl = form.audioUrl
+
+                            if (selectedImageUri != null) {
+                                FileUploadHelper.uploadImage(context, selectedImageUri!!)
+                                    .fold(
+                                        ifLeft = { error ->
+                                            viewModel.setActionError(error.message)
+                                            isUploading = false
+                                            return@launch
+                                        },
+                                        ifRight = { imageUrl ->
+                                            finalImageUrl = imageUrl
+                                        }
+                                    )
+                            }
+
+                            if (selectedAudioUri != null) {
+                                FileUploadHelper.uploadAudio(context, selectedAudioUri!!)
+                                    .fold(
+                                        ifLeft = { error ->
+                                            viewModel.setActionError(error.message)
+                                            isUploading = false
+                                            return@launch
+                                        },
+                                        ifRight = { audioUrl ->
+                                            finalAudioUrl = audioUrl
+                                        }
+                                    )
+                            }
+
+                            if (wordId == null) {
+                                viewModel.onEvent(
+                                    WordManagementEvent.Create(
+                                        word = form.word,
+                                        meaning = form.meaning,
+                                        vnMeaning = form.vnMeaning,
+                                        phonetic = form.phonetic,
+                                        cefrLevel = form.cefrLevel,
+                                        type = form.type,
+                                        example = form.example,
+                                        exampleTranslation = form.exampleTranslation,
+                                        audioUrl = finalAudioUrl,
+                                        imageUrl = finalImageUrl,
+                                        topicId = form.topicId
+                                    )
                                 )
-                            )
-                        } else {
-                            viewModel.onEvent(
-                                WordManagementEvent.Update(
-                                    wordId = wordId,
-                                    word = form.word,
-                                    meaning = form.meaning,
-                                    vnMeaning = form.vnMeaning,
-                                    phonetic = form.phonetic,
-                                    cefrLevel = form.cefrLevel,
-                                    type = form.type,
-                                    example = form.example,
-                                    exampleTranslation = form.exampleTranslation,
-                                    audioUrl = form.audioUrl,
-                                    imageUrl = form.imageUrl,
-                                    topicId = form.topicId
+                            } else {
+                                viewModel.onEvent(
+                                    WordManagementEvent.Update(
+                                        wordId = wordId,
+                                        word = form.word,
+                                        meaning = form.meaning,
+                                        vnMeaning = form.vnMeaning,
+                                        phonetic = form.phonetic,
+                                        cefrLevel = form.cefrLevel,
+                                        type = form.type,
+                                        example = form.example,
+                                        exampleTranslation = form.exampleTranslation,
+                                        audioUrl = finalAudioUrl,
+                                        imageUrl = finalImageUrl,
+                                        topicId = form.topicId
+                                    )
                                 )
-                            )
+                            }
+
+                            selectedImageUri = null
+                            selectedAudioUri = null
+                            isUploading = false
                         }
                     },
                     enabled = form.isValid && !isUploading,

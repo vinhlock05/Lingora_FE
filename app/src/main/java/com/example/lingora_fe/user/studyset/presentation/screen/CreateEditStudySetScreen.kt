@@ -1,6 +1,7 @@
 package com.example.lingora_fe.user.studyset.presentation.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,6 +25,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
@@ -103,6 +106,14 @@ fun CreateEditStudySetScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            GradientStart.copy(alpha = 0.06f),
+                            GradientEnd.copy(alpha = 0.02f)
+                        )
+                    )
+                )
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),

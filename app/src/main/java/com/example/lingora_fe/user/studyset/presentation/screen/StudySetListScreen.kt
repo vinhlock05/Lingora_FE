@@ -1,7 +1,6 @@
 package com.example.lingora_fe.user.studyset.presentation.screen
 
-import android.content.Intent
-import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.lingora_fe.admin.common.presentation.components.SearchBar
+import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.navigation.Route
@@ -87,7 +88,16 @@ fun StudySetListScreen(
     }
 
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        GradientStart.copy(alpha = 0.06f),
+                        GradientEnd.copy(alpha = 0.02f)
+                    )
+                )
+            )
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -138,19 +148,25 @@ fun StudySetListScreen(
             }
         }
 
-        // Search Bar
-        SearchBar(
-            query = searchQuery,
-            onQueryChange = { searchQuery = it },
-            placeholder = if (uiState.selectedTab == com.example.lingora_fe.user.studyset.presentation.StudySetTab.STORE) {
-                "Tìm kiếm học liệu..."
-            } else {
-                "Tìm kiếm học liệu của tôi..."
-            },
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            shadowElevation = 4.dp
+        ) {
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholder = if (uiState.selectedTab == com.example.lingora_fe.user.studyset.presentation.StudySetTab.STORE) {
+                    "Tìm kiếm học liệu..."
+                } else {
+                    "Tìm kiếm học liệu của tôi..."
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         // Content
         when {
@@ -191,11 +207,9 @@ fun StudySetListScreen(
                 ) {
                     items(uiState.studySets) { studySet ->
                         if (uiState.selectedTab == com.example.lingora_fe.user.studyset.presentation.StudySetTab.MINE) {
-                            // Use MyStudySetCard for "Của tôi" tab
                             com.example.lingora_fe.user.studyset.presentation.components.MyStudySetCard(
                                 studySet = studySet,
                                 onClick = {
-                                    // For own study sets, navigate directly without access check
                                     onStudySetClick(studySet.id)
                                 },
                                 onLikeClick = {
@@ -209,15 +223,11 @@ fun StudySetListScreen(
                                 }
                             )
                         } else {
-                            // Use StudySetCard for "Kho học liệu" tab
                             StudySetCard(
                                 currentUserId = viewModel.currentUserId,
                                 studySet = studySet,
                                 onClick = {
-                                    // Check access first
-                                    viewModel.checkAccessAndNavigate(studySet.id) { studySetId ->
-                                        onStudySetClick(studySetId)
-                                    }
+                                    onStudySetClick(studySet.id)
                                 },
                                 onLikeClick = {
                                     viewModel.toggleLike(studySet.id)
@@ -242,26 +252,6 @@ fun StudySetListScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 24.dp)
-        )
-    }
-
-    // Purchase Modal
-    if (uiState.showPurchaseModal && uiState.purchaseStudySet != null) {
-        com.example.lingora_fe.user.studyset.presentation.components.PurchaseModal(
-            studySet = uiState.purchaseStudySet,
-            isLoading = uiState.isPurchasing || uiState.isCheckingAccess,
-            error = uiState.purchaseError,
-            onDismiss = { viewModel.hidePurchaseModal() },
-            onPurchase = {
-                viewModel.buyStudySet(uiState.purchaseStudySet!!.id) { paymentUrl ->
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl))
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        // Handle error opening browser
-                    }
-                }
-            }
         )
     }
 
@@ -309,6 +299,7 @@ fun StudySetListScreen(
             }
         )
     }
+    
 }
 
 @Composable
@@ -318,22 +309,25 @@ private fun TabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .background(
-                color = if (isSelected) GradientStart else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) GradientStart else Color.White,
+        border = if (isSelected) null else BorderStroke(1.5.dp, GradientStart.copy(alpha = 0.3f)),
+        shadowElevation = if (isSelected) 4.dp else 0.dp
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else MainText
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) Color.White else GradientStart
+            )
+        }
     }
 }
 

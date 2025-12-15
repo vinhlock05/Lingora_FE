@@ -1,10 +1,13 @@
 package com.example.lingora_fe.user.vocabulary.presentation.components
 
+import android.media.MediaPlayer
 import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -47,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.lingora_fe.R
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
@@ -61,12 +67,25 @@ fun FlashcardComponent(
     modifier: Modifier = Modifier
 ) {
     var rotated by remember { mutableStateOf(false) }
-    
-    // Trigger rotation when isRevealed changes
+    val context = LocalContext.current
+    val flipPlayer = remember { MediaPlayer.create(context, R.raw.flip) }
+
+    var isFirstLaunch by remember { mutableStateOf(true) }
+
     LaunchedEffect(isRevealed) {
+        if (isFirstLaunch) {
+            isFirstLaunch = false
+            return@LaunchedEffect  // Không chạy flip lúc mới vào
+        }
+
         rotated = isRevealed
-        // TODO: Add flip sound effect when sound file is available
-        // You can use SoundPool or MediaPlayer here
+        try {
+            flipPlayer.seekTo(0)
+            flipPlayer.start()
+        } catch (_: Exception) {}
+    }
+    DisposableEffect(Unit) {
+        onDispose { try { flipPlayer.release() } catch (_: Exception) { } }
     }
 
     val rotation by animateFloatAsState(
@@ -100,20 +119,21 @@ fun FlashcardComponent(
         modifier = modifier
             .fillMaxWidth(0.9f)
             .height(500.dp)
-            .shadow(8.dp, shape = RoundedCornerShape(16.dp))
+            .border(BorderStroke(1.dp, Color(0xFFE5E7EB)), shape = RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
             .graphicsLayer {
                 rotationY = rotation
                 cameraDistance = 12f * density
             }
             .clickable(onClick = onCardClick),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .background(Color.White)
         ) {
             if (rotation <= 90f) {
                 FlashcardFrontSide(

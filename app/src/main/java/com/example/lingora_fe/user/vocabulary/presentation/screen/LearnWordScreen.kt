@@ -40,7 +40,6 @@ import androidx.compose.runtime.DisposableEffect
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.TopBarBorder
-import com.example.lingora_fe.user.vocabulary.presentation.components.FlashcardComponent
 import com.example.lingora_fe.user.vocabulary.presentation.components.LearnPhaseContent
 import com.example.lingora_fe.user.vocabulary.presentation.components.QuizPhaseContent
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.LearningPhase
@@ -284,7 +283,18 @@ fun LearnWordScreen(
         )
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        GradientStart.copy(alpha = 0.06f),
+                        GradientEnd.copy(alpha = 0.02f)
+                    )
+                )
+            )
+    ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Progress bar with phase name
             Column(

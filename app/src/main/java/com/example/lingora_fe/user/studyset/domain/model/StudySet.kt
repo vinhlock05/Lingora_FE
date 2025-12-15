@@ -1,5 +1,7 @@
 package com.example.lingora_fe.user.studyset.domain.model
 
+import com.example.lingora_fe.user.forum.domain.model.Comment
+
 data class StudySet(
     val id: Int,
     val title: String,
@@ -8,6 +10,7 @@ data class StudySet(
     val price: Int,
     val status: StudySetStatus,
     val likeCount: Int,
+    val commentCount: Int = 0,
     val createdAt: String,
     val updatedAt: String?,
     val owner: Owner,
@@ -16,7 +19,8 @@ data class StudySet(
     val totalFlashcards: Int? = null,
     val totalQuizzes: Int? = null,
     val isPurchased: Boolean? = null,
-    val isAlreadyLike: Boolean = false
+    val isAlreadyLike: Boolean = false,
+    val comments: List<Comment> = emptyList()
 )
 
 data class Owner(

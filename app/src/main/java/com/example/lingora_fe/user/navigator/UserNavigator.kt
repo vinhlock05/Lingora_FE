@@ -43,17 +43,21 @@ import com.example.lingora_fe.user.forum.presentation.ForumScreen
 import com.example.lingora_fe.user.forum.presentation.*
 import com.example.lingora_fe.user.navigator.components.BottomNavigationBar
 import com.example.lingora_fe.user.navigator.components.UserTopBar
+import com.example.lingora_fe.user.notification.presentation.screen.NotificationScreen
+import com.example.lingora_fe.user.exam.presentation.ListeningPracticeScreen
 import com.example.lingora_fe.user.notification.presentation.NotificationScreen
 import com.example.lingora_fe.user.notification.presentation.NotificationViewModel
 import com.example.lingora_fe.user.practice.presentation.screen.ListeningPracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.PracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.PronunciationPracticeScreen
-import com.example.lingora_fe.user.practice.presentation.screen.ReadingPracticeScreen
+import com.example.lingora_fe.user.exam.presentation.ReadingPracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.ReviewScreen
-import com.example.lingora_fe.user.practice.presentation.screen.TestDetailScreen
-import com.example.lingora_fe.user.practice.presentation.screen.TestPracticeScreen
+import com.example.lingora_fe.user.exam.presentation.TestDetailScreen
+import com.example.lingora_fe.user.exam.presentation.TestPracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.VocabularyReviewScreen
-import com.example.lingora_fe.user.practice.presentation.screen.WritingPracticeScreen
+import com.example.lingora_fe.user.exam.presentation.WritingPracticeScreen
+import com.example.lingora_fe.user.exam.presentation.AttemptDetailScreen
+import com.example.lingora_fe.user.exam.presentation.SpeakingPracticeScreen
 import com.example.lingora_fe.user.profile.presentation.ProfileScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.CategoryDetailScreen
 import com.example.lingora_fe.user.vocabulary.presentation.screen.LearnWordScreen
@@ -424,6 +428,16 @@ fun UserNavigator(
             }
 
             composable(
+                route = Route.AttemptDetail.route,
+                arguments = listOf(
+                    navArgument("attemptId") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val attemptId = backStackEntry.arguments?.getInt("attemptId") ?: 0
+                AttemptDetailScreen(navController = navController, attemptId = attemptId)
+            }
+
+            composable(
                 route = Route.TestDetail.route,
                 arguments = listOf(
                     navArgument("testId") {
@@ -441,34 +455,89 @@ fun UserNavigator(
             composable(
                 route = Route.ListeningPractice.route,
                 arguments = listOf(
-                    navArgument("testId") {
-                        type = NavType.StringType
+                    navArgument("testId") { type = NavType.StringType },
+                    navArgument("sectionId") { type = NavType.IntType },
+                    navArgument("isPractice") { 
+                        type = NavType.BoolType
+                        defaultValue = true 
+                    },
+                    navArgument("attemptId") { 
+                        type = NavType.StringType 
+                        nullable = true
+                        defaultValue = null
                     }
                 )
             ) { backStackEntry ->
-                ListeningPracticeScreen(navController = navController)
+                val testId = backStackEntry.arguments?.getString("testId") ?: "1"
+                val sectionId = backStackEntry.arguments?.getInt("sectionId") ?: 0
+                val isPractice = backStackEntry.arguments?.getBoolean("isPractice") ?: true
+                val attemptId = backStackEntry.arguments?.getString("attemptId")?.toIntOrNull()
+                ListeningPracticeScreen(
+                    navController = navController, 
+                    testId = testId, 
+                    sectionId = sectionId,
+                    isPracticeMode = isPractice,
+                    attemptId = attemptId
+                )
             }
 
             composable(
                 route = Route.ReadingPractice.route,
                 arguments = listOf(
-                    navArgument("testId") {
-                        type = NavType.StringType
+                    navArgument("testId") { type = NavType.StringType },
+                    navArgument("sectionId") { type = NavType.IntType },
+                    navArgument("attemptId") { 
+                        type = NavType.StringType 
+                        nullable = true
+                        defaultValue = null
                     }
                 )
             ) { backStackEntry ->
-                ReadingPracticeScreen(navController = navController)
+                val testId = backStackEntry.arguments?.getString("testId") ?: "1"
+                val sectionId = backStackEntry.arguments?.getInt("sectionId") ?: 0
+                val attemptId = backStackEntry.arguments?.getString("attemptId")?.toIntOrNull()
+                ReadingPracticeScreen(navController = navController, testId = testId, sectionId = sectionId, attemptId = attemptId)
             }
 
             composable(
                 route = Route.WritingPractice.route,
                 arguments = listOf(
-                    navArgument("testId") {
-                        type = NavType.StringType
+                    navArgument("testId") { type = NavType.StringType },
+                    navArgument("sectionId") { type = NavType.IntType },
+                    navArgument("attemptId") { 
+                        type = NavType.StringType 
+                        nullable = true
+                        defaultValue = null
                     }
                 )
             ) { backStackEntry ->
-                WritingPracticeScreen(navController = navController)
+                val testId = backStackEntry.arguments?.getString("testId") ?: "1"
+                val sectionId = backStackEntry.arguments?.getInt("sectionId") ?: 0
+                val attemptId = backStackEntry.arguments?.getString("attemptId")?.toIntOrNull()
+                WritingPracticeScreen(navController = navController, testId = testId, sectionId = sectionId, attemptId = attemptId)
+            }
+
+            composable(
+                route = Route.SpeakingPractice.route,
+                arguments = listOf(
+                    navArgument("testId") { type = NavType.StringType },
+                    navArgument("sectionId") { type = NavType.IntType },
+                    navArgument("attemptId") { 
+                        type = NavType.StringType 
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val testId = backStackEntry.arguments?.getString("testId") ?: "1"
+                val sectionId = backStackEntry.arguments?.getInt("sectionId") ?: 0
+                val attemptId = backStackEntry.arguments?.getString("attemptId")?.toIntOrNull()
+                SpeakingPracticeScreen(
+                    navController = navController,
+                    testId = testId,
+                    sectionId = sectionId,
+                    attemptId = attemptId
+                )
             }
 
             composable(

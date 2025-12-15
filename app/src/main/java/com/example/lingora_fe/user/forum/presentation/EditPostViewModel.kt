@@ -100,6 +100,10 @@ class EditPostViewModel @Inject constructor(
             _state.value = _state.value.copy(thumbnails = updated)
         }
     }
+    
+    fun setThumbnails(thumbnails: List<String>) {
+        _state.value = _state.value.copy(thumbnails = thumbnails)
+    }
 
     fun addTag(tag: String) {
         val clean = tag.trim().removePrefix("#")

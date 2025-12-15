@@ -110,6 +110,14 @@ fun TopicDetailScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            GradientStart.copy(alpha = 0.06f),
+                            GradientEnd.copy(alpha = 0.02f)
+                        )
+                    )
+                )
                 .padding(paddingValues)
         ) {
             // Tabs
@@ -296,14 +304,21 @@ fun WordListTab(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SearchBar(
-                query = searchQuery,
-                onQueryChange = onSearchQueryChange,
-                placeholder = "Tìm kiếm từ...",
-                modifier = Modifier.weight(1f)
-            )
+            Surface(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                shadowElevation = 4.dp
+            ) {
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    placeholder = "Tìm kiếm từ...",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
             
-            // Filter button using FilterButton component
             com.example.lingora_fe.admin.common.presentation.components.FilterButton(
                 onClick = { showFilterDialog = true },
                 hasActiveFilters = uiState.hasLearnedFilter != null,

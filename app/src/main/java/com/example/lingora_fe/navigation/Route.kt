@@ -69,9 +69,11 @@ sealed class Route(
     object QuizPractice : Route("practice/quiz")
     object ReviewPractice : Route("practice/review/{limit}/{types}")
     object TestDetail : Route("practice/test/{testId}")
-    object ListeningPractice : Route("practice/test/{testId}/listening")
-    object ReadingPractice : Route("practice/test/{testId}/reading")
-    object WritingPractice : Route("practice/test/{testId}/writing")
+    object ListeningPractice : Route("practice/test/{testId}/listening/{sectionId}?isPractice={isPractice}&attemptId={attemptId}")
+    object ReadingPractice : Route("practice/test/{testId}/reading/{sectionId}?attemptId={attemptId}")
+    object WritingPractice : Route("practice/test/{testId}/writing/{sectionId}?attemptId={attemptId}")
+    object SpeakingPractice : Route("practice/test/{testId}/speaking/{sectionId}?attemptId={attemptId}")
+    object AttemptDetail : Route("practice/attempt/{attemptId}")
     
     // Forum Navigation
     object CreatePost : Route("forum/create")
@@ -97,9 +99,15 @@ sealed class Route(
         
         // Practice routes
         fun testDetail(testId: String) = "practice/test/$testId"
-        fun listeningPractice(testId: String) = "practice/test/$testId/listening"
-        fun readingPractice(testId: String) = "practice/test/$testId/reading"
-        fun writingPractice(testId: String) = "practice/test/$testId/writing"
+        fun listeningPractice(testId: String, sectionId: Int, isPractice: Boolean = true, attemptId: Int? = null) = 
+            "practice/test/$testId/listening/$sectionId?isPractice=$isPractice" + (attemptId?.let { "&attemptId=$it" } ?: "")
+        fun readingPractice(testId: String, sectionId: Int, attemptId: Int? = null) = 
+            "practice/test/$testId/reading/$sectionId" + (attemptId?.let { "?attemptId=$it" } ?: "")
+        fun writingPractice(testId: String, sectionId: Int, attemptId: Int? = null) = 
+            "practice/test/$testId/writing/$sectionId" + (attemptId?.let { "?attemptId=$it" } ?: "")
+        fun speakingPractice(testId: String, sectionId: Int, attemptId: Int? = null) = 
+            "practice/test/$testId/speaking/$sectionId" + (attemptId?.let { "?attemptId=$it" } ?: "")
+        fun attemptDetail(attemptId: Int) = "practice/attempt/$attemptId"
         fun reviewPractice(limit: Int, gameTypes: String) = "practice/review/$limit/$gameTypes"
         
         // StudySet routes

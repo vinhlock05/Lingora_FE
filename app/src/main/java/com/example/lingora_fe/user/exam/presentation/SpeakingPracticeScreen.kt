@@ -1,7 +1,9 @@
 package com.example.lingora_fe.user.exam.presentation
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,18 +29,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import arrow.core.fold
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
 import com.example.lingora_fe.user.exam.presentation.viewmodel.ExamViewModel
 import com.example.lingora_fe.util.AudioRecorderManager
+import com.example.lingora_fe.util.FileUploadHelper
 import com.example.lingora_fe.util.RecordingInfo
-import com.example.lingora_fe.util.CloudinaryUploader
-import com.example.lingora_fe.util.UploadResult
 import com.example.lingora_fe.util.formatDuration
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,9 +62,7 @@ fun SpeakingPracticeScreen(
         attemptId?.let { viewModel.setExistingAttemptId(it) }
     }
 
-    // Audio recorder
     val audioRecorder = remember { AudioRecorderManager(context) }
-    val cloudinaryUploader = remember { CloudinaryUploader() }
     
     // Clean up on dispose
     DisposableEffect(Unit) {
@@ -165,14 +166,13 @@ fun SpeakingPracticeScreen(
         } else {
             if (!autoSubmitted) {
                 autoSubmitted = true
-                // Submit all recordings
                 scope.launch {
                     submitAllRecordings(
-                        recordingsByQuestion,
-                        uploadedUrlsByQuestion,
-                        cloudinaryUploader,
-                        viewModel,
-                        examId
+                        context = context,
+                        recordingsByQuestion = recordingsByQuestion,
+                        uploadedUrlsByQuestion = uploadedUrlsByQuestion,
+                        viewModel = viewModel,
+                        examId = examId
                     )
                 }
             }
@@ -260,11 +260,11 @@ fun SpeakingPracticeScreen(
                             isUploading = true
                             uploadProgress = "Đang upload audio..."
                             submitAllRecordings(
-                                recordingsByQuestion,
-                                uploadedUrlsByQuestion,
-                                cloudinaryUploader,
-                                viewModel,
-                                examId
+                                context = context,
+                                recordingsByQuestion = recordingsByQuestion,
+                                uploadedUrlsByQuestion = uploadedUrlsByQuestion,
+                                viewModel = viewModel,
+                                examId = examId
                             )
                             isUploading = false
                             uploadProgress = null
@@ -1048,34 +1048,35 @@ private fun formatDuration(seconds: Long): String {
 }
 
 private suspend fun submitAllRecordings(
+    context: Context,
     recordingsByQuestion: Map<Int, RecordingInfo>,
     uploadedUrlsByQuestion: MutableMap<Int, String>,
-    cloudinaryUploader: CloudinaryUploader,
     viewModel: ExamViewModel,
     examId: Int
 ) {
-    // Upload each recording to Cloudinary
+    var hasError = false
+
     recordingsByQuestion.forEach { (questionId, recordingInfo) ->
         if (!uploadedUrlsByQuestion.containsKey(questionId)) {
-            val result = cloudinaryUploader.uploadAudioSigned(
-                filePath = recordingInfo.filePath,
-                publicId = "speaking_q${questionId}_${System.currentTimeMillis()}"
+            val file = File(recordingInfo.filePath)
+            val uri = Uri.fromFile(file)
+
+            FileUploadHelper.uploadAudio(
+                context = context,
+                audioUri = uri
+            ).fold(
+                ifLeft = {
+                    hasError = true
+                },
+                ifRight = { audioUrl ->
+                    uploadedUrlsByQuestion[questionId] = audioUrl
+                    viewModel.updateAnswer(questionId, audioUrl)
+                }
             )
-            
-            when (result) {
-                is UploadResult.Success -> {
-                    uploadedUrlsByQuestion[questionId] = result.url
-                    viewModel.updateAnswer(questionId, result.url)
-                }
-                is UploadResult.Error -> {
-                    // Use local path as fallback
-                    viewModel.updateAnswer(questionId, recordingInfo.filePath)
-                }
-                else -> {}
-            }
         }
     }
-    
-    // Submit section
-    viewModel.submitCurrentSection(examId)
+
+    if (!hasError) {
+        viewModel.submitCurrentSection(examId)
+    }
 }

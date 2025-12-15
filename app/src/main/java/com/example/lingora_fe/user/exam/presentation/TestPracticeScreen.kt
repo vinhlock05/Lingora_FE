@@ -38,7 +38,7 @@ fun TestPracticeScreen(
     val viewModel: ExamViewModel = hiltViewModel()
     val state by viewModel.listState.collectAsState()
     val attemptsState by viewModel.attemptsState.collectAsState()
-    var selectedTab by remember { mutableStateOf(0) }
+    val selectedTab by viewModel.selectedTab.collectAsState()
     LaunchedEffect(selectedTab) {
         if (selectedTab == 0) {
             viewModel.loadExams()
@@ -74,26 +74,34 @@ fun TestPracticeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color.White),
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            GradientStart.copy(alpha = 0.06f),
+                            GradientEnd.copy(alpha = 0.02f)
+                        )
+                    )
+                )
+                .padding(paddingValues),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 0.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TabButton(
                     text = "Luyện đề thi",
                     isSelected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
+                    onClick = { viewModel.setSelectedTab(0) },
                     modifier = Modifier.weight(1f)
                 )
                 TabButton(
                     text = "Lịch sử làm bài",
                     isSelected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
+                    onClick = { viewModel.setSelectedTab(1) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -310,22 +318,25 @@ private fun TabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .background(
-                color = if (isSelected) GradientStart else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) GradientStart else Color.White,
+        border = if (isSelected) null else BorderStroke(1.5.dp, GradientStart.copy(alpha = 0.3f)),
+        shadowElevation = if (isSelected) 4.dp else 0.dp
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.White else MainText
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) Color.White else GradientStart
+            )
+        }
     }
 }
 

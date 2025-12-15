@@ -481,7 +481,7 @@ fun ListeningPracticeScreen(
                             )
                         } else {
                             LinearProgressIndicator(
-                                progress = { audioPlayer.state.progress },
+                                progress = audioPlayer.state.progress,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(6.dp)

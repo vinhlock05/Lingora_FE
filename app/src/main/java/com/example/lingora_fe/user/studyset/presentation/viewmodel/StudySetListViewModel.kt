@@ -112,26 +112,25 @@ class StudySetListViewModel @Inject constructor(
             
             repository.getStudySetById(token, studySetId).fold(
                 ifLeft = { error ->
-                    // If error (likely 403 Forbidden), show purchase modal
-                    val studySet = _uiState.value.studySets.find { it.id == studySetId }
-                    if (studySet != null) {
+                    _uiState.value = _uiState.value.copy(
+                        isCheckingAccess = false,
+                        error = error.message
+                    )
+                },
+                ifRight = { studySet ->
+                    val isAccess = studySet.isPurchased == true || studySet.price == 0 || studySet.owner.id == currentUserId
+                    if (isAccess) {
+                        _uiState.value = _uiState.value.copy(isCheckingAccess = false)
+                        onSuccess(studySetId)
+                    } else {
+                        val cachedStudySet = _uiState.value.studySets.find { it.id == studySetId } ?: studySet
                         _uiState.value = _uiState.value.copy(
                             isCheckingAccess = false,
                             showPurchaseModal = true,
-                            purchaseStudySet = studySet,
+                            purchaseStudySet = cachedStudySet,
                             purchaseError = null
                         )
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            isCheckingAccess = false,
-                            error = error.message
-                        )
                     }
-                },
-                ifRight = { studySet ->
-                    // Success - can access, navigate to detail
-                    _uiState.value = _uiState.value.copy(isCheckingAccess = false)
-                    onSuccess(studySetId)
                 }
             )
         }

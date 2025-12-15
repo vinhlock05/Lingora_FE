@@ -181,22 +181,33 @@ fun MyStudySetCard(
             // Like Count
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onLikeClick)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (studySet.isAlreadyLike) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Like",
-                        tint = if (studySet.isAlreadyLike) Color(0xFFEF4444) else NavBarText,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable(onClick = onLikeClick)
+                    ) {
+                        Icon(
+                            imageVector = if (studySet.isAlreadyLike) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Like",
+                            tint = if (studySet.isAlreadyLike) Color(0xFFEF4444) else NavBarText,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "${studySet.likeCount}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NavBarText
+                        )
+                    }
+
                     Text(
-                        text = "${studySet.likeCount}",
+                        text = "${studySet.commentCount} bình luận",
                         style = MaterialTheme.typography.bodySmall,
                         color = NavBarText
                     )

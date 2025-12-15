@@ -283,7 +283,18 @@ fun LearnWordScreen(
         )
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        GradientStart.copy(alpha = 0.06f),
+                        GradientEnd.copy(alpha = 0.02f)
+                    )
+                )
+            )
+    ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Progress bar with phase name
             Column(

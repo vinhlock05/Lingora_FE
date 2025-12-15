@@ -50,6 +50,9 @@ class ExamViewModel @Inject constructor(
     private val _attemptDetailState = MutableStateFlow(AttemptDetailUiState())
     val attemptDetailState: StateFlow<AttemptDetailUiState> = _attemptDetailState.asStateFlow()
     
+    private val _selectedTab = MutableStateFlow(0)
+    val selectedTab: StateFlow<Int> = _selectedTab.asStateFlow()
+    
     // Full test flow - track completed sections locally
     private val _completedSections = MutableStateFlow<Set<Int>>(emptySet())
     val completedSections: StateFlow<Set<Int>> = _completedSections.asStateFlow()
@@ -68,6 +71,10 @@ class ExamViewModel @Inject constructor(
     
     fun isSectionCompleted(sectionId: Int): Boolean {
         return sectionId in _completedSections.value
+    }
+    
+    fun setSelectedTab(index: Int) {
+        _selectedTab.value = index
     }
     
     // Set existing attempt ID for FULL mode (passed from navigation)

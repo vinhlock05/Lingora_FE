@@ -3,6 +3,8 @@ package com.example.lingora_fe.user.studyset.presentation
 import com.example.lingora_fe.user.studyset.domain.model.StudySet
 import com.example.lingora_fe.user.studyset.domain.model.StudySetStatus
 import com.example.lingora_fe.user.studyset.domain.model.StudySetVisibility
+import com.example.lingora_fe.user.forum.presentation.CommentThread
+import com.example.lingora_fe.user.forum.presentation.ReplyContext
 
 // StudySet List State
 data class StudySetListUiState(
@@ -34,7 +36,17 @@ data class StudySetDetailUiState(
     val studySet: StudySet? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isLiking: Boolean = false
+    val isLiking: Boolean = false,
+    val commentText: String = "",
+    val isSubmittingComment: Boolean = false,
+    val isPurchasing: Boolean = false,
+    val commentThreads: List<CommentThread> = emptyList(),
+    val replyContext: ReplyContext? = null,
+    val expandedParentIds: Set<Int> = emptySet(),
+    val currentUserId: Int? = null,
+    val editingCommentId: Int? = null,
+    val editingCommentText: String = "",
+    val isUpdatingComment: Boolean = false
 )
 
 // Create/Edit StudySet State

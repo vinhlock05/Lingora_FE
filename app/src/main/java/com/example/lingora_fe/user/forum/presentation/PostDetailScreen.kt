@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -743,27 +744,33 @@ fun CommentCard(
             }
             
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = formatTimeAgo(comment.createdAt),
-                    fontSize = 12.sp,
-                    color = NavBarText
-                )
-                Text(
-                    text = "Phản hồi",
-                    color = Color(0xFF2563EB),
-                    fontSize = 13.sp,
-                    modifier = Modifier.clickable(onClick = onReplyClick)
-                )
-                if (isEditable && !isEditing) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "Chỉnh sửa",
+                        text = formatTimeAgo(comment.createdAt),
+                        fontSize = 12.sp,
+                        color = NavBarText
+                    )
+                    Text(
+                        text = "Phản hồi",
                         color = Color(0xFF2563EB),
                         fontSize = 13.sp,
-                        modifier = Modifier.clickable(onClick = onEditClick)
+                        modifier = Modifier.clickable(onClick = onReplyClick)
                     )
+                    if (isEditable && !isEditing) {
+                        Text(
+                            text = "Chỉnh sửa",
+                            color = Color(0xFF2563EB),
+                            fontSize = 13.sp,
+                            modifier = Modifier.clickable(onClick = onEditClick)
+                        )
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -838,6 +845,7 @@ fun CommentInputSection(
             .fillMaxWidth()
             .background(Color.White)
             .padding(horizontal = 16.dp, vertical = 10.dp)
+            .imePadding()
     ) {
         replyContext?.let {
             Row(

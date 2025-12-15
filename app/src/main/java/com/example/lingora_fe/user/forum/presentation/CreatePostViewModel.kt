@@ -43,6 +43,10 @@ class CreatePostViewModel @Inject constructor(
         )
     }
     
+    fun setThumbnails(thumbnails: List<String>) {
+        _state.value = _state.value.copy(thumbnails = thumbnails)
+    }
+    
     fun addThumbnail(imageUrl: String) {
         val currentThumbnails = _state.value.thumbnails.toMutableList()
         currentThumbnails.add(imageUrl)

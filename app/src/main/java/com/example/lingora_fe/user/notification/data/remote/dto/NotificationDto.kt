@@ -1,6 +1,7 @@
 package com.example.lingora_fe.user.notification.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
+import com.google.gson.JsonObject
 
 // MetaData DTOs
 data class NotificationListMetaData(
@@ -10,6 +11,8 @@ data class NotificationListMetaData(
     val totalPages: Int,
     @SerializedName("total")
     val total: Int,
+    @SerializedName("unreadCount")
+    val unreadCount: Int,
     @SerializedName("notifications")
     val notifications: List<NotificationDto>
 )
@@ -17,22 +20,18 @@ data class NotificationListMetaData(
 data class NotificationDto(
     @SerializedName("id")
     val id: Int,
-    @SerializedName("relatedId")
-    val relatedId: Int,
-    @SerializedName("title")
-    val title: String,
     @SerializedName("message")
-    val message: String,
+    val message: String?,
     @SerializedName("type")
     val type: String,
     @SerializedName("isRead")
     val isRead: Boolean,
+    @SerializedName("readAt")
+    val readAt: String?,
+    @SerializedName("data")
+    val data: JsonObject?,
+    @SerializedName("target")
+    val target: String?,
     @SerializedName("createdAt")
     val createdAt: String
 )
-
-data class UnreadCountMetaData(
-    @SerializedName("unreadCount")
-    val unreadCount: Int
-)
-

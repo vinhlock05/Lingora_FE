@@ -7,6 +7,7 @@ import com.example.lingora_fe.admin.user.domain.model.UpdateUserData
 import com.example.lingora_fe.admin.user.domain.repository.UserManagementRepository
 import com.example.lingora_fe.auth.domain.repository.AuthRepository
 import com.example.lingora_fe.core.network.TokenManager
+import com.example.lingora_fe.user.notification.data.socket.NotificationSocketManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val tokenManager: TokenManager,
-    private val userManagementRepository: UserManagementRepository
+    private val userManagementRepository: UserManagementRepository,
+    private val socketManager: NotificationSocketManager
 ) : ViewModel() {
 
     private val _profileState = MutableStateFlow(ProfileState())
@@ -79,6 +81,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun clearLocalData() {
+        runCatching { socketManager.disconnect() }
         tokenManager.clearTokens()
         _profileState.value = ProfileState()
     }

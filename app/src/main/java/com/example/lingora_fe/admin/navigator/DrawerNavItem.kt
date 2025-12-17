@@ -59,6 +59,13 @@ sealed class DrawerNavItem(
         description = "Manage forum posts and comments"
     )
     
+    object ReportManagement : DrawerNavItem(
+        route = "admin_report_management",
+        title = "Report Management",
+        icon = Icons.Default.Report,
+        description = "Manage user reports and violations"
+    )
+    
     object Analytics : DrawerNavItem(
         route = "admin_analytics",
         title = "Analytics",
@@ -82,6 +89,7 @@ sealed class DrawerNavItem(
             WordManagement,
             ContentManagement,
             ForumManagement,
+            ReportManagement,
             Analytics,
             Settings
         )

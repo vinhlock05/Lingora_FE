@@ -26,9 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.lingora_fe.admin.report.domain.model.TargetType
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
+import com.example.lingora_fe.user.common.presentation.components.CreateReportDialog
 import com.example.lingora_fe.user.studyset.domain.model.StudySet
 import java.text.NumberFormat
 import java.util.Locale
@@ -83,18 +85,22 @@ fun StudySetCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                if (isOwner && (onEditClick != null || onDeleteClick != null)) {
-                    Box {
-                        IconButton(onClick = { menuExpanded.value = true }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More actions"
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded.value,
-                            onDismissRequest = { menuExpanded.value = false }
-                        ) {
+                val menuExpanded = remember { mutableStateOf(false) }
+                val showReportDialog = remember { mutableStateOf(false) }
+                
+                // Always show menu (Edit/Delete for owner, Report for non-owner)
+                Box {
+                    IconButton(onClick = { menuExpanded.value = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More actions"
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded.value,
+                        onDismissRequest = { menuExpanded.value = false }
+                    ) {
+                        if (isOwner && (onEditClick != null || onDeleteClick != null)) {
                             onEditClick?.let { edit ->
                                 DropdownMenuItem(
                                     text = { Text("Chỉnh sửa") },
@@ -113,8 +119,29 @@ fun StudySetCard(
                                     }
                                 )
                             }
+                        } else if (!isOwner) {
+                            DropdownMenuItem(
+                                text = { Text("Báo cáo vi phạm") },
+                                onClick = {
+                                    menuExpanded.value = false
+                                    showReportDialog.value = true
+                                }
+                            )
                         }
                     }
+                }
+                
+                // Report Dialog for non-owners
+                if (showReportDialog.value) {
+                    CreateReportDialog(
+                        targetType = TargetType.STUDY_SET,
+                        targetId = studySet.id,
+                        onDismiss = { showReportDialog.value = false },
+                        onSuccess = {
+                            showReportDialog.value = false
+                            // Could show success message here
+                        }
+                    )
                 }
             }
 

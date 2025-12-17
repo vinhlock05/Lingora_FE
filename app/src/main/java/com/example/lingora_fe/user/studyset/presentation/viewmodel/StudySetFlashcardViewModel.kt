@@ -36,7 +36,7 @@ class StudySetFlashcardViewModel @Inject constructor(
         viewModelScope.launch {
             val token = tokenManager.getAccessToken() ?: return@launch
             
-            repository.getStudySetById(token, studySetId).fold(
+            repository.getStudySetById(studySetId).fold(
                 ifLeft = { error ->
                     // Handle error
                 },

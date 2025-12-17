@@ -33,7 +33,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -75,6 +74,7 @@ import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
 import com.example.lingora_fe.navigation.Route
+import com.example.lingora_fe.user.common.presentation.components.CreateReportDialog
 import com.example.lingora_fe.user.forum.domain.model.Post
 import com.example.lingora_fe.user.forum.domain.model.PostStatus
 import com.example.lingora_fe.user.forum.domain.model.PostTopic
@@ -594,20 +594,23 @@ fun PostCard(
                 }
 
                 val isOwner = post.createdBy?.id == currentUserId
-                if (isOwner) {
-                    var menuExpanded by remember { mutableStateOf(false) }
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = "Options",
-                                tint = Color(0xFF757575)
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
-                        ) {
+                var menuExpanded by remember { mutableStateOf(false) }
+                var showReportDialog by remember { mutableStateOf(false) }
+                
+                // Always show menu (Edit/Delete for owner, Report for non-owner)
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            tint = Color(0xFF757575)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        if (isOwner) {
                             DropdownMenuItem(
                                 text = { Text("Chỉnh sửa") },
                                 onClick = {
@@ -634,8 +637,29 @@ fun PostCard(
                                     onDeletePost()
                                 }
                             )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text("Báo cáo vi phạm") },
+                                onClick = {
+                                    menuExpanded = false
+                                    showReportDialog = true
+                                }
+                            )
                         }
                     }
+                }
+                
+                // Report Dialog for non-owners
+                if (showReportDialog) {
+                    CreateReportDialog(
+                        targetType = com.example.lingora_fe.admin.report.domain.model.TargetType.POST,
+                        targetId = post.id,
+                        onDismiss = { showReportDialog = false },
+                        onSuccess = { 
+                            showReportDialog = false
+                            // Could show success message here
+                        }
+                    )
                 }
             }
 

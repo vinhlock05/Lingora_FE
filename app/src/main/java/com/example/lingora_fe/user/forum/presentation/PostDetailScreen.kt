@@ -89,6 +89,8 @@ import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.forum.domain.model.Comment
 import com.example.lingora_fe.user.forum.domain.model.Post
 import com.example.lingora_fe.user.forum.domain.model.PostStatus
+import com.example.lingora_fe.user.common.presentation.components.CreateReportDialog
+import com.example.lingora_fe.admin.report.domain.model.TargetType
 import kotlinx.coroutines.launch
 
 private const val COMMENT_MAX_LENGTH = 256
@@ -303,6 +305,9 @@ fun PostDetailCard(
     onDeletePost: () -> Unit,
     onChangeStatus: (PostStatus) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -405,7 +410,44 @@ fun PostDetailCard(
                         }
                     }
                 } else {
-                    Spacer(modifier = Modifier.width(40.dp))
+                    // Show report option for non-owners
+                    var menuExpanded by remember { mutableStateOf(false) }
+                    var showReportDialog by remember { mutableStateOf(false) }
+                    
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Báo cáo vi phạm") },
+                                onClick = {
+                                    menuExpanded = false
+                                    showReportDialog = true
+                                }
+                            )
+                        }
+                    }
+                    
+                    if (showReportDialog) {
+                        CreateReportDialog(
+                            targetType = TargetType.POST,
+                            targetId = post.id,
+                            onDismiss = { showReportDialog = false },
+                            onSuccess = { 
+                                showReportDialog = false
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Đã báo cáo vi phạm thành công",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             }
             
@@ -770,6 +812,32 @@ fun CommentCard(
                             fontSize = 13.sp,
                             modifier = Modifier.clickable(onClick = onEditClick)
                         )
+                    }
+                    if (!isEditable && !isEditing) {
+                        val reportScope = rememberCoroutineScope()
+                        var showReportDialog by remember { mutableStateOf(false) }
+                        Text(
+                            text = "Báo cáo",
+                            color = Color(0xFFEF4444),
+                            fontSize = 13.sp,
+                            modifier = Modifier.clickable { showReportDialog = true }
+                        )
+                        if (showReportDialog) {
+                            CreateReportDialog(
+                                targetType = TargetType.COMMENT,
+                                targetId = comment.id,
+                                onDismiss = { showReportDialog = false },
+                                onSuccess = { 
+                                    showReportDialog = false
+                                    reportScope.launch {
+                                        androidx.compose.material3.SnackbarHostState().showSnackbar(
+                                            message = "Đã báo cáo vi phạm thành công",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
                 Row(

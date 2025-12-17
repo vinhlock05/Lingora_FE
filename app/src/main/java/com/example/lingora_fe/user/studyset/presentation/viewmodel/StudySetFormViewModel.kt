@@ -53,7 +53,7 @@ class StudySetFormViewModel @Inject constructor(
             
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            repository.getStudySetById(token, id).fold(
+            repository.getStudySetById(id).fold(
                 ifLeft = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

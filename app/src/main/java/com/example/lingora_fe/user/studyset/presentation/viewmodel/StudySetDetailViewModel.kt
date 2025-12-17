@@ -74,7 +74,7 @@ class StudySetDetailViewModel @Inject constructor(
             
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            repository.getStudySetById(token, studySetId).fold(
+            repository.getStudySetById(studySetId).fold(
                 ifLeft = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

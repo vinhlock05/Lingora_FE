@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -190,6 +191,8 @@ private fun getNotificationIcon(type: NotificationType) = when (type) {
     NotificationType.LIKE -> Icons.Default.Favorite
     NotificationType.COMMENT -> Icons.Default.Comment
     NotificationType.ORDER -> Icons.Default.ShoppingCart
+    NotificationType.WARNING -> Icons.Default.Warning
+    NotificationType.CONTENT_DELETED -> TODO()
 }
 
 @Composable
@@ -275,8 +278,16 @@ fun NotificationItem(
 
                 // Message
                 notification.message?.let { message ->
+                    val formattedMessage = message
+                        .replace("POST", "bài viết")
+                        .replace("STUDY_SET", "học liệu")
+                        .replace("COMMENT", "bình luận")
+                        .replace("Post", "Bài viết")
+                        .replace("Study set", "Học liệu")
+                        .replace("Comment", "Bình luận")
+                    
                     Text(
-                        text = message,
+                        text = formattedMessage,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,

@@ -8,7 +8,9 @@ data class AdminUser(
     val avatar: String?,
     val status: String,
     val proficiency: String? = null,
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    val suspendedUntil: String? = null,
+    val banReason: String? = null
 )
 
 data class UserRole(
@@ -56,6 +58,7 @@ data class UserFilterOptions(
 enum class UserStatus(val value: String) {
     ACTIVE("ACTIVE"),
     INACTIVE("INACTIVE"),
+    SUSPENDED("SUSPENDED"),
     BANNED("BANNED"),
     DELETED("DELETED")
 }

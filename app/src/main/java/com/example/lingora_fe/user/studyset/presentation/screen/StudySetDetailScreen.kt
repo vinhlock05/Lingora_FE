@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +38,8 @@ import com.example.lingora_fe.user.forum.presentation.CommentInputSection
 import com.example.lingora_fe.user.forum.presentation.CommentThreadItem
 import com.example.lingora_fe.user.studyset.presentation.viewmodel.StudySetDetailViewModel
 import com.example.lingora_fe.user.studyset.presentation.PaymentWebViewActivity
+import com.example.lingora_fe.user.common.presentation.components.CreateReportDialog
+import com.example.lingora_fe.admin.report.domain.model.TargetType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -130,7 +133,64 @@ fun StudySetDetailScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
                     }
                 },
-                actions = {},
+                actions = {
+                    uiState.studySet?.let { studySet ->
+                        var menuExpanded by remember { mutableStateOf(false) }
+                        var showReportDialog by remember { mutableStateOf(false) }
+                        
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                if (isOwner) {
+                                    DropdownMenuItem(
+                                        text = { Text("Chỉnh sửa") },
+                                        onClick = {
+                                            menuExpanded = false
+                                            onEditClick(studySet.id)
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Xóa", color = Color(0xFFDC2626)) },
+                                        onClick = {
+                                            menuExpanded = false
+                                            showDeleteDialog = true
+                                        }
+                                    )
+                                } else {
+                                    DropdownMenuItem(
+                                        text = { Text("Báo cáo vi phạm") },
+                                        onClick = {
+                                            menuExpanded = false
+                                            showReportDialog = true
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        
+                        if (showReportDialog) {
+                            CreateReportDialog(
+                                targetType = TargetType.STUDY_SET,
+                                targetId = studySet.id,
+                                onDismiss = { showReportDialog = false },
+                                onSuccess = { 
+                                    showReportDialog = false
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Đã báo cáo vi phạm thành công",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.White
                 )

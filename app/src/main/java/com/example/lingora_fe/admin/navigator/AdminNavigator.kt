@@ -31,6 +31,8 @@ import com.example.lingora_fe.admin.user.presentation.screen.UserListScreen
 import com.example.lingora_fe.admin.word.presentation.screen.CreateEditWordScreen
 import com.example.lingora_fe.admin.word.presentation.screen.WordListScreen
 import com.example.lingora_fe.admin.word.presentation.screen.WordsInTopicScreen
+import com.example.lingora_fe.admin.report.presentation.screen.ReportListScreen
+import com.example.lingora_fe.admin.report.presentation.screen.ReportDetailScreen
 import com.example.lingora_fe.auth.presentation.AuthViewModel
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.launch
@@ -90,6 +92,8 @@ fun AdminNavigator(
             currentRoute.startsWith("admin_dashboard") -> "Dashboard"
             currentRoute.startsWith("admin_content") -> "Content Management"
             currentRoute.startsWith("admin_forum") -> "Forum Management"
+            currentRoute.startsWith("admin_report_management/details") -> "Report Details"
+            currentRoute.startsWith("admin_report_management") -> "Report Management"
             currentRoute.startsWith("admin_analytics") -> "Analytics"
             currentRoute.startsWith("admin_settings") -> "Settings"
             else -> "Admin Panel"
@@ -397,6 +401,28 @@ fun AdminNavigator(
                     ForumManagementScreen()
                 }
 
+                // Report Management
+                composable("admin_report_management") {
+                    ReportListScreen(
+                        onNavigateToDetail = { reportId ->
+                            navController.navigate("admin_report_management/details/$reportId")
+                        }
+                    )
+                }
+
+                composable(
+                    route = "admin_report_management/details/{reportId}",
+                    arguments = listOf(
+                        navArgument("reportId") { type = NavType.IntType }
+                    )
+                ) { backStackEntry ->
+                    val reportId = backStackEntry.arguments?.getInt("reportId") ?: 0
+                    ReportDetailScreen(
+                        reportId = reportId,
+                        navController = navController
+                    )
+                }
+
                 // Analytics
                 composable("admin_analytics") {
                     AnalyticsScreen()
@@ -472,6 +498,7 @@ private fun getMainRoute(route: String?): String {
         route.startsWith("admin_dashboard") -> "admin_dashboard"
         route.startsWith("admin_content") -> "admin_content"
         route.startsWith("admin_forum") -> "admin_forum"
+        route.startsWith("admin_report_management") -> "admin_report_management"
         route.startsWith("admin_analytics") -> "admin_analytics"
         route.startsWith("admin_settings") -> "admin_settings"
         else -> "admin_dashboard"

@@ -3,8 +3,10 @@ package com.example.lingora_fe.user.notification.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.core.network.TokenManager
+import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.notification.data.socket.NotificationSocketManager
 import com.example.lingora_fe.user.notification.domain.model.NotificationFilterOptions
+import com.example.lingora_fe.user.notification.domain.model.NotificationType
 import com.example.lingora_fe.user.notification.domain.repository.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,15 +103,32 @@ class NotificationViewModel @Inject constructor(
                 ?: getInt("targetId")
 
         return when (type) {
-            com.example.lingora_fe.user.notification.domain.model.NotificationType.LIKE,
-            com.example.lingora_fe.user.notification.domain.model.NotificationType.COMMENT,
-            com.example.lingora_fe.user.notification.domain.model.NotificationType.ORDER -> {
+            NotificationType.LIKE,
+            NotificationType.COMMENT,
+            NotificationType.ORDER -> {
                 val id = studySetId ?: relatedId ?: objectId
-                if (id != null) com.example.lingora_fe.navigation.Route.studySetDetail(id)
-                else if (postId != null) com.example.lingora_fe.navigation.Route.postDetail(postId)
+                if (id != null) Route.studySetDetail(id)
+                else if (postId != null) Route.postDetail(postId)
                 else null
             }
-            com.example.lingora_fe.user.notification.domain.model.NotificationType.CHANGE_PASSWORD -> com.example.lingora_fe.navigation.Route.ProfileTab.route
+            NotificationType.WARNING -> {
+                // WARNING notification contains targetType and targetId
+                val targetType = try { data?.get("targetType")?.asString } catch (_: Exception) { null }
+                val targetId = getInt("targetId")
+                
+                when (targetType) {
+                    "POST" -> if (targetId != null) Route.postDetail(targetId) else null
+                    "STUDY_SET" -> if (targetId != null) Route.studySetDetail(targetId) else null
+                    "COMMENT" -> {
+                        // For comments, try to navigate to parent post if available
+                        if (postId != null) Route.postDetail(postId)
+                        else null
+                    }
+                    else -> null
+                }
+            }
+            NotificationType.CHANGE_PASSWORD -> Route.ProfileTab.route
+            NotificationType.CONTENT_DELETED -> TODO()
         }
     }
 

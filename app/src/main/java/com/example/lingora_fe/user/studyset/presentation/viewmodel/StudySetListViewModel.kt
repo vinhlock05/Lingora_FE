@@ -106,11 +106,9 @@ class StudySetListViewModel @Inject constructor(
 
     fun checkAccessAndNavigate(studySetId: Int, onSuccess: (Int) -> Unit) {
         viewModelScope.launch {
-            val token = tokenManager.getAccessToken() ?: return@launch
-            
             _uiState.value = _uiState.value.copy(isCheckingAccess = true, purchaseError = null)
             
-            repository.getStudySetById(token, studySetId).fold(
+            repository.getStudySetById(studySetId).fold(
                 ifLeft = { error ->
                     _uiState.value = _uiState.value.copy(
                         isCheckingAccess = false,

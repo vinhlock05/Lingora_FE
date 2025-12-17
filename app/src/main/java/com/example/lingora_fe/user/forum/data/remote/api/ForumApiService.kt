@@ -61,6 +61,11 @@ interface ForumApiService {
         @Query("targetType") targetType: String? = "POST"
     ): ApiResponse<List<CommentDto>>
     
+    @GET("comments/{commentId}")
+    suspend fun getCommentById(
+        @Path("commentId") commentId: Int
+    ): ApiResponse<CommentDto>
+    
     @POST("comments/target/{targetId}")
     suspend fun createComment(
         @Path("targetId") targetId: Int,

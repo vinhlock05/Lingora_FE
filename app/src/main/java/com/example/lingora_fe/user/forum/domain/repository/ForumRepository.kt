@@ -50,6 +50,10 @@ interface ForumRepository {
         targetType: String = "POST"
     ): Either<AppFailure, List<Comment>>
     
+    suspend fun getCommentById(
+        commentId: Int
+    ): Either<AppFailure, Comment>
+    
     suspend fun createComment(
         targetId: Int,
         content: String,

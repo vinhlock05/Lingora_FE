@@ -43,11 +43,9 @@ import com.example.lingora_fe.user.forum.presentation.ForumScreen
 import com.example.lingora_fe.user.forum.presentation.*
 import com.example.lingora_fe.user.navigator.components.BottomNavigationBar
 import com.example.lingora_fe.user.navigator.components.UserTopBar
-import com.example.lingora_fe.user.notification.presentation.screen.NotificationScreen
 import com.example.lingora_fe.user.exam.presentation.ListeningPracticeScreen
 import com.example.lingora_fe.user.notification.presentation.NotificationScreen
 import com.example.lingora_fe.user.notification.presentation.NotificationViewModel
-import com.example.lingora_fe.user.practice.presentation.screen.ListeningPracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.PracticeScreen
 import com.example.lingora_fe.user.practice.presentation.screen.PronunciationPracticeScreen
 import com.example.lingora_fe.user.exam.presentation.ReadingPracticeScreen

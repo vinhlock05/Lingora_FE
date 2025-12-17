@@ -68,7 +68,6 @@ class StudySetRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getStudySetById(
-        token: String,
         studySetId: Int
     ): Either<AppFailure, StudySet> {
         return Either.catch {

@@ -8,6 +8,8 @@ import com.example.lingora_fe.user.forum.data.remote.dto.*
 import com.example.lingora_fe.user.forum.domain.model.PostTopic
 import com.example.lingora_fe.user.forum.domain.repository.ForumRepository
 import com.example.lingora_fe.user.forum.domain.repository.PostListResult
+import com.example.lingora_fe.user.forum.domain.model.Comment
+import com.example.lingora_fe.user.forum.domain.model.Post
 import javax.inject.Inject
 
 class ForumRepositoryImpl @Inject constructor(
@@ -20,7 +22,7 @@ class ForumRepositoryImpl @Inject constructor(
         thumbnails: List<String>?,
         tags: List<String>?,
         topic: PostTopic?
-    ): Either<AppFailure, com.example.lingora_fe.user.forum.domain.model.Post> {
+    ): Either<AppFailure, Post> {
         return Either.catch {
             val request = CreatePostRequest(
                 title = title,
@@ -66,7 +68,7 @@ class ForumRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
     
-    override suspend fun getPostById(id: Int): Either<AppFailure, com.example.lingora_fe.user.forum.domain.model.Post> {
+    override suspend fun getPostById(id: Int): Either<AppFailure, Post> {
         return Either.catch {
             val response = apiService.getPostById(id)
             val postDto = response.metaData ?: throw Exception(response.message)
@@ -82,7 +84,7 @@ class ForumRepositoryImpl @Inject constructor(
         tags: List<String>?,
         topic: PostTopic?,
         status: String?
-    ): Either<AppFailure, com.example.lingora_fe.user.forum.domain.model.Post> {
+    ): Either<AppFailure, Post> {
         return Either.catch {
             val request = UpdatePostRequest(
                 title = title,
@@ -123,7 +125,7 @@ class ForumRepositoryImpl @Inject constructor(
         targetId: Int,
         parentId: Int?,
         targetType: String
-    ): Either<AppFailure, List<com.example.lingora_fe.user.forum.domain.model.Comment>> {
+    ): Either<AppFailure, List<Comment>> {
         return Either.catch {
             val parentIdStr = parentId?.toString() ?: "null"
             val response = apiService.getChildComments(targetId, parentIdStr, targetType)
@@ -132,12 +134,22 @@ class ForumRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
     
+    override suspend fun getCommentById(
+        commentId: Int
+    ): Either<AppFailure, Comment> {
+        return Either.catch {
+            val response = apiService.getCommentById(commentId)
+            val commentDto = response.metaData ?: throw Exception(response.message)
+            commentDto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+    
     override suspend fun createComment(
         targetId: Int,
         content: String,
         parentId: Int?,
         targetType: String
-    ): Either<AppFailure, com.example.lingora_fe.user.forum.domain.model.Comment> {
+    ): Either<AppFailure, Comment> {
         return Either.catch {
             val request = CreateCommentRequest(content = content, parentId = parentId)
             val response = apiService.createComment(targetId, targetType, request)
@@ -151,7 +163,7 @@ class ForumRepositoryImpl @Inject constructor(
         targetId: Int,
         content: String,
         targetType: String
-    ): Either<AppFailure, com.example.lingora_fe.user.forum.domain.model.Comment> {
+    ): Either<AppFailure, Comment> {
         return Either.catch {
             val request = UpdateCommentRequest(content = content)
             val response = apiService.updateComment(commentId, targetId, targetType, request)

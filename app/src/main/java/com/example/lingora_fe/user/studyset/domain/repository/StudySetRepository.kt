@@ -39,7 +39,6 @@ interface StudySetRepository {
      * Get study set by ID
      */
     suspend fun getStudySetById(
-        token: String,
         studySetId: Int
     ): Either<AppFailure, StudySet>
 

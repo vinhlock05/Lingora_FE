@@ -35,9 +35,7 @@ class StudySetQuizViewModel @Inject constructor(
 
     private fun loadStudySet() {
         viewModelScope.launch {
-            val token = tokenManager.getAccessToken() ?: return@launch
-            
-            repository.getStudySetById(token, studySetId).fold(
+            repository.getStudySetById(studySetId).fold(
                 ifLeft = { error ->
                     // Handle error
                 },

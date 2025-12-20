@@ -33,9 +33,11 @@ import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
 import com.example.lingora_fe.navigation.Route
 
+
 @Composable
 fun ProfileScreen(
     rootNavController: NavHostController,
+    navController: NavHostController? = null,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val profileState by viewModel.profileState.collectAsState()
@@ -384,6 +386,68 @@ fun ProfileScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                // Withdrawal Section Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clickable { 
+                            navController?.navigate(Route.WithdrawalList.route)
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(GradientStart, GradientEnd)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountBalance,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Rút tiền",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MainText
+                            )
+                            Text(
+                                text = "Quản lý thu nhập và rút tiền",
+                                fontSize = 13.sp,
+                                color = NavBarText,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = NavBarText,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
                 

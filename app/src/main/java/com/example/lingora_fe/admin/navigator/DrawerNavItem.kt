@@ -66,6 +66,13 @@ sealed class DrawerNavItem(
         description = "Manage user reports and violations"
     )
     
+    object WithdrawalManagement : DrawerNavItem(
+        route = "admin_withdrawal_management",
+        title = "Withdrawal Management",
+        icon = Icons.Default.AccountBalance,
+        description = "Manage withdrawal requests"
+    )
+    
     object Analytics : DrawerNavItem(
         route = "admin_analytics",
         title = "Analytics",
@@ -90,6 +97,7 @@ sealed class DrawerNavItem(
             ContentManagement,
             ForumManagement,
             ReportManagement,
+            WithdrawalManagement,
             Analytics,
             Settings
         )

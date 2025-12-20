@@ -78,7 +78,7 @@ fun ReportListScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Search Bar

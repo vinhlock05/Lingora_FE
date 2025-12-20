@@ -80,6 +80,11 @@ sealed class Route(
     object PostDetail : Route("forum/post/{postId}")
     object EditPost : Route("forum/post/{postId}/edit")
     
+    // Withdrawal Navigation
+    object WithdrawalList : Route("withdrawal/list")
+    object WithdrawalCreate : Route("withdrawal/create")
+    object WithdrawalDetail : Route("withdrawal/{withdrawalId}")
+    
     companion object {
         // Auth routes
         fun otpScreen(email: String) = "otpScreen/$email"
@@ -118,6 +123,9 @@ sealed class Route(
         // Forum routes
         fun postDetail(postId: Int) = "forum/post/$postId"
         fun editPost(postId: Int) = "forum/post/$postId/edit"
+        
+        // Withdrawal routes
+        fun withdrawalDetail(withdrawalId: Int) = "withdrawal/$withdrawalId"
     }
 
 }

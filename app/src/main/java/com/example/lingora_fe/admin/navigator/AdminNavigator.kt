@@ -33,6 +33,8 @@ import com.example.lingora_fe.admin.word.presentation.screen.WordListScreen
 import com.example.lingora_fe.admin.word.presentation.screen.WordsInTopicScreen
 import com.example.lingora_fe.admin.report.presentation.screen.ReportListScreen
 import com.example.lingora_fe.admin.report.presentation.screen.ReportDetailScreen
+import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalListScreen
+import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalDetailScreen
 import com.example.lingora_fe.auth.presentation.AuthViewModel
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.launch
@@ -94,6 +96,8 @@ fun AdminNavigator(
             currentRoute.startsWith("admin_forum") -> "Forum Management"
             currentRoute.startsWith("admin_report_management/details") -> "Report Details"
             currentRoute.startsWith("admin_report_management") -> "Report Management"
+            currentRoute.startsWith("admin_withdrawal/") -> "Withdrawal Details"
+            currentRoute.startsWith("admin_withdrawal_management") -> "Withdrawal Management"
             currentRoute.startsWith("admin_analytics") -> "Analytics"
             currentRoute.startsWith("admin_settings") -> "Settings"
             else -> "Admin Panel"
@@ -432,6 +436,26 @@ fun AdminNavigator(
                 composable("admin_settings") {
                     SettingsScreen()
                 }
+
+                // Withdrawal Management
+                composable("admin_withdrawal_management") {
+                    AdminWithdrawalListScreen(
+                        navController = navController
+                    )
+                }
+
+                composable(
+                    route = "admin_withdrawal/{withdrawalId}",
+                    arguments = listOf(
+                        navArgument("withdrawalId") { type = NavType.IntType }
+                    )
+                ) { backStackEntry ->
+                    val withdrawalId = backStackEntry.arguments?.getInt("withdrawalId") ?: 0
+                    AdminWithdrawalDetailScreen(
+                        withdrawalId = withdrawalId,
+                        navController = navController
+                    )
+                }
             }
         }
     }
@@ -499,6 +523,7 @@ private fun getMainRoute(route: String?): String {
         route.startsWith("admin_content") -> "admin_content"
         route.startsWith("admin_forum") -> "admin_forum"
         route.startsWith("admin_report_management") -> "admin_report_management"
+        route.startsWith("admin_withdrawal") -> "admin_withdrawal_management"
         route.startsWith("admin_analytics") -> "admin_analytics"
         route.startsWith("admin_settings") -> "admin_settings"
         else -> "admin_dashboard"

@@ -18,6 +18,9 @@ import com.example.lingora_fe.admin.report.domain.repository.ReportRepository
 import com.example.lingora_fe.admin.withdrawal.data.remote.api.AdminWithdrawalApiService
 import com.example.lingora_fe.admin.withdrawal.data.repository.AdminWithdrawalRepositoryImpl
 import com.example.lingora_fe.admin.withdrawal.domain.repository.AdminWithdrawalRepository
+import com.example.lingora_fe.admin.dashboard.data.remote.api.DashboardApiService
+import com.example.lingora_fe.admin.dashboard.data.repository.DashboardRepositoryImpl
+import com.example.lingora_fe.admin.dashboard.domain.repository.DashboardRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -65,6 +68,12 @@ abstract class AdminRepositoryModule {
     abstract fun bindAdminWithdrawalRepository(
         impl: AdminWithdrawalRepositoryImpl
     ): AdminWithdrawalRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDashboardRepository(
+        impl: DashboardRepositoryImpl
+    ): DashboardRepository
 }
 
 @Module
@@ -111,6 +120,13 @@ object AdminNetworkModule {
     @Singleton
     fun provideAdminWithdrawalApiService(retrofit: Retrofit): AdminWithdrawalApiService {
         return retrofit.create(AdminWithdrawalApiService::class.java)
+    }
+
+    // Dashboard
+    @Provides
+    @Singleton
+    fun provideDashboardApiService(retrofit: Retrofit): DashboardApiService {
+        return retrofit.create(DashboardApiService::class.java)
     }
 }
 

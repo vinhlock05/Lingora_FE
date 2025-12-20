@@ -15,11 +15,6 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.lingora_fe.admin.category.presentation.screen.CategoryListScreen
 import com.example.lingora_fe.admin.category.presentation.screen.CreateEditCategoryScreen
-import com.example.lingora_fe.admin.common.presentation.AnalyticsScreen
-import com.example.lingora_fe.admin.common.presentation.ContentManagementScreen
-import com.example.lingora_fe.admin.common.presentation.DashboardScreen
-import com.example.lingora_fe.admin.common.presentation.ForumManagementScreen
-import com.example.lingora_fe.admin.common.presentation.SettingsScreen
 import com.example.lingora_fe.admin.navigator.components.AdminDrawerContent
 import com.example.lingora_fe.admin.navigator.components.AdminTopBar
 import com.example.lingora_fe.admin.topic.presentation.screen.CreateEditTopicScreen
@@ -35,6 +30,7 @@ import com.example.lingora_fe.admin.report.presentation.screen.ReportListScreen
 import com.example.lingora_fe.admin.report.presentation.screen.ReportDetailScreen
 import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalListScreen
 import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalDetailScreen
+import com.example.lingora_fe.admin.dashboard.presentation.screen.DashboardScreen
 import com.example.lingora_fe.auth.presentation.AuthViewModel
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.launch
@@ -377,11 +373,6 @@ fun AdminNavigator(
                     )
                 }
 
-                // Content Management
-                composable("admin_content") {
-                    ContentManagementScreen()
-                }
-
                 // Word Management (standalone)
                 composable("admin_word_management") {
                     WordListScreen(
@@ -398,11 +389,6 @@ fun AdminNavigator(
                 ) { backStackEntry ->
                     val wordId = backStackEntry.arguments?.getInt("wordId")
                     CreateEditWordScreen(wordId = wordId, topicId = null, onNavigateBack = { navController.popBackStack() })
-                }
-
-                // Forum Management
-                composable("admin_forum") {
-                    ForumManagementScreen()
                 }
 
                 // Report Management
@@ -425,16 +411,6 @@ fun AdminNavigator(
                         reportId = reportId,
                         navController = navController
                     )
-                }
-
-                // Analytics
-                composable("admin_analytics") {
-                    AnalyticsScreen()
-                }
-
-                // Settings
-                composable("admin_settings") {
-                    SettingsScreen()
                 }
 
                 // Withdrawal Management

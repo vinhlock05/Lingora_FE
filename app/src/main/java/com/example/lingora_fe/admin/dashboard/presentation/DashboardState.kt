@@ -14,6 +14,10 @@ data class DashboardState(
     val isLoadingRevenue: Boolean = false,
     val isLoadingExams: Boolean = false,
     
+    // Date Filter
+    val startDate: Long? = null,
+    val endDate: Long? = null,
+    
     // Overview KPIs
     val overview: DashboardOverview? = null,
     

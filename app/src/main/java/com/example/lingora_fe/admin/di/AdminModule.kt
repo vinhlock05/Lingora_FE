@@ -74,6 +74,12 @@ abstract class AdminRepositoryModule {
     abstract fun bindDashboardRepository(
         impl: DashboardRepositoryImpl
     ): DashboardRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAdminExamRepository(
+        impl: com.example.lingora_fe.admin.exam.data.repository.AdminExamRepositoryImpl
+    ): com.example.lingora_fe.admin.exam.domain.repository.AdminExamRepository
 }
 
 @Module
@@ -127,6 +133,13 @@ object AdminNetworkModule {
     @Singleton
     fun provideDashboardApiService(retrofit: Retrofit): DashboardApiService {
         return retrofit.create(DashboardApiService::class.java)
+    }
+
+    // Exam Management
+    @Provides
+    @Singleton
+    fun provideAdminExamApiService(retrofit: Retrofit): com.example.lingora_fe.admin.exam.data.remote.api.AdminExamApiService {
+        return retrofit.create(com.example.lingora_fe.admin.exam.data.remote.api.AdminExamApiService::class.java)
     }
 }
 

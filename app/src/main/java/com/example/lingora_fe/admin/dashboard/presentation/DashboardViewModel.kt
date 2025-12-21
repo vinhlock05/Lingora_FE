@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -37,7 +40,10 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
-            val overviewDeferred = async { repository.getOverview() }
+            val startDateStr = formatDateParam(_state.value.startDate)
+            val endDateStr = formatDateParam(_state.value.endDate)
+
+            val overviewDeferred = async { repository.getOverview(startDateStr, endDateStr) }
             val activitiesDeferred = async { repository.getRecentActivities(10) }
 
             val overviewResult = overviewDeferred.await()
@@ -64,7 +70,9 @@ class DashboardViewModel @Inject constructor(
     fun loadUserAnalytics() {
         viewModelScope.launch {
             _state.update { it.copy(isLoadingUsers = true) }
-            repository.getUserAnalytics().fold(
+            val startDateStr = formatDateParam(_state.value.startDate)
+            val endDateStr = formatDateParam(_state.value.endDate)
+            repository.getUserAnalytics(startDateStr, endDateStr).fold(
                 { error -> _state.update { it.copy(isLoadingUsers = false, error = error.message) } },
                 { data -> _state.update { it.copy(userAnalytics = data, isLoadingUsers = false) } }
             )
@@ -74,7 +82,9 @@ class DashboardViewModel @Inject constructor(
     fun loadLearningAnalytics() {
         viewModelScope.launch {
             _state.update { it.copy(isLoadingLearning = true) }
-            repository.getLearningAnalytics().fold(
+            val startDateStr = formatDateParam(_state.value.startDate)
+            val endDateStr = formatDateParam(_state.value.endDate)
+            repository.getLearningAnalytics(startDateStr, endDateStr).fold(
                 { error -> _state.update { it.copy(isLoadingLearning = false, error = error.message) } },
                 { data -> _state.update { it.copy(learningAnalytics = data, isLoadingLearning = false) } }
             )
@@ -84,7 +94,9 @@ class DashboardViewModel @Inject constructor(
     fun loadRevenueAnalytics() {
         viewModelScope.launch {
             _state.update { it.copy(isLoadingRevenue = true) }
-            repository.getRevenueAnalytics().fold(
+            val startDateStr = formatDateParam(_state.value.startDate)
+            val endDateStr = formatDateParam(_state.value.endDate)
+            repository.getRevenueAnalytics(startDateStr, endDateStr).fold(
                 { error -> _state.update { it.copy(isLoadingRevenue = false, error = error.message) } },
                 { data -> _state.update { it.copy(revenueAnalytics = data, isLoadingRevenue = false) } }
             )
@@ -94,7 +106,9 @@ class DashboardViewModel @Inject constructor(
     fun loadExamAnalytics() {
         viewModelScope.launch {
             _state.update { it.copy(isLoadingExams = true) }
-            repository.getExamAnalytics().fold(
+            val startDateStr = formatDateParam(_state.value.startDate)
+            val endDateStr = formatDateParam(_state.value.endDate)
+            repository.getExamAnalytics(startDateStr, endDateStr).fold(
                 { error -> _state.update { it.copy(isLoadingExams = false, error = error.message) } },
                 { data -> _state.update { it.copy(examAnalytics = data, isLoadingExams = false) } }
             )
@@ -110,5 +124,21 @@ class DashboardViewModel @Inject constructor(
 
     fun clearError() {
         _state.update { it.copy(error = null) }
+    }
+
+    fun onDateRangeSelected(start: Long?, end: Long?) {
+         _state.update { it.copy(startDate = start, endDate = end) }
+         // Reload all data with new filter
+         loadOverviewData()
+         loadUserAnalytics()
+         loadLearningAnalytics()
+         loadRevenueAnalytics()
+         loadExamAnalytics()
+    }
+
+    private fun formatDateParam(timestamp: Long?): String? {
+        return timestamp?.let {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(it))
+        }
     }
 }

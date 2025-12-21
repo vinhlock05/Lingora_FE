@@ -12,27 +12,27 @@ interface DashboardRepository {
     /**
      * Get overview metrics for 4 KPI cards
      */
-    suspend fun getOverview(): Either<AppFailure, DashboardOverview>
+    suspend fun getOverview(startDate: String? = null, endDate: String? = null): Either<AppFailure, DashboardOverview>
     
     /**
      * Get user analytics
      */
-    suspend fun getUserAnalytics(): Either<AppFailure, UserAnalytics>
+    suspend fun getUserAnalytics(startDate: String? = null, endDate: String? = null): Either<AppFailure, UserAnalytics>
     
     /**
      * Get learning analytics
      */
-    suspend fun getLearningAnalytics(): Either<AppFailure, LearningAnalytics>
+    suspend fun getLearningAnalytics(startDate: String? = null, endDate: String? = null): Either<AppFailure, LearningAnalytics>
     
     /**
      * Get revenue analytics
      */
-    suspend fun getRevenueAnalytics(): Either<AppFailure, RevenueAnalytics>
+    suspend fun getRevenueAnalytics(startDate: String? = null, endDate: String? = null): Either<AppFailure, RevenueAnalytics>
     
     /**
      * Get exam analytics
      */
-    suspend fun getExamAnalytics(): Either<AppFailure, ExamAnalytics>
+    suspend fun getExamAnalytics(startDate: String? = null, endDate: String? = null): Either<AppFailure, ExamAnalytics>
     
     /**
      * Get recent activities

@@ -59,6 +59,13 @@ sealed class DrawerNavItem(
         description = "Manage withdrawal requests"
     )
 
+    object ExamManagement : DrawerNavItem(
+        route = "admin_exam_management",
+        title = "Exam Management",
+        icon = Icons.Default.Description,
+        description = "Manage exams and attempts"
+    )
+
     companion object {
         val items = listOf(
             Dashboard,
@@ -67,7 +74,8 @@ sealed class DrawerNavItem(
             TopicManagement,
             WordManagement,
             ReportManagement,
-            WithdrawalManagement
+            WithdrawalManagement,
+            ExamManagement
         )
     }
 }

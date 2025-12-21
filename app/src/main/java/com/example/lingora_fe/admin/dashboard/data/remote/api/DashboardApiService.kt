@@ -14,31 +14,46 @@ interface DashboardApiService {
      * Get Overview Metrics - 4 KPI cards
      */
     @GET("admin/dashboard/overview")
-    suspend fun getOverview(): ApiResponse<OverviewDto>
+    suspend fun getOverview(
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): ApiResponse<OverviewDto>
     
     /**
      * Get User Analytics
      */
     @GET("admin/dashboard/users")
-    suspend fun getUserAnalytics(): ApiResponse<UserAnalyticsDto>
+    suspend fun getUserAnalytics(
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): ApiResponse<UserAnalyticsDto>
     
     /**
      * Get Learning Analytics
      */
     @GET("admin/dashboard/learning")
-    suspend fun getLearningAnalytics(): ApiResponse<LearningAnalyticsDto>
+    suspend fun getLearningAnalytics(
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): ApiResponse<LearningAnalyticsDto>
     
     /**
      * Get Revenue Analytics
      */
     @GET("admin/dashboard/revenue")
-    suspend fun getRevenueAnalytics(): ApiResponse<RevenueAnalyticsDto>
+    suspend fun getRevenueAnalytics(
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): ApiResponse<RevenueAnalyticsDto>
     
     /**
      * Get Exam Analytics
      */
     @GET("admin/dashboard/exams")
-    suspend fun getExamAnalytics(): ApiResponse<ExamAnalyticsDto>
+    suspend fun getExamAnalytics(
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): ApiResponse<ExamAnalyticsDto>
     
     /**
      * Get Recent Activities

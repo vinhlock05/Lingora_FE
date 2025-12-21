@@ -31,6 +31,9 @@ import com.example.lingora_fe.admin.report.presentation.screen.ReportDetailScree
 import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalListScreen
 import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalDetailScreen
 import com.example.lingora_fe.admin.dashboard.presentation.screen.DashboardScreen
+import com.example.lingora_fe.admin.exam.presentation.screen.AdminExamScreen
+import com.example.lingora_fe.admin.exam.presentation.screen.AdminExamDetailScreen
+import com.example.lingora_fe.admin.exam.presentation.screen.AdminAttemptDetailScreen
 import com.example.lingora_fe.auth.presentation.AuthViewModel
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.launch
@@ -96,6 +99,9 @@ fun AdminNavigator(
             currentRoute.startsWith("admin_withdrawal_management") -> "Withdrawal Management"
             currentRoute.startsWith("admin_analytics") -> "Analytics"
             currentRoute.startsWith("admin_settings") -> "Settings"
+            currentRoute.startsWith("admin_exam_management/details") -> "Exam Details"
+            currentRoute.startsWith("admin_exam_management/attempts") -> "Attempt Details"
+            currentRoute.startsWith("admin_exam_management") -> "Exam Management"
             else -> "Admin Panel"
         }
     }
@@ -432,6 +438,36 @@ fun AdminNavigator(
                         navController = navController
                     )
                 }
+
+                // Exam Management
+                composable("admin_exam_management") {
+                    AdminExamScreen(
+                         onNavigateToExamDetail = { id -> navController.navigate("admin_exam_management/details/$id") },
+                         onNavigateToAttemptDetail = { id -> navController.navigate("admin_exam_management/attempts/$id") }
+                    )
+                }
+
+                composable(
+                    route = "admin_exam_management/details/{examId}",
+                    arguments = listOf(navArgument("examId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val examId = backStackEntry.arguments?.getInt("examId") ?: 0
+                    AdminExamDetailScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        examId = examId
+                    )
+                }
+
+                composable(
+                    route = "admin_exam_management/attempts/{attemptId}",
+                    arguments = listOf(navArgument("attemptId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val attemptId = backStackEntry.arguments?.getInt("attemptId") ?: 0
+                    AdminAttemptDetailScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        attemptId = attemptId
+                    )
+                }
             }
         }
     }
@@ -502,6 +538,7 @@ private fun getMainRoute(route: String?): String {
         route.startsWith("admin_withdrawal") -> "admin_withdrawal_management"
         route.startsWith("admin_analytics") -> "admin_analytics"
         route.startsWith("admin_settings") -> "admin_settings"
+        route.startsWith("admin_exam_management") -> "admin_exam_management"
         else -> "admin_dashboard"
     }
 }

@@ -59,11 +59,12 @@ fun AdminWithdrawalDetailScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+        val bottomPadding = padding.calculateBottomPadding()
         if (state.isLoadingDetail) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .padding(bottom = bottomPadding),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
@@ -73,7 +74,7 @@ fun AdminWithdrawalDetailScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
+                        .padding(bottom = bottomPadding)
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)

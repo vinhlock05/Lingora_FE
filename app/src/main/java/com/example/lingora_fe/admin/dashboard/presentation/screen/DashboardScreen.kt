@@ -60,6 +60,18 @@ fun DashboardScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val pagerState = rememberPagerState(pageCount = { DashboardTab.entries.size })
     val coroutineScope = rememberCoroutineScope()
+    var showDateRangePicker by remember { mutableStateOf(false) }
+    
+    // Format for display
+    val dateRangeText = remember(state.startDate, state.endDate) {
+        if (state.startDate != null && state.endDate != null) {
+            val start = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date(state.startDate!!))
+            val end = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date(state.endDate!!))
+            "$start - $end"
+        } else {
+            "30 days"
+        }
+    }
 
     // Trigger API loading when tab changes
     LaunchedEffect(pagerState.currentPage) {
@@ -81,6 +93,8 @@ fun DashboardScreen(
                 .fillMaxSize()
                 .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
+
+
             // Tab Row
             ScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
@@ -98,6 +112,36 @@ fun DashboardScreen(
                         icon = { Icon(tab.icon, contentDescription = tab.title) }
                     )
                 }
+            }
+            
+            // Date Filter Row (Below Tabs)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                 Box {
+                     OutlinedButton(
+                         onClick = { showDateRangePicker = true },
+                         shape = RoundedCornerShape(8.dp),
+                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                     ) {
+                         Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(16.dp))
+                         Spacer(modifier = Modifier.width(8.dp))
+                         Text(text = dateRangeText, style = MaterialTheme.typography.labelLarge)
+                     }
+
+                     DatePresetDropdown(
+                         expanded = showDateRangePicker,
+                         onDismiss = { showDateRangePicker = false },
+                         onPresetSelected = { start, end ->
+                             viewModel.onDateRangeSelected(start, end)
+                             showDateRangePicker = false
+                         }
+                     )
+                 }
             }
 
             if (state.isLoading && state.overview == null) {
@@ -898,5 +942,65 @@ private fun EmptyDataMessage(message: String) {
                 color = NavBarText
             )
         }
+    }
+}
+
+@Composable
+private fun DatePresetDropdown(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onPresetSelected: (Long, Long) -> Unit
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss
+    ) {
+        val today = java.util.Calendar.getInstance()
+
+        // This Week
+        DropdownMenuItem(
+            text = { Text("This Week") },
+            onClick = {
+                val start = today.clone() as java.util.Calendar
+                start.set(java.util.Calendar.DAY_OF_WEEK, start.firstDayOfWeek)
+                onPresetSelected(start.timeInMillis, System.currentTimeMillis())
+            }
+        )
+
+        // Last Week
+        DropdownMenuItem(
+            text = { Text("Last Week") },
+            onClick = {
+                val start = today.clone() as java.util.Calendar
+                start.add(java.util.Calendar.WEEK_OF_YEAR, -1)
+                start.set(java.util.Calendar.DAY_OF_WEEK, start.firstDayOfWeek)
+                val end = start.clone() as java.util.Calendar
+                end.add(java.util.Calendar.DAY_OF_WEEK, 6)
+                onPresetSelected(start.timeInMillis, end.timeInMillis)
+            }
+        )
+
+        // This Month
+        DropdownMenuItem(
+            text = { Text("This Month") },
+            onClick = {
+                val start = today.clone() as java.util.Calendar
+                start.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                onPresetSelected(start.timeInMillis, System.currentTimeMillis())
+            }
+        )
+
+        // Last Month
+        DropdownMenuItem(
+            text = { Text("Last Month") },
+            onClick = {
+                val start = today.clone() as java.util.Calendar
+                start.add(java.util.Calendar.MONTH, -1)
+                start.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                val end = start.clone() as java.util.Calendar
+                end.set(java.util.Calendar.DAY_OF_MONTH, end.getActualMaximum(java.util.Calendar.DAY_OF_MONTH))
+                onPresetSelected(start.timeInMillis, end.timeInMillis)
+            }
+        )
     }
 }

@@ -29,6 +29,9 @@ import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.studyset.domain.model.StudySet
 import com.example.lingora_fe.user.studyset.presentation.components.StudySetCard
 import com.example.lingora_fe.user.studyset.presentation.viewmodel.StudySetListViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -46,6 +49,19 @@ fun StudySetListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var studySetPendingDelete by remember { mutableStateOf<StudySet?>(null) }
+    
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     
     // Refresh when coming back from create/edit screen
     val savedStateHandle = navController?.currentBackStackEntry?.savedStateHandle

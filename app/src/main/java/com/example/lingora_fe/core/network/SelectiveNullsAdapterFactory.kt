@@ -21,6 +21,7 @@ class SelectiveNullsAdapterFactory : TypeAdapterFactory {
         // Skip: primitives, java.lang.*, kotlin.collections.*, arrays
         if (rawType.isPrimitive ||
             rawType.isArray ||
+            rawType.isEnum ||
             rawType.name.startsWith("java.lang.") ||
             rawType.name.startsWith("java.util.") ||
             rawType.name.startsWith("kotlin.collections.") ||

@@ -15,11 +15,6 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.lingora_fe.admin.category.presentation.screen.CategoryListScreen
 import com.example.lingora_fe.admin.category.presentation.screen.CreateEditCategoryScreen
-import com.example.lingora_fe.admin.common.presentation.AnalyticsScreen
-import com.example.lingora_fe.admin.common.presentation.ContentManagementScreen
-import com.example.lingora_fe.admin.common.presentation.DashboardScreen
-import com.example.lingora_fe.admin.common.presentation.ForumManagementScreen
-import com.example.lingora_fe.admin.common.presentation.SettingsScreen
 import com.example.lingora_fe.admin.navigator.components.AdminDrawerContent
 import com.example.lingora_fe.admin.navigator.components.AdminTopBar
 import com.example.lingora_fe.admin.topic.presentation.screen.CreateEditTopicScreen
@@ -33,6 +28,12 @@ import com.example.lingora_fe.admin.word.presentation.screen.WordListScreen
 import com.example.lingora_fe.admin.word.presentation.screen.WordsInTopicScreen
 import com.example.lingora_fe.admin.report.presentation.screen.ReportListScreen
 import com.example.lingora_fe.admin.report.presentation.screen.ReportDetailScreen
+import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalListScreen
+import com.example.lingora_fe.admin.withdrawal.presentation.screen.AdminWithdrawalDetailScreen
+import com.example.lingora_fe.admin.dashboard.presentation.screen.DashboardScreen
+import com.example.lingora_fe.admin.exam.presentation.screen.AdminExamScreen
+import com.example.lingora_fe.admin.exam.presentation.screen.AdminExamDetailScreen
+import com.example.lingora_fe.admin.exam.presentation.screen.AdminAttemptDetailScreen
 import com.example.lingora_fe.auth.presentation.AuthViewModel
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.launch
@@ -94,8 +95,13 @@ fun AdminNavigator(
             currentRoute.startsWith("admin_forum") -> "Forum Management"
             currentRoute.startsWith("admin_report_management/details") -> "Report Details"
             currentRoute.startsWith("admin_report_management") -> "Report Management"
+            currentRoute.startsWith("admin_withdrawal/") -> "Withdrawal Details"
+            currentRoute.startsWith("admin_withdrawal_management") -> "Withdrawal Management"
             currentRoute.startsWith("admin_analytics") -> "Analytics"
             currentRoute.startsWith("admin_settings") -> "Settings"
+            currentRoute.startsWith("admin_exam_management/details") -> "Exam Details"
+            currentRoute.startsWith("admin_exam_management/attempts") -> "Attempt Details"
+            currentRoute.startsWith("admin_exam_management") -> "Exam Management"
             else -> "Admin Panel"
         }
     }
@@ -373,11 +379,6 @@ fun AdminNavigator(
                     )
                 }
 
-                // Content Management
-                composable("admin_content") {
-                    ContentManagementScreen()
-                }
-
                 // Word Management (standalone)
                 composable("admin_word_management") {
                     WordListScreen(
@@ -394,11 +395,6 @@ fun AdminNavigator(
                 ) { backStackEntry ->
                     val wordId = backStackEntry.arguments?.getInt("wordId")
                     CreateEditWordScreen(wordId = wordId, topicId = null, onNavigateBack = { navController.popBackStack() })
-                }
-
-                // Forum Management
-                composable("admin_forum") {
-                    ForumManagementScreen()
                 }
 
                 // Report Management
@@ -423,14 +419,54 @@ fun AdminNavigator(
                     )
                 }
 
-                // Analytics
-                composable("admin_analytics") {
-                    AnalyticsScreen()
+                // Withdrawal Management
+                composable("admin_withdrawal_management") {
+                    AdminWithdrawalListScreen(
+                        navController = navController
+                    )
                 }
 
-                // Settings
-                composable("admin_settings") {
-                    SettingsScreen()
+                composable(
+                    route = "admin_withdrawal/{withdrawalId}",
+                    arguments = listOf(
+                        navArgument("withdrawalId") { type = NavType.IntType }
+                    )
+                ) { backStackEntry ->
+                    val withdrawalId = backStackEntry.arguments?.getInt("withdrawalId") ?: 0
+                    AdminWithdrawalDetailScreen(
+                        withdrawalId = withdrawalId,
+                        navController = navController
+                    )
+                }
+
+                // Exam Management
+                composable("admin_exam_management") {
+                    AdminExamScreen(
+                         onNavigateToExamDetail = { id -> navController.navigate("admin_exam_management/details/$id") },
+                         onNavigateToAttemptDetail = { id -> navController.navigate("admin_exam_management/attempts/$id") }
+                    )
+                }
+
+                composable(
+                    route = "admin_exam_management/details/{examId}",
+                    arguments = listOf(navArgument("examId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val examId = backStackEntry.arguments?.getInt("examId") ?: 0
+                    AdminExamDetailScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        examId = examId
+                    )
+                }
+
+                composable(
+                    route = "admin_exam_management/attempts/{attemptId}",
+                    arguments = listOf(navArgument("attemptId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val attemptId = backStackEntry.arguments?.getInt("attemptId") ?: 0
+                    AdminAttemptDetailScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        attemptId = attemptId
+                    )
                 }
             }
         }
@@ -499,8 +535,10 @@ private fun getMainRoute(route: String?): String {
         route.startsWith("admin_content") -> "admin_content"
         route.startsWith("admin_forum") -> "admin_forum"
         route.startsWith("admin_report_management") -> "admin_report_management"
+        route.startsWith("admin_withdrawal") -> "admin_withdrawal_management"
         route.startsWith("admin_analytics") -> "admin_analytics"
         route.startsWith("admin_settings") -> "admin_settings"
+        route.startsWith("admin_exam_management") -> "admin_exam_management"
         else -> "admin_dashboard"
     }
 }

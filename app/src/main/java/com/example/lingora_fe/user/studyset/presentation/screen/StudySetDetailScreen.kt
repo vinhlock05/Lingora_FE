@@ -203,6 +203,7 @@ fun StudySetDetailScreen(
                 onCommentTextChange = { viewModel.updateCommentText(it) },
                 onSubmitComment = {
                     viewModel.submitComment {
+                        viewModel.loadStudySet()
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 message = "Bình luận đã được đăng",

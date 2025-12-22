@@ -45,20 +45,6 @@ sealed class DrawerNavItem(
         description = "Manage words"
     )
     
-    object ContentManagement : DrawerNavItem(
-        route = "admin_content",
-        title = "Content Management",
-        icon = Icons.Default.Article,
-        description = "Manage learning content"
-    )
-    
-    object ForumManagement : DrawerNavItem(
-        route = "admin_forum",
-        title = "Forum Management",
-        icon = Icons.Default.Forum,
-        description = "Manage forum posts and comments"
-    )
-    
     object ReportManagement : DrawerNavItem(
         route = "admin_report_management",
         title = "Report Management",
@@ -66,18 +52,18 @@ sealed class DrawerNavItem(
         description = "Manage user reports and violations"
     )
     
-    object Analytics : DrawerNavItem(
-        route = "admin_analytics",
-        title = "Analytics",
-        icon = Icons.Default.Analytics,
-        description = "View statistics and reports"
+    object WithdrawalManagement : DrawerNavItem(
+        route = "admin_withdrawal_management",
+        title = "Withdrawal Management",
+        icon = Icons.Default.AccountBalance,
+        description = "Manage withdrawal requests"
     )
-    
-    object Settings : DrawerNavItem(
-        route = "admin_settings",
-        title = "Settings",
-        icon = Icons.Default.Settings,
-        description = "System settings"
+
+    object ExamManagement : DrawerNavItem(
+        route = "admin_exam_management",
+        title = "Exam Management",
+        icon = Icons.Default.Description,
+        description = "Manage exams and attempts"
     )
 
     companion object {
@@ -87,11 +73,9 @@ sealed class DrawerNavItem(
             CategoryManagement,
             TopicManagement,
             WordManagement,
-            ContentManagement,
-            ForumManagement,
             ReportManagement,
-            Analytics,
-            Settings
+            WithdrawalManagement,
+            ExamManagement
         )
     }
 }

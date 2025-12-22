@@ -15,6 +15,12 @@ import com.example.lingora_fe.admin.user.domain.repository.UserManagementReposit
 import com.example.lingora_fe.admin.report.data.remote.api.ReportApiService
 import com.example.lingora_fe.admin.report.data.repository.ReportRepositoryImpl
 import com.example.lingora_fe.admin.report.domain.repository.ReportRepository
+import com.example.lingora_fe.admin.withdrawal.data.remote.api.AdminWithdrawalApiService
+import com.example.lingora_fe.admin.withdrawal.data.repository.AdminWithdrawalRepositoryImpl
+import com.example.lingora_fe.admin.withdrawal.domain.repository.AdminWithdrawalRepository
+import com.example.lingora_fe.admin.dashboard.data.remote.api.DashboardApiService
+import com.example.lingora_fe.admin.dashboard.data.repository.DashboardRepositoryImpl
+import com.example.lingora_fe.admin.dashboard.domain.repository.DashboardRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -56,6 +62,24 @@ abstract class AdminRepositoryModule {
     abstract fun bindReportRepository(
         reportRepositoryImpl: ReportRepositoryImpl
     ): ReportRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAdminWithdrawalRepository(
+        impl: AdminWithdrawalRepositoryImpl
+    ): AdminWithdrawalRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDashboardRepository(
+        impl: DashboardRepositoryImpl
+    ): DashboardRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAdminExamRepository(
+        impl: com.example.lingora_fe.admin.exam.data.repository.AdminExamRepositoryImpl
+    ): com.example.lingora_fe.admin.exam.domain.repository.AdminExamRepository
 }
 
 @Module
@@ -95,6 +119,27 @@ object AdminNetworkModule {
     @Singleton
     fun provideReportApiService(retrofit: Retrofit): ReportApiService {
         return retrofit.create(ReportApiService::class.java)
+    }
+
+    // Withdrawal Management
+    @Provides
+    @Singleton
+    fun provideAdminWithdrawalApiService(retrofit: Retrofit): AdminWithdrawalApiService {
+        return retrofit.create(AdminWithdrawalApiService::class.java)
+    }
+
+    // Dashboard
+    @Provides
+    @Singleton
+    fun provideDashboardApiService(retrofit: Retrofit): DashboardApiService {
+        return retrofit.create(DashboardApiService::class.java)
+    }
+
+    // Exam Management
+    @Provides
+    @Singleton
+    fun provideAdminExamApiService(retrofit: Retrofit): com.example.lingora_fe.admin.exam.data.remote.api.AdminExamApiService {
+        return retrofit.create(com.example.lingora_fe.admin.exam.data.remote.api.AdminExamApiService::class.java)
     }
 }
 

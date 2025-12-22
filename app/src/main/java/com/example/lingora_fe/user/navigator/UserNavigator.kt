@@ -684,9 +684,40 @@ fun UserNavigator(
                 EditPostScreen(navController = navController)
             }
 
+            // Withdrawal Navigation
+            composable(Route.WithdrawalList.route) {
+                com.example.lingora_fe.user.withdrawal.presentation.screen.WithdrawalListScreen(
+                    navController = navController
+                )
+            }
+
+            composable(Route.WithdrawalCreate.route) {
+                com.example.lingora_fe.user.withdrawal.presentation.screen.CreateWithdrawalScreen(
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.WithdrawalDetail.route,
+                arguments = listOf(
+                    navArgument("withdrawalId") {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val withdrawalId = backStackEntry.arguments?.getInt("withdrawalId") ?: 0
+                com.example.lingora_fe.user.withdrawal.presentation.screen.WithdrawalDetailScreen(
+                    withdrawalId = withdrawalId,
+                    navController = navController
+                )
+            }
+
             // Profile Tab
             composable(Route.ProfileTab.route) {
-                ProfileScreen(rootNavController = rootNavController)
+                ProfileScreen(
+                    rootNavController = rootNavController,
+                    navController = navController
+                )
             }
         }
     }

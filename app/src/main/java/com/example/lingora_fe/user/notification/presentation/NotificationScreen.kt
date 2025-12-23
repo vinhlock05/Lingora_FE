@@ -17,6 +17,11 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -192,7 +197,12 @@ private fun getNotificationIcon(type: NotificationType) = when (type) {
     NotificationType.COMMENT -> Icons.Default.Comment
     NotificationType.ORDER -> Icons.Default.ShoppingCart
     NotificationType.WARNING -> Icons.Default.Warning
-    NotificationType.CONTENT_DELETED -> TODO()
+    NotificationType.CONTENT_DELETED -> Icons.Default.Delete
+    // Withdrawal notifications
+    NotificationType.WITHDRAWAL_PROCESSING -> Icons.Default.AccountBalanceWallet
+    NotificationType.WITHDRAWAL_COMPLETED -> Icons.Default.CheckCircle
+    NotificationType.WITHDRAWAL_REJECTED -> Icons.Default.Cancel
+    NotificationType.WITHDRAWAL_FAILED -> Icons.Default.Error
 }
 
 @Composable

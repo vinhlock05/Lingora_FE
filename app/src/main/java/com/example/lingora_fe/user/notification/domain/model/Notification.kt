@@ -34,7 +34,12 @@ enum class NotificationType(val value: String) {
     COMMENT("Comment"),
     ORDER("Order"),
     WARNING("Warning"),
-    CONTENT_DELETED("Content deleted")
+    CONTENT_DELETED("Content deleted"),
+    // Withdrawal notifications
+    WITHDRAWAL_PROCESSING("Withdrawal processing"),
+    WITHDRAWAL_COMPLETED("Withdrawal completed"),
+    WITHDRAWAL_REJECTED("Withdrawal rejected"),
+    WITHDRAWAL_FAILED("Withdrawal failed")
 }
 
 enum class NotificationTarget(val value: String) {

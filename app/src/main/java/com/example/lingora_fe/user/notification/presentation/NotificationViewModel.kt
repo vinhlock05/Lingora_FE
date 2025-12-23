@@ -128,7 +128,16 @@ class NotificationViewModel @Inject constructor(
                 }
             }
             NotificationType.CHANGE_PASSWORD -> Route.ProfileTab.route
-            NotificationType.CONTENT_DELETED -> TODO()
+            NotificationType.CONTENT_DELETED -> null // TODO: handle content deleted navigation
+            // Withdrawal notifications - navigate to withdrawal detail if ID available
+            NotificationType.WITHDRAWAL_PROCESSING,
+            NotificationType.WITHDRAWAL_COMPLETED,
+            NotificationType.WITHDRAWAL_REJECTED,
+            NotificationType.WITHDRAWAL_FAILED -> {
+                val withdrawalId = getInt("withdrawalId")
+                if (withdrawalId != null) Route.withdrawalDetail(withdrawalId)
+                else Route.WithdrawalList.route
+            }
         }
     }
 

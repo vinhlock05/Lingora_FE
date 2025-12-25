@@ -84,31 +84,65 @@ class AuthViewModel @Inject constructor(
 
             authRepository.login(identifier, password)
                 .onRight { authData ->
-                    // Get all roles from user
-                    val allRoles = authData.user.roles.map { it.name }
-                    // Determine default active role (ADMIN if available, else first role, else LEARNER)
-                    val defaultActiveRole = if (allRoles.contains("ADMIN")) {
-                        "ADMIN"
+                    // Check if user account is verified (status = ACTIVE)
+                    if (authData.user.status != "ACTIVE") {
+                        // User hasn't verified email yet
+                        // Save token to TokenManager so API calls (like sendEmailVerification) can use it
+                        // But DON'T set isAuthenticated = true yet
+                        val allRoles = authData.user.roles.map { it.name }
+                        val defaultActiveRole = if (allRoles.contains("ADMIN")) {
+                            "ADMIN"
+                        } else {
+                            allRoles.firstOrNull() ?: "LEARNER"
+                        }
+                        
+                        // Save token to TokenManager (needed for authenticated API calls)
+                        saveAuthDataWithRoles(
+                            token = authData.accessToken,
+                            userId = authData.user.id,
+                            allRoles = allRoles,
+                            activeRole = defaultActiveRole,
+                            refreshToken = authData.refreshToken
+                        )
+                        
+                        // Store user data in state but NOT authenticated yet
+                        _authState.value = _authState.value.copy(
+                            isLoading = false,
+                            user = authData.user,
+                            token = authData.accessToken,
+                            isAuthenticated = false, // Not authenticated until OTP verified
+                            error = null
+                        )
+                        Log.d("AuthViewModel", "User status is ${authData.user.status}, needs email verification")
+                        // Navigation to OTP screen will be handled by AuthScreen
                     } else {
-                        allRoles.firstOrNull() ?: "LEARNER"
+                        // User is verified, proceed with normal login
+                        // Get all roles from user
+                        val allRoles = authData.user.roles.map { it.name }
+                        // Determine default active role (ADMIN if available, else first role, else LEARNER)
+                        val defaultActiveRole = if (allRoles.contains("ADMIN")) {
+                            "ADMIN"
+                        } else {
+                            allRoles.firstOrNull() ?: "LEARNER"
+                        }
+                        Log.d("AuthViewModel", "User roles: $allRoles, default active role: $defaultActiveRole")
+                        
+                        // Save all roles and active role
+                        saveAuthDataWithRoles(
+                            token = authData.accessToken,
+                            userId = authData.user.id,
+                            allRoles = allRoles,
+                            activeRole = defaultActiveRole,
+                            refreshToken = authData.refreshToken
+                        )
+                        _authState.value = _authState.value.copy(
+                            isLoading = false,
+                            user = authData.user,
+                            token = authData.accessToken,
+                            isAuthenticated = true,
+                            error = null
+                        )
                     }
-                    Log.d("AuthViewModel", "User roles: $allRoles, default active role: $defaultActiveRole")
-                    
-                    // Save all roles and active role
-                    saveAuthDataWithRoles(
-                        token = authData.accessToken,
-                        userId = authData.user.id,
-                        allRoles = allRoles,
-                        activeRole = defaultActiveRole,
-                        refreshToken = authData.refreshToken
-                    )
-                    _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        user = authData.user,
-                        token = authData.accessToken,
-                        isAuthenticated = true,
-                        error = null
-                    )
                 }
                 .onLeft { failure ->
                     Log.d("AuthViewModel", "Login failed: $failure")
@@ -126,19 +160,16 @@ class AuthViewModel @Inject constructor(
 
             authRepository.register(email, username, password)
                 .onRight { authData ->
-                    // Get all roles from user
+                    // Save token to TokenManager so API calls (like sendEmailVerification) can use it
+                    // But DON'T set isAuthenticated = true yet - user needs to verify OTP first
                     val allRoles = authData.user.roles.map { it.name }
-                    // Determine default active role (ADMIN if available, else first role, else LEARNER)
                     val defaultActiveRole = if (allRoles.contains("ADMIN")) {
                         "ADMIN"
                     } else {
                         allRoles.firstOrNull() ?: "LEARNER"
                     }
-                    Log.d("AuthViewModel", "User roles after registration: $allRoles, default active role: $defaultActiveRole")
                     
-                    // Save token and user data, but DON'T set isAuthenticated = true yet
-                    // User needs to verify OTP first before being authenticated
-                    // We save the token so OTP verification can use it
+                    // Save token to TokenManager (needed for authenticated API calls)
                     saveAuthDataWithRoles(
                         token = authData.accessToken,
                         userId = authData.user.id,
@@ -147,13 +178,12 @@ class AuthViewModel @Inject constructor(
                         refreshToken = authData.refreshToken
                     )
                     
-                    // Set user and token but NOT isAuthenticated
-                    // isAuthenticated will be set to true after OTP verification
+                    // Store user data in state but NOT authenticated yet
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         user = authData.user,
                         token = authData.accessToken,
-                        isAuthenticated = false, // Don't authenticate yet, need OTP verification
+                        isAuthenticated = false, // Not authenticated until OTP verified
                         error = null
                     )
                 }
@@ -218,30 +248,14 @@ class AuthViewModel @Inject constructor(
             if (isTestOTP) {
                 // Bypass API call for testing - directly proceed with profile fetch
                 Log.d("AuthViewModel", "Using test OTP mode: $otp")
+                // Get token from TokenManager (already saved during register/login)
                 val token = tokenManager.getAccessToken()
                 if (token != null) {
-                    // Get user profile to check proficiency
+                    // Get user profile to update status
                     authRepository.getProfile(token)
                         .onRight { user ->
-                            // Get all roles from user
-                            val allRoles = user.roles.map { it.name }
-                            val defaultActiveRole = if (allRoles.contains("ADMIN")) {
-                                "ADMIN"
-                            } else {
-                                allRoles.firstOrNull() ?: "LEARNER"
-                            }
-                            
-                            // Save roles if not already saved
-                            val existingRoles = tokenManager.getAllRoles()
-                            if (existingRoles.isEmpty()) {
-                                saveAuthDataWithRoles(
-                                    token = token,
-                                    userId = user.id,
-                                    allRoles = allRoles,
-                                    activeRole = defaultActiveRole
-                                )
-                            }
-                            
+                            // Token already saved during register/login
+                            // Just update state to authenticated
                             _authState.value = _authState.value.copy(
                                 isLoading = false,
                                 user = user,
@@ -265,62 +279,18 @@ class AuthViewModel @Inject constructor(
                 }
             } else {
                 // Normal flow: Call API to verify OTP
-                authRepository.verifyOTP(email, otp)
-                    .onRight { verified ->
-                        if (verified) {
-                            // After OTP verification, get user profile to check if proficiency is set
-                            // First, try to get token from TokenManager (might be set during registration)
-                            val token = tokenManager.getAccessToken()
-                            if (token != null) {
-                                // Get user profile to check proficiency
-                                authRepository.getProfile(token)
-                                    .onRight { user ->
-                                        // Get all roles from user
-                                        val allRoles = user.roles.map { it.name }
-                                        val defaultActiveRole = if (allRoles.contains("ADMIN")) {
-                                            "ADMIN"
-                                        } else {
-                                            allRoles.firstOrNull() ?: "LEARNER"
-                                        }
-                                        
-                                        // Save roles if not already saved
-                                        val existingRoles = tokenManager.getAllRoles()
-                                        if (existingRoles.isEmpty()) {
-                                            saveAuthDataWithRoles(
-                                                token = token,
-                                                userId = user.id,
-                                                allRoles = allRoles,
-                                                activeRole = defaultActiveRole
-                                            )
-                                        }
-                                        
-                                        _authState.value = _authState.value.copy(
-                                            isLoading = false,
-                                            user = user,
-                                            token = token,
-                                            isAuthenticated = true,
-                                            error = null
-                                        )
-                                    }
-                                    .onLeft { failure ->
-                                        _authState.value = _authState.value.copy(
-                                            isLoading = false,
-                                            error = failure.message
-                                        )
-                                    }
-                            } else {
-                                // If no token, just mark as verified (user will need to login)
-                                _authState.value = _authState.value.copy(
-                                    isLoading = false,
-                                    error = null
-                                )
-                            }
-                        } else {
-                            _authState.value = _authState.value.copy(
-                                isLoading = false,
-                                error = "Xác minh OTP thất bại"
-                            )
-                        }
+                authRepository.verifyEmail(otp)
+                    .onRight { user ->
+                        // After successful OTP verification, user status is now ACTIVE
+                        // Token already saved during register/login
+                        // Just update state to authenticated
+                        _authState.value = _authState.value.copy(
+                            isLoading = false,
+                            user = user,
+                            token = tokenManager.getAccessToken(),
+                            isAuthenticated = true,
+                            error = null
+                        )
                     }
                     .onLeft { failure ->
                         _authState.value = _authState.value.copy(
@@ -446,6 +416,113 @@ class AuthViewModel @Inject constructor(
         kotlinx.coroutines.delay(200)
         // Sau đó mới clear local data (bao gồm cookies)
         clearAuthData()
+    }
+    
+    // Password Reset Flow
+    fun sendPasswordResetEmail(email: String) {
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+            
+            authRepository.sendPasswordResetEmail(email)
+                .onRight {
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        passwordResetEmail = email,
+                        error = null
+                    )
+                }
+                .onLeft { failure ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = failure.message
+                    )
+                }
+        }
+    }
+    
+    fun verifyPasswordResetOtp(email: String, code: String) {
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+            
+            authRepository.verifyPasswordResetOtp(email, code)
+                .onRight { resetToken ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        resetToken = resetToken,
+                        error = null
+                    )
+                }
+                .onLeft { failure ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = failure.message
+                    )
+                }
+        }
+    }
+    
+    fun confirmPasswordReset(resetToken: String, newPassword: String) {
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+            
+            authRepository.confirmPasswordReset(resetToken, newPassword)
+                .onRight {
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        resetToken = null,
+                        passwordResetEmail = null,
+                        error = null
+                    )
+                }
+                .onLeft { failure ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = failure.message
+                    )
+                }
+        }
+    }
+    
+    // Email Verification Flow
+    fun sendEmailVerification() {
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+            
+            authRepository.sendEmailVerification()
+                .onRight {
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = null
+                    )
+                }
+                .onLeft { failure ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = failure.message
+                    )
+                }
+        }
+    }
+    
+    fun verifyEmailWithCode(code: String) {
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+            
+            authRepository.verifyEmail(code)
+                .onRight { user ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        user = user,
+                        error = null
+                    )
+                }
+                .onLeft { failure ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = failure.message
+                    )
+                }
+        }
     }
 }
 

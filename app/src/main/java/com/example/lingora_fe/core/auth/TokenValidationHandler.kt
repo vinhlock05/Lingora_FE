@@ -11,10 +11,6 @@ import com.example.lingora_fe.auth.domain.repository.AuthRepository
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.navigation.Route
 
-/**
- * Composable để validate token khi app khởi động
- * Nếu token expired, thử refresh. Nếu refresh fail, redirect về login
- */
 @Composable
 fun TokenValidationHandler(
     authRepository: AuthRepository,
@@ -52,7 +48,16 @@ fun TokenValidationHandler(
                 },
                 ifRight = { user ->
                     // Token valid (có thể đã được refresh)
-                    // Lấy token mới sau khi refresh (nếu có)
+                    // Check if user is verified (status = ACTIVE)
+                    if (user.status != "ACTIVE") {
+                        // User has token but hasn't verified email yet
+                        // Redirect to OTP screen
+                        Log.d("TokenValidationHandler", "User not verified (status: ${user.status}), redirecting to OTP")
+                        onValidationComplete(Route.otpScreen(user.email))
+                        return@fold
+                    }
+                    
+                    // User is verified, proceed to app
                     val newToken = tokenManager.getAccessToken()
                     Log.d("TokenValidationHandler", "Token validation successful, token length: ${newToken?.length}")
                     val activeRole = tokenManager.getActiveRole() ?: tokenManager.getUserRole()

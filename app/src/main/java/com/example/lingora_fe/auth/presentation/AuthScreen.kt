@@ -75,6 +75,19 @@ fun AuthScreen(
             return@LaunchedEffect
         }
         
+        // Check if login was successful but user is NOT verified (status != ACTIVE)
+        // This happens when user logs in but hasn't verified their email
+        if (authState.user != null && 
+            authState.token != null && 
+            !authState.isAuthenticated &&
+            !authState.isLoading &&
+            activeTab == "login" &&
+            authState.user?.status != "ACTIVE") {
+            // User logged in but not verified - navigate to OTP screen
+            navController.navigate(Route.otpScreen(authState.user!!.email))
+            return@LaunchedEffect
+        }
+        
         // Login successful - only navigate when authenticated and on login tab
         if (authState.isAuthenticated && 
             authState.user != null && 
@@ -270,6 +283,9 @@ fun AuthScreen(
                                     viewModel.login(loginIdentifier, loginPassword)
                                 }
                             },
+                            onForgotPasswordClick = {
+                                navController.navigate(Route.ForgotPassword.route)
+                            },
                             isLoading = authState.isLoading,
                             error = authState.error
                         )
@@ -323,6 +339,7 @@ fun LoginContent(
     passwordVisible: Boolean,
     onPasswordVisibilityChange: () -> Unit,
     onLoginClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
     isLoading: Boolean,
     error: String?
 ) {
@@ -420,6 +437,21 @@ fun LoginContent(
                     color = Color.White
                 )
             }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Forgot Password Link
+        TextButton(
+            onClick = onForgotPasswordClick
+        ) {
+            Text(
+                text = "Quên mật khẩu?",
+                color = GradientStart,
+                fontSize = 14.sp,
+                fontFamily = ArimoFontFamily,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

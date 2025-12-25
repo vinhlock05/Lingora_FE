@@ -5,6 +5,7 @@ import com.example.lingora_fe.core.network.ApiResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface AuthApiService {
     
@@ -36,5 +37,32 @@ interface AuthApiService {
     
     @GET("auth/me")
     suspend fun getProfile(): ApiResponse<UserDto>
+    
+    // Password Reset Flow
+    @POST("auth/password-reset/request")
+    suspend fun sendPasswordResetEmail(
+        @Body request: SendPasswordResetRequest
+    ): ApiResponse<Any>
+    
+    @POST("auth/password-reset/verify")
+    suspend fun verifyPasswordResetOtp(
+        @Query("code") code: String,
+        @Body request: VerifyPasswordResetRequest
+    ): ApiResponse<VerifyPasswordResetResponse>
+    
+    @POST("auth/password-reset/confirm")
+    suspend fun confirmPasswordReset(
+        @retrofit2.http.Header("Authorization") authorization: String,
+        @Body request: ConfirmPasswordResetRequest
+    ): ApiResponse<Any>
+    
+    // Email Verification Flow
+    @POST("auth/email-verification/request")
+    suspend fun sendEmailVerification(): ApiResponse<Any>
+    
+    @POST("auth/email-verification/verify")
+    suspend fun verifyEmail(
+        @Body request: VerifyAccountRequest
+    ): ApiResponse<UserDto>
 }
 

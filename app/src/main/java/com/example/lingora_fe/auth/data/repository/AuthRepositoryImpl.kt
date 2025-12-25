@@ -1,6 +1,5 @@
 package com.example.lingora_fe.auth.data.repository
 
-import android.util.Log
 import arrow.core.Either
 import com.example.lingora_fe.auth.data.remote.api.AuthApiService
 import com.example.lingora_fe.auth.data.remote.dto.*
@@ -76,6 +75,45 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun getProfile(token: String): Either<AppFailure, User> {
         return Either.catch {
             val response = authApiService.getProfile()
+            val userDto = response.metaData ?: throw Exception(response.message)
+            userDto.toDomainModel()
+        }.mapLeft { it.toAppFailure() }
+    }
+    
+    override suspend fun sendPasswordResetEmail(email: String): Either<AppFailure, Boolean> {
+        return Either.catch {
+            authApiService.sendPasswordResetEmail(SendPasswordResetRequest(email))
+            true
+        }.mapLeft { it.toAppFailure() }
+    }
+    
+    override suspend fun verifyPasswordResetOtp(email: String, code: String): Either<AppFailure, String> {
+        return Either.catch {
+            val response = authApiService.verifyPasswordResetOtp(code, VerifyPasswordResetRequest(email))
+            response.metaData?.resetToken ?: throw Exception("Reset token not found in response")
+        }.mapLeft { it.toAppFailure() }
+    }
+    
+    override suspend fun confirmPasswordReset(resetToken: String, newPassword: String): Either<AppFailure, Boolean> {
+        return Either.catch {
+            authApiService.confirmPasswordReset(
+                authorization = "Bearer $resetToken",
+                request = ConfirmPasswordResetRequest(newPassword)
+            )
+            true
+        }.mapLeft { it.toAppFailure() }
+    }
+    
+    override suspend fun sendEmailVerification(): Either<AppFailure, Boolean> {
+        return Either.catch {
+            authApiService.sendEmailVerification()
+            true
+        }.mapLeft { it.toAppFailure() }
+    }
+    
+    override suspend fun verifyEmail(code: String): Either<AppFailure, User> {
+        return Either.catch {
+            val response = authApiService.verifyEmail(VerifyAccountRequest(code))
             val userDto = response.metaData ?: throw Exception(response.message)
             userDto.toDomainModel()
         }.mapLeft { it.toAppFailure() }

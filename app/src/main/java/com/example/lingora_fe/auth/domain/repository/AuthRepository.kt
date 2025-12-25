@@ -18,5 +18,14 @@ interface AuthRepository {
     suspend fun refreshToken(token: String): Either<AppFailure, String>
     suspend fun logout(token: String): Either<AppFailure, Unit>
     suspend fun getProfile(token: String): Either<AppFailure, User>
+    
+    // Password Reset Flow
+    suspend fun sendPasswordResetEmail(email: String): Either<AppFailure, Boolean>
+    suspend fun verifyPasswordResetOtp(email: String, code: String): Either<AppFailure, String> // Returns resetToken
+    suspend fun confirmPasswordReset(resetToken: String, newPassword: String): Either<AppFailure, Boolean>
+    
+    // Email Verification Flow
+    suspend fun sendEmailVerification(): Either<AppFailure, Boolean>
+    suspend fun verifyEmail(code: String): Either<AppFailure, User>
 }
 

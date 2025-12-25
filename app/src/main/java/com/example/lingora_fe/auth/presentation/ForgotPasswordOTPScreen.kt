@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,13 +27,11 @@ import com.example.lingora_fe.R
 import com.example.lingora_fe.core.ui.theme.*
 import com.example.lingora_fe.navigation.Route
 import kotlinx.coroutines.delay
-import android.util.Log
-import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
-fun OTPScreen(
+fun ForgotPasswordOTPScreen(
     navController: NavController,
-    email: String = "test004@gmail.com",
+    email: String,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
@@ -41,18 +40,7 @@ fun OTPScreen(
     var countdown by remember { mutableStateOf(60) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var attemptCount by remember { mutableStateOf(0) }
-    var hasVerifiedOTP by remember { mutableStateOf(false) } // Track if OTP was verified in this screen
-    var hasRequestedOTP by remember { mutableStateOf(false) } // Track if OTP was already requested
-
-    // Automatically request OTP when screen loads (only once)
-    LaunchedEffect(Unit) {
-        if (!hasRequestedOTP) {
-            Log.d("OTPScreen", "Automatically requesting OTP for email: $email")
-            viewModel.sendEmailVerification()
-            hasRequestedOTP = true
-        }
-    }
-
+    
     LaunchedEffect(countdown) {
         if (countdown > 0) {
             delay(1000L)
@@ -65,49 +53,21 @@ fun OTPScreen(
             errorMessage = authState.error
             attemptCount++
         } else {
-            // Clear error message when error is cleared
             errorMessage = null
         }
     }
     
-    // Navigate after successful OTP verification
-    LaunchedEffect(authState.isAuthenticated, authState.user, authState.token, hasVerifiedOTP, authState.isLoading, authState.error) {
-        Log.d("OTPScreen", "LaunchedEffect - hasVerifiedOTP: $hasVerifiedOTP, isAuthenticated: ${authState.isAuthenticated}, user: ${authState.user != null}, isLoading: ${authState.isLoading}")
-        
-        if (hasVerifiedOTP && 
-            authState.isAuthenticated && 
-            authState.user != null && 
-            authState.token != null && 
-            !authState.isLoading &&
+    // Navigate to reset password screen after successful OTP verification
+    LaunchedEffect(authState.resetToken, authState.isLoading, authState.error) {
+        if (authState.resetToken != null && 
+            !authState.isLoading && 
             authState.error == null) {
-            // OTP verified successfully - check proficiency and navigate
-            val userProficiency = authState.user?.proficiency
-            val tokenManager = viewModel.tokenManager
-            val activeRole = tokenManager.getActiveRole() ?: tokenManager.getUserRole()
-            
-            Log.d("OTPScreen", "Navigating after OTP verification - role: $activeRole, proficiency: $userProficiency")
-            
-            if (activeRole == "ADMIN") {
-                navController.navigate(Route.AdminNavigation.route) {
-                    popUpTo(Route.AuthNavigation.route) { inclusive = true }
-                }
-            } else {
-                // For LEARNER role, check proficiency
-                if (userProficiency.isNullOrBlank()) {
-                    // User has no proficiency - redirect to adaptive test
-                    navController.navigate(Route.AdaptiveTest.route) {
-                        popUpTo(Route.AuthNavigation.route) { inclusive = true }
-                    }
-                } else {
-                    // User has proficiency - navigate to UserNavigation
-                    navController.navigate(Route.UserNavigation.route) {
-                        popUpTo(Route.AuthNavigation.route) { inclusive = true }
-                    }
-                }
+            navController.navigate(Route.resetPassword(authState.resetToken!!)) {
+                popUpTo(Route.ForgotPassword.route) { inclusive = true }
             }
         }
     }
-
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -124,12 +84,10 @@ fun OTPScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Box to contain Card with overlapping Logo
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter
             ) {
-                // Card Container with Shadow
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -153,17 +111,16 @@ fun OTPScreen(
                             .padding(top = 56.dp, start = 24.dp, end = 24.dp, bottom = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Title
                         Text(
-                            text = "Xác minh Email",
+                            text = "Xác minh OTP",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = ArimoFontFamily,
                             color = GradientStart,
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
-
-                        // Email Display in Card
+                        
+                        // Email Display
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -189,7 +146,7 @@ fun OTPScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     textAlign = TextAlign.Center
                                 )
-
+                                
                                 Text(
                                     text = email,
                                     fontSize = 15.sp,
@@ -199,8 +156,7 @@ fun OTPScreen(
                                 )
                             }
                         }
-
-                        // OTP Input Label
+                        
                         Text(
                             text = "Nhập mã xác minh",
                             fontSize = 14.sp,
@@ -208,8 +164,8 @@ fun OTPScreen(
                             color = NavBarText,
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
-
-                        // OTP Input Box
+                        
+                        // OTP Input
                         OutlinedTextField(
                             value = otpValue,
                             onValueChange = { 
@@ -249,8 +205,8 @@ fun OTPScreen(
                                 )
                             }
                         )
-
-                        // Error Message or Countdown
+                        
+                        // Error or Countdown
                         if (errorMessage != null) {
                             Text(
                                 text = "Mã OTP không chính xác. Còn lại ${3 - attemptCount} lần thử!",
@@ -269,14 +225,14 @@ fun OTPScreen(
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }
-
-                        // Resend OTP Button
+                        
+                        // Resend Button
                         TextButton(
                             onClick = { 
                                 if (countdown == 0) {
                                     countdown = 60
                                     errorMessage = null
-                                    viewModel.sendEmailVerification()
+                                    viewModel.sendPasswordResetEmail(email)
                                 }
                             },
                             enabled = countdown == 0 && !authState.isLoading
@@ -289,15 +245,14 @@ fun OTPScreen(
                                 fontWeight = FontWeight.Medium
                             )
                         }
-
+                        
                         Spacer(modifier = Modifier.height(8.dp))
-
-                        // Verify Button with Gradient
+                        
+                        // Verify Button
                         Button(
                             onClick = {
                                 if (otpValue.length == 6) {
-                                    hasVerifiedOTP = true // Mark that OTP verification was initiated
-                                    viewModel.verifyOTP(email, otpValue)
+                                    viewModel.verifyPasswordResetOtp(email, otpValue)
                                 }
                             },
                             modifier = Modifier
@@ -336,22 +291,10 @@ fun OTPScreen(
                                 )
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Note
-                        Text(
-                            text = "Kiểm tra hộp thư spam nếu bạn không thấy email",
-                            fontSize = 12.sp,
-                            fontFamily = ArimoFontFamily,
-                            color = NavBarText,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
                     }
                 }
                 
-                // Logo overlapping the card (half outside, half inside)
+                // Logo
                 Image(
                     painter = painterResource(id = R.drawable.app_logo),
                     contentDescription = "Lingora Logo",

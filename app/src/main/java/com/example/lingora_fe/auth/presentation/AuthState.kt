@@ -7,6 +7,8 @@ data class AuthState(
     val user: User? = null,
     val token: String? = null,
     val error: String? = null,
-    val isAuthenticated: Boolean = false
+    val isAuthenticated: Boolean = false,
+    val resetToken: String? = null,
+    val passwordResetEmail: String? = null
 )
 

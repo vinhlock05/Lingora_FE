@@ -10,7 +10,10 @@ import androidx.navigation.navigation
 import com.example.lingora_fe.admin.navigator.AdminNavigator
 import com.example.lingora_fe.auth.domain.repository.AuthRepository
 import com.example.lingora_fe.auth.presentation.AuthScreen
+import com.example.lingora_fe.auth.presentation.ForgotPasswordScreen
+import com.example.lingora_fe.auth.presentation.ForgotPasswordOTPScreen
 import com.example.lingora_fe.auth.presentation.OTPScreen
+import com.example.lingora_fe.auth.presentation.ResetPasswordScreen
 import com.example.lingora_fe.core.auth.SplashScreen
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.user.adaptivetest.presentation.AdaptiveTestScreen
@@ -69,6 +72,31 @@ fun AppNavGraph(
             ) { backStackEntry ->
                 val email = backStackEntry.arguments?.getString("email") ?: ""
                 OTPScreen(navController = navController, email = email)
+            }
+            
+            // Forgot Password Flow
+            composable(route = Route.ForgotPassword.route) {
+                ForgotPasswordScreen(navController = navController)
+            }
+            
+            composable(
+                route = Route.ForgotPasswordOTP.route,
+                arguments = listOf(
+                    navArgument("email") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val email = backStackEntry.arguments?.getString("email") ?: ""
+                ForgotPasswordOTPScreen(navController = navController, email = email)
+            }
+            
+            composable(
+                route = Route.ResetPassword.route,
+                arguments = listOf(
+                    navArgument("resetToken") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val resetToken = backStackEntry.arguments?.getString("resetToken") ?: ""
+                ResetPasswordScreen(navController = navController, resetToken = resetToken)
             }
 
             composable(route = Route.AdaptiveTest.route) {

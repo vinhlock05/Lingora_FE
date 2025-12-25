@@ -14,6 +14,9 @@ sealed class Route(
     object OTPScreen : Route("otpScreen/{email}")
     object ProficiencySelection : Route("proficiencySelection")
     object AdaptiveTest : Route("adaptiveTest")
+    object ForgotPassword : Route("forgot_password")
+    object ForgotPasswordOTP : Route("forgot_password_otp/{email}")
+    object ResetPassword : Route("reset_password/{resetToken}")
     
     // Admin Navigation
     object AdminNavigation : Route("adminNavigation")
@@ -88,6 +91,8 @@ sealed class Route(
     companion object {
         // Auth routes
         fun otpScreen(email: String) = "otpScreen/$email"
+        fun forgotPasswordOtp(email: String) = "forgot_password_otp/$email"
+        fun resetPassword(resetToken: String) = "reset_password/$resetToken"
         
         // Admin routes
         fun adminUserEdit(userId: Int) = "admin_user_management/edit/$userId"

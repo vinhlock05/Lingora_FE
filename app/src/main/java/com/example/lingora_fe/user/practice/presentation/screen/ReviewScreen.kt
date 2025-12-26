@@ -59,6 +59,7 @@ import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.user.practice.presentation.viewmodel.ReviewViewModel
 import com.example.lingora_fe.user.vocabulary.domain.model.Word
 import com.example.lingora_fe.user.vocabulary.domain.model.WordWithProgress
+import com.example.lingora_fe.user.vocabulary.presentation.components.PronunciationQuizContent
 import com.example.lingora_fe.user.vocabulary.presentation.components.QuizPhaseContent
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.QuestionType
 import com.example.lingora_fe.user.vocabulary.presentation.viewmodel.QuizQuestion
@@ -230,78 +231,145 @@ fun ReviewScreen(
 
                         val currentQuestion = currentQuestions.getOrNull(currentQuestionIndex)
                         if (currentQuestion != null) {
-                            QuizPhaseContent(
-                                question = currentQuestion,
-                                answeredCount = answeredCorrect,
-                                totalQuestions = totalQuestions,
-                                selectedAnswer = selectedAnswer,
-                                typedAnswer = typedAnswer,
-                                isAnswerChecked = isAnswerChecked,
-                                onAnswerSelected = { answer ->
-                                    if (!isAnswerChecked) {
-                                        selectedAnswer = answer
-                                    }
-                                },
-                                onTypedAnswerChanged = { answer ->
-                                    if (!isAnswerChecked) {
-                                        typedAnswer = answer
-                                    }
-                                },
-                                onCheckAnswer = {
-                                    val userAnswer = if (currentQuestion.type == QuestionType.LISTEN_FILL) {
-                                        typedAnswer.trim()
-                                    } else {
-                                        selectedAnswer
-                                    }
-                                    if (!userAnswer.isNullOrEmpty()) {
-                                        val isCorrect = userAnswer.equals(currentQuestion.correctAnswer, ignoreCase = true)
-                                        if (isCorrect && !isAnswerChecked) {
+                            // Render PronunciationQuizContent for pronunciation questions
+                            if (currentQuestion.type == QuestionType.PRONUNCIATION) {
+                                PronunciationQuizContent(
+                                    word = currentQuestion.word,
+                                    attemptCount = currentQuestion.attemptCount,
+                                    onResult = { isCorrect, recognizedText ->
+                                        Log.d("ReviewScreen", "Pronunciation result: correct=$isCorrect, text=$recognizedText")
+                                        
+                                        if (isCorrect) {
                                             answeredCorrect += 1
-                                        }
-                                        isAnswerChecked = true
-                                    }
-                                },
-                                onNextQuestion = {
-                                    val question = currentQuestions.getOrNull(currentQuestionIndex) ?: return@QuizPhaseContent
-                                    val userAnswer = if (question.type == QuestionType.LISTEN_FILL) {
-                                        typedAnswer.trim()
-                                    } else {
-                                        selectedAnswer
-                                    }
-                                    val isCorrect = userAnswer?.equals(question.correctAnswer, ignoreCase = true) == true
-
-                                    if (isCorrect) {
-                                        val remaining = currentQuestions.filterIndexed { index, _ -> index != currentQuestionIndex }
-                                        currentQuestions = remaining
-                                        if (currentQuestions.isEmpty()) {
-                                            showCompletionDialog = true
+                                            
+                                            val remaining = currentQuestions.filterIndexed { index, _ -> index != currentQuestionIndex }
+                                            currentQuestions = remaining
+                                            
+                                            if (currentQuestions.isEmpty()) {
+                                                showCompletionDialog = true
+                                            } else {
+                                                currentQuestionIndex = if (currentQuestionIndex < currentQuestions.size) {
+                                                    currentQuestionIndex.coerceAtMost(currentQuestions.lastIndex)
+                                                } else {
+                                                    0
+                                                }
+                                            }
                                         } else {
+                                            val newAttemptCount = currentQuestion.attemptCount + 1
+                                            val remaining = currentQuestions.filterIndexed { index, _ -> index != currentQuestionIndex }
+                                            
+                                            if (newAttemptCount >= 2) {
+                                                // Đã thử 2 lần - bỏ qua
+                                                Log.d("ReviewScreen", "Skipping pronunciation after 2 attempts")
+                                                currentQuestions = remaining
+                                                
+                                                if (currentQuestions.isEmpty()) {
+                                                    showCompletionDialog = true
+                                                } else {
+                                                    currentQuestionIndex = if (currentQuestionIndex < currentQuestions.size) {
+                                                        currentQuestionIndex.coerceAtMost(currentQuestions.lastIndex)
+                                                    } else {
+                                                        0
+                                                    }
+                                                }
+                                            } else {
+                                                // Đưa xuống cuối với attemptCount tăng
+                                                val updatedQuestion = currentQuestion.copy(attemptCount = newAttemptCount)
+                                                currentQuestions = remaining + updatedQuestion
+                                                val wordId = currentQuestion.word.id
+                                                wrongCounts[wordId] = (wrongCounts[wordId] ?: 0) + 1
+                                                
+                                                currentQuestionIndex = if (currentQuestionIndex < currentQuestions.size) {
+                                                    currentQuestionIndex
+                                                } else {
+                                                    0
+                                                }
+                                            }
+                                        }
+                                        
+                                        selectedAnswer = null
+                                        typedAnswer = ""
+                                        isAnswerChecked = false
+                                    },
+                                    onListenClick = {
+                                        playAudio(currentQuestion.word.audioUrl)
+                                    }
+                                )
+                            } else {
+                                // Render QuizPhaseContent for other question types
+                                QuizPhaseContent(
+                                    question = currentQuestion,
+                                    answeredCount = answeredCorrect,
+                                    totalQuestions = totalQuestions,
+                                    selectedAnswer = selectedAnswer,
+                                    typedAnswer = typedAnswer,
+                                    isAnswerChecked = isAnswerChecked,
+                                    onAnswerSelected = { answer ->
+                                        if (!isAnswerChecked) {
+                                            selectedAnswer = answer
+                                        }
+                                    },
+                                    onTypedAnswerChanged = { answer ->
+                                        if (!isAnswerChecked) {
+                                            typedAnswer = answer
+                                        }
+                                    },
+                                    onCheckAnswer = {
+                                        val userAnswer = if (currentQuestion.type == QuestionType.LISTEN_FILL) {
+                                            typedAnswer.trim()
+                                        } else {
+                                            selectedAnswer
+                                        }
+                                        if (!userAnswer.isNullOrEmpty()) {
+                                            val isCorrect = userAnswer.equals(currentQuestion.correctAnswer, ignoreCase = true)
+                                            if (isCorrect && !isAnswerChecked) {
+                                                answeredCorrect += 1
+                                            }
+                                            isAnswerChecked = true
+                                        }
+                                    },
+                                    onNextQuestion = {
+                                        val question = currentQuestions.getOrNull(currentQuestionIndex) ?: return@QuizPhaseContent
+                                        val userAnswer = if (question.type == QuestionType.LISTEN_FILL) {
+                                            typedAnswer.trim()
+                                        } else {
+                                            selectedAnswer
+                                        }
+                                        val isCorrect = userAnswer?.equals(question.correctAnswer, ignoreCase = true) == true
+
+                                        if (isCorrect) {
+                                            val remaining = currentQuestions.filterIndexed { index, _ -> index != currentQuestionIndex }
+                                            currentQuestions = remaining
+                                            if (currentQuestions.isEmpty()) {
+                                                showCompletionDialog = true
+                                            } else {
+                                                currentQuestionIndex = if (currentQuestionIndex < currentQuestions.size) {
+                                                    currentQuestionIndex.coerceAtMost(currentQuestions.lastIndex)
+                                                } else {
+                                                    0
+                                                }
+                                            }
+                                        } else {
+                                            val remaining = currentQuestions.filterIndexed { index, _ -> index != currentQuestionIndex }
+                                            currentQuestions = remaining + question
+                                            val wordId = question.word.id
+                                            wrongCounts[wordId] = (wrongCounts[wordId] ?: 0) + 1
                                             currentQuestionIndex = if (currentQuestionIndex < currentQuestions.size) {
-                                                currentQuestionIndex.coerceAtMost(currentQuestions.lastIndex)
+                                                currentQuestionIndex
                                             } else {
                                                 0
                                             }
                                         }
-                                    } else {
-                                        val remaining = currentQuestions.filterIndexed { index, _ -> index != currentQuestionIndex }
-                                        currentQuestions = remaining + question
-                                        val wordId = question.word.id
-                                        wrongCounts[wordId] = (wrongCounts[wordId] ?: 0) + 1
-                                        currentQuestionIndex = if (currentQuestionIndex < currentQuestions.size) {
-                                            currentQuestionIndex
-                                        } else {
-                                            0
-                                        }
-                                    }
 
-                                    selectedAnswer = null
-                                    typedAnswer = ""
-                                    isAnswerChecked = false
-                                },
-                                onPronunciationClick = {
-                                    playAudio(currentQuestion.word.audioUrl)
-                                }
-                            )
+                                        selectedAnswer = null
+                                        typedAnswer = ""
+                                        isAnswerChecked = false
+                                    },
+                                    onPronunciationClick = {
+                                        playAudio(currentQuestion.word.audioUrl)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -454,6 +522,7 @@ private fun generateReviewQuizQuestions(
             GameType.TRUE_FALSE -> QuestionType.TRUE_FALSE
             GameType.SEE_WORD_CHOOSE_MEANING -> QuestionType.SEE_WORD_CHOOSE_MEANING
             GameType.SEE_MEANING_CHOOSE_WORD -> QuestionType.SEE_MEANING_CHOOSE_WORD
+            GameType.PRONUNCIATION -> QuestionType.PRONUNCIATION
         }
     }
 
@@ -543,6 +612,18 @@ private fun generateReviewQuizQuestions(
                             )
                         )
                     }
+                }
+                
+                QuestionType.PRONUNCIATION -> {
+                    questions.add(
+                        QuizQuestion(
+                            type = QuestionType.PRONUNCIATION,
+                            question = "Phát âm từ \"${word.word}\"",
+                            correctAnswer = word.word,
+                            options = emptyList(),
+                            word = word
+                        )
+                    )
                 }
             }
         }

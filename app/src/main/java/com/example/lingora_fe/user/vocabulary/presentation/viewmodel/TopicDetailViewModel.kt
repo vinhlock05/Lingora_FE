@@ -43,7 +43,8 @@ data class TopicDetailUiState(
         GameType.LISTEN_CHOOSE,
         GameType.TRUE_FALSE,
         GameType.SEE_WORD_CHOOSE_MEANING,
-        GameType.SEE_MEANING_CHOOSE_WORD
+        GameType.SEE_MEANING_CHOOSE_WORD,
+        GameType.PRONUNCIATION
     )
 )
 
@@ -52,7 +53,8 @@ enum class GameType {
     LISTEN_CHOOSE,        // Nghe chọn từ
     TRUE_FALSE,           // Đúng/Sai
     SEE_WORD_CHOOSE_MEANING,  // Nhìn từ chọn nghĩa
-    SEE_MEANING_CHOOSE_WORD   // Nhìn nghĩa chọn từ
+    SEE_MEANING_CHOOSE_WORD,  // Nhìn nghĩa chọn từ
+    PRONUNCIATION             // Luyện phát âm
 }
 
 @HiltViewModel

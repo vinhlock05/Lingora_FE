@@ -308,6 +308,7 @@ private fun getQuestionTypeLabel(type: QuestionType): String {
         QuestionType.TRUE_FALSE -> "ĐÚNG/SAI"
         QuestionType.SEE_WORD_CHOOSE_MEANING -> "NHÌN TỪ CHỌN NGHĨA"
         QuestionType.SEE_MEANING_CHOOSE_WORD -> "NHÌN NGHĨA CHỌN TỪ"
+        QuestionType.PRONUNCIATION -> "LUYỆN PHÁT ÂM"
     }
 }
 

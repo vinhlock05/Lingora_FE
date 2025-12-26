@@ -14,7 +14,8 @@ enum class QuestionType {
     LISTEN_CHOOSE,         // Nghe chọn từ
     TRUE_FALSE,            // Đúng/Sai
     SEE_WORD_CHOOSE_MEANING,  // Nhìn từ chọn nghĩa
-    SEE_MEANING_CHOOSE_WORD   // Nhìn nghĩa chọn từ
+    SEE_MEANING_CHOOSE_WORD,  // Nhìn nghĩa chọn từ
+    PRONUNCIATION             // Luyện phát âm
 }
 
 // Quiz question data class
@@ -23,7 +24,8 @@ data class QuizQuestion(
     val question: String,
     val correctAnswer: String,
     val options: List<String> = emptyList(),
-    val word: Word
+    val word: Word,
+    val attemptCount: Int = 0  // Đếm số lần thử (cho pronunciation)
 )
 
 // Learning state

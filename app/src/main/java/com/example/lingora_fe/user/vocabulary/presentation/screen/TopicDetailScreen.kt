@@ -45,6 +45,7 @@ fun TopicDetailScreen(
     topicName: String,
     onBackClick: () -> Unit,
     onStartLearning: (Int, Int, Set<GameType>) -> Unit, // topicId, wordCount, gameTypes
+    shouldRefresh: Boolean = false,
     viewModel: TopicDetailViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -61,6 +62,14 @@ fun TopicDetailScreen(
     LaunchedEffect(topicId) {
         android.util.Log.d("TopicDetailScreen", "Loading topic words for topicId: $topicId")
         viewModel.loadTopicWords(topicId)
+    }
+    
+    // Refresh data when coming back from learning
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            android.util.Log.d("TopicDetailScreen", "Refreshing topic words after learning")
+            viewModel.refresh()
+        }
     }
 
     // Load more when scrolling near the end

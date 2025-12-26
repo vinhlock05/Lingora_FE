@@ -88,6 +88,10 @@ sealed class Route(
     object WithdrawalCreate : Route("withdrawal/create")
     object WithdrawalDetail : Route("withdrawal/{withdrawalId}")
     
+    // Profile Navigation
+    object EditProfile : Route("profile/edit")
+    object ChangePassword : Route("profile/change-password")
+    
     companion object {
         // Auth routes
         fun otpScreen(email: String) = "otpScreen/$email"

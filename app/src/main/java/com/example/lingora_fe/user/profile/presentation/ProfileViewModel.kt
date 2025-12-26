@@ -159,5 +159,123 @@ class ProfileViewModel @Inject constructor(
                 }
         }
     }
+    
+    // Edit Profile State
+    private val _editProfileState = MutableStateFlow(EditProfileState())
+    val editProfileState: StateFlow<EditProfileState> = _editProfileState.asStateFlow()
+    
+    // Change Password State
+    private val _changePasswordState = MutableStateFlow(ChangePasswordState())
+    val changePasswordState: StateFlow<ChangePasswordState> = _changePasswordState.asStateFlow()
+    
+    /**
+     * Cập nhật thông tin profile (username, email, avatar URL)
+     */
+    fun updateProfile(
+        username: String?,
+        email: String?,
+        avatarUrl: String?,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            _editProfileState.value = _editProfileState.value.copy(isUpdating = true, error = null)
+            
+            val token = tokenManager.getAccessToken()
+            val userId = tokenManager.getUserId()
+
+            if (token == null || userId == null) {
+                _editProfileState.value = _editProfileState.value.copy(
+                    isUpdating = false,
+                    error = "Không tìm thấy thông tin đăng nhập"
+                )
+                return@launch
+            }
+            
+            val updateData = UpdateUserData(
+                username = username,
+                email = email,
+                avatar = avatarUrl
+            )
+            
+            userManagementRepository.updateUser(token, userId, updateData)
+                .onRight { updatedUser ->
+                    Log.d("ProfileViewModel", "Profile updated successfully")
+                    _editProfileState.value = _editProfileState.value.copy(
+                        isUpdating = false,
+                        updateSuccess = true,
+                        error = null
+                    )
+                    // Reload profile to get updated data
+                    loadUserProfile()
+                    onSuccess()
+                }
+                .onLeft { failure ->
+                    Log.e("ProfileViewModel", "Failed to update profile: ${failure.message}")
+                    _editProfileState.value = _editProfileState.value.copy(
+                        isUpdating = false,
+                        error = failure.message ?: "Có lỗi xảy ra khi cập nhật thông tin"
+                    )
+                }
+        }
+    }
+    
+    fun setUploadingAvatar(isUploading: Boolean) {
+        _editProfileState.value = _editProfileState.value.copy(isUploadingAvatar = isUploading)
+    }
+    
+    fun clearEditProfileState() {
+        _editProfileState.value = EditProfileState()
+    }
+    
+    /**
+     * Đổi mật khẩu
+     */
+    fun changePassword(
+        oldPassword: String,
+        newPassword: String,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            _changePasswordState.value = _changePasswordState.value.copy(isUpdating = true, error = null)
+            
+            val token = tokenManager.getAccessToken()
+            val userId = tokenManager.getUserId()
+
+            if (token == null || userId == null) {
+                _changePasswordState.value = _changePasswordState.value.copy(
+                    isUpdating = false,
+                    error = "Không tìm thấy thông tin đăng nhập"
+                )
+                return@launch
+            }
+            
+            val updateData = UpdateUserData(
+                oldPassword = oldPassword,
+                newPassword = newPassword
+            )
+            
+            userManagementRepository.updateUser(token, userId, updateData)
+                .onRight { updatedUser ->
+                    Log.d("ProfileViewModel", "Password changed successfully")
+                    _changePasswordState.value = _changePasswordState.value.copy(
+                        isUpdating = false,
+                        updateSuccess = true,
+                        error = null
+                    )
+                    onSuccess()
+                }
+                .onLeft { failure ->
+                    Log.e("ProfileViewModel", "Failed to change password: ${failure.message}")
+                    _changePasswordState.value = _changePasswordState.value.copy(
+                        isUpdating = false,
+                        error = failure.message ?: "Có lỗi xảy ra khi đổi mật khẩu"
+                    )
+                }
+        }
+    }
+    
+    fun clearChangePasswordState() {
+        _changePasswordState.value = ChangePasswordState()
+    }
 }
 

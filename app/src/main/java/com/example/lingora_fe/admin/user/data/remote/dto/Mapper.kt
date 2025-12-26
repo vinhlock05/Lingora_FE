@@ -55,7 +55,8 @@ fun UpdateUserData.toDto(): UpdateUserRequest {
         oldPassword = oldPassword,
         roleIds = roleIds,
         proficiency = proficiency,
-        status = status
+        status = status,
+        avatar = avatar
     )
 }
 

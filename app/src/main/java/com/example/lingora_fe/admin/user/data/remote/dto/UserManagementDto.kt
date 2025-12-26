@@ -68,7 +68,9 @@ data class UpdateUserRequest(
     @SerializedName("proficiency")
     val proficiency: String?,
     @SerializedName("status")
-    val status: String?
+    val status: String?,
+    @SerializedName("avatar")
+    val avatar: String?
 )
 
 // Request for updating only proficiency field

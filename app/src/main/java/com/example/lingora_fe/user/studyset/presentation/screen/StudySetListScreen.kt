@@ -2,14 +2,11 @@ package com.example.lingora_fe.user.studyset.presentation.screen
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +21,6 @@ import androidx.navigation.NavController
 import com.example.lingora_fe.admin.common.presentation.components.SearchBar
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
-import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.studyset.domain.model.StudySet
 import com.example.lingora_fe.user.studyset.presentation.components.StudySetCard
@@ -38,7 +34,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun StudySetListScreen(
     onStudySetClick: (Int) -> Unit,
-    onCreateClick: () -> Unit,
     navController: NavController? = null,
     viewModel: StudySetListViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
@@ -139,30 +134,6 @@ fun StudySetListScreen(
             )
         }
 
-        // Create Button (only for "Của tôi" tab)
-        if (uiState.selectedTab == com.example.lingora_fe.user.studyset.presentation.StudySetTab.MINE) {
-            Button(
-                onClick = onCreateClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = GradientStart
-                ),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Tạo học liệu mới",
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
 
         Surface(
             modifier = Modifier

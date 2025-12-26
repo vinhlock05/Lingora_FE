@@ -138,5 +138,10 @@ private val questionTypeOptions = listOf(
         type = GameType.SEE_MEANING_CHOOSE_WORD,
         title = "Nhìn nghĩa chọn từ",
         description = "Chọn từ tiếng Anh phù hợp với nghĩa"
+    ),
+    QuestionTypeOption(
+        type = GameType.PRONUNCIATION,
+        title = "Luyện phát âm",
+        description = "Phát âm từ và được nhận diện tự động"
     )
 )

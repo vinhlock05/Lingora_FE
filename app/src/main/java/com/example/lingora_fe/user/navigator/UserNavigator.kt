@@ -362,6 +362,13 @@ fun UserNavigator(
             ) { backStackEntry ->
                 val topicId = backStackEntry.arguments?.getInt("topicId") ?: 0
                 val topicName = backStackEntry.arguments?.getString("topicName")
+                
+                // Check if should refresh data (after learning completion)
+                val shouldRefresh = backStackEntry.savedStateHandle.get<Boolean>("shouldRefreshTopicDetail") ?: false
+                if (shouldRefresh) {
+                    backStackEntry.savedStateHandle.remove<Boolean>("shouldRefreshTopicDetail")
+                }
+                
                 TopicDetailScreen(
                     topicId = topicId,
                     topicName = topicName!!,
@@ -369,7 +376,8 @@ fun UserNavigator(
                     onStartLearning = { topicId, wordCount, gameTypes ->
                         val gameTypesString = gameTypes.joinToString(separator = ",") { it.name }
                         navController.navigate(Route.learnWord(topicId, wordCount, gameTypesString))
-                    }
+                    },
+                    shouldRefresh = shouldRefresh
                 )
             }
 
@@ -405,14 +413,19 @@ fun UserNavigator(
                         com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.LISTEN_CHOOSE,
                         com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.TRUE_FALSE,
                         com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.SEE_WORD_CHOOSE_MEANING,
-                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.SEE_MEANING_CHOOSE_WORD
+                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.SEE_MEANING_CHOOSE_WORD,
+                        com.example.lingora_fe.user.vocabulary.presentation.viewmodel.GameType.PRONUNCIATION
                     )
                 }
                 LearnWordScreen(
                     topicId = topicId,
                     wordCount = wordCount,
                     gameTypes = gameTypes,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = {
+                        // Set flag to refresh TopicDetail
+                        navController.previousBackStackEntry?.savedStateHandle?.set("shouldRefreshTopicDetail", true)
+                        navController.popBackStack()
+                    }
                 )
             }
 

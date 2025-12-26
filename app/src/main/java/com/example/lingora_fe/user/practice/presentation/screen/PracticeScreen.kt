@@ -46,18 +46,6 @@ fun PracticeScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Luyện phát âm
-            PracticeCard(
-                icon = Icons.Default.Mic,
-                iconColor = Color(0xFF3B82F6), // Blue
-                iconBackgroundColor = Color(0xFFDCECFE),
-                title = "Luyện phát âm",
-                subtitle = "Cải thiện phát âm với AI",
-                onClick = {
-                    navController.navigate("practice/pronunciation")
-                }
-            )
-
             // Luyện đề thi
             PracticeCard(
                 icon = Icons.Default.Assignment,

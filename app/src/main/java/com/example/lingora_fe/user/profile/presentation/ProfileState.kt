@@ -9,3 +9,16 @@ data class ProfileState(
     val isLoggingOut: Boolean = false
 )
 
+data class EditProfileState(
+    val isUpdating: Boolean = false,
+    val isUploadingAvatar: Boolean = false,
+    val updateSuccess: Boolean = false,
+    val error: String? = null
+)
+
+data class ChangePasswordState(
+    val isUpdating: Boolean = false,
+    val updateSuccess: Boolean = false,
+    val error: String? = null
+)
+

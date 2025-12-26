@@ -217,6 +217,25 @@ fun UserNavigator(
                             }
                         }
                     }
+                    Route.StudySetList.route -> {
+                        {
+                            Button(
+                                onClick = { navController.navigate(Route.StudySetCreate.route) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF10B981),
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(38.dp)
+                            ) {
+                                Text(
+                                    text = "+ Tạo mới",
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
                     else -> {
                         { }
                     }
@@ -628,9 +647,6 @@ fun UserNavigator(
                     onStudySetClick = { studySetId ->
                         navController.navigate(Route.studySetDetail(studySetId))
                     },
-                    onCreateClick = {
-                        navController.navigate(Route.StudySetCreate.route)
-                    },
                     navController = navController
                 )
             }
@@ -717,6 +733,26 @@ fun UserNavigator(
                 ProfileScreen(
                     rootNavController = rootNavController,
                     navController = navController
+                )
+            }
+            
+            // Edit Profile Screen
+            composable(Route.EditProfile.route) {
+                val profileEntry = navController.getBackStackEntry(Route.ProfileTab.route)
+                val profileViewModel: com.example.lingora_fe.user.profile.presentation.ProfileViewModel = hiltViewModel(profileEntry)
+                com.example.lingora_fe.user.profile.presentation.EditProfileScreen(
+                    onBackClick = { navController.popBackStack() },
+                    viewModel = profileViewModel
+                )
+            }
+            
+            // Change Password Screen
+            composable(Route.ChangePassword.route) {
+                val profileEntry = navController.getBackStackEntry(Route.ProfileTab.route)
+                val profileViewModel: com.example.lingora_fe.user.profile.presentation.ProfileViewModel = hiltViewModel(profileEntry)
+                com.example.lingora_fe.user.profile.presentation.ChangePasswordScreen(
+                    onBackClick = { navController.popBackStack() },
+                    viewModel = profileViewModel
                 )
             }
         }

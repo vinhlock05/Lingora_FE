@@ -32,6 +32,10 @@ import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
 import com.example.lingora_fe.navigation.Route
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 
 
 @Composable
@@ -118,6 +122,7 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.height(40.dp))
                             
                             // Avatar
+                            val context = LocalContext.current
                             Box(
                                 modifier = Modifier
                                     .size(100.dp)
@@ -125,23 +130,39 @@ fun ProfileScreen(
                                     .background(Color.White),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(92.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            Brush.horizontalGradient(
-                                                colors = listOf(GradientStart, GradientEnd)
-                                            )
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = profileState.user?.username?.first()?.uppercase() ?: "U",
-                                        fontSize = 40.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
+                                if (!profileState.user?.avatar.isNullOrBlank() && profileState.user?.avatar != "N/A") {
+                                    // Show avatar image from URL
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(context)
+                                            .data(profileState.user?.avatar)
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Avatar",
+                                        modifier = Modifier
+                                            .size(92.dp)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
                                     )
+                                } else {
+                                    // Fallback to initial letter
+                                    Box(
+                                        modifier = Modifier
+                                            .size(92.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    colors = listOf(GradientStart, GradientEnd)
+                                                )
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = profileState.user?.username?.first()?.uppercase() ?: "U",
+                                            fontSize = 40.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
                                 }
                             }
 
@@ -386,6 +407,130 @@ fun ProfileScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                // Edit Profile Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clickable { 
+                            navController?.navigate(Route.EditProfile.route)
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(GradientStart, GradientEnd)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Chỉnh sửa thông tin",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MainText
+                            )
+                            Text(
+                                text = "Cập nhật tên, email và ảnh đại diện",
+                                fontSize = 13.sp,
+                                color = NavBarText,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = NavBarText,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+
+                // Change Password Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clickable { 
+                            navController?.navigate(Route.ChangePassword.route)
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(GradientStart, GradientEnd)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Đổi mật khẩu",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MainText
+                            )
+                            Text(
+                                text = "Thay đổi mật khẩu đăng nhập",
+                                fontSize = 13.sp,
+                                color = NavBarText,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = NavBarText,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
 

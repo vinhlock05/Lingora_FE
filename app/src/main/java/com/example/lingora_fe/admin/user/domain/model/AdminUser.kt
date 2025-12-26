@@ -41,7 +41,8 @@ data class UpdateUserData(
     val oldPassword: String? = null,
     val roleIds: List<Int>? = null,
     val proficiency: String? = null,
-    val status: String? = null
+    val status: String? = null,
+    val avatar: String? = null
 )
 
 // Filter data for queries

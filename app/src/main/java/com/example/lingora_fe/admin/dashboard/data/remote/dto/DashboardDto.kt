@@ -141,7 +141,7 @@ data class LearningAnalyticsDto(
 
 data class LearningTrendDto(
     @SerializedName("date")
-    val date: String,
+    val date: String?,
     
     @SerializedName("wordsLearned")
     val wordsLearned: Int,
@@ -194,7 +194,7 @@ data class PopularTopicDto(
     val id: Int,
     
     @SerializedName("name")
-    val name: String,
+    val name: String?,
     
     @SerializedName("usersCount")
     val usersCount: Int
@@ -432,14 +432,14 @@ fun LearningAnalyticsDto.toDomain() = LearningAnalytics(
     topics = TopicsAnalytics(
         total = topics.total,
         completedByUsers = topics.completedByUsers,
-        popular = topics.popular.map { PopularTopic(id = it.id, name = it.name, usersCount = it.usersCount) }
+        popular = topics.popular.map { PopularTopic(id = it.id, name = it.name ?: "", usersCount = it.usersCount) }
     ),
     words = WordsAnalytics(
         total = words.total,
         learnedByUsers = words.learnedByUsers,
         avgPerUser = words.avgPerUser
     ),
-    learningTrend = learningTrend?.map { LearningTrend(date = it.date, wordsLearned = it.wordsLearned, topicsCompleted = it.topicsCompleted) }
+    learningTrend = learningTrend?.filter { it.date != null }?.map { LearningTrend(date = it.date!!, wordsLearned = it.wordsLearned, topicsCompleted = it.topicsCompleted) }
 )
 
 fun RevenueAnalyticsDto.toDomain() = RevenueAnalytics(

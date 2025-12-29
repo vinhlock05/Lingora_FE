@@ -62,16 +62,8 @@ fun DashboardScreen(
     val coroutineScope = rememberCoroutineScope()
     var showDateRangePicker by remember { mutableStateOf(false) }
     
-    // Format for display
-    val dateRangeText = remember(state.startDate, state.endDate) {
-        if (state.startDate != null && state.endDate != null) {
-            val start = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date(state.startDate!!))
-            val end = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date(state.endDate!!))
-            "$start - $end"
-        } else {
-            "30 days"
-        }
-    }
+    // Display label from state
+    val dateRangeText = state.dateRangeLabel
 
     // Trigger API loading when tab changes
     LaunchedEffect(pagerState.currentPage) {
@@ -136,8 +128,8 @@ fun DashboardScreen(
                      DatePresetDropdown(
                          expanded = showDateRangePicker,
                          onDismiss = { showDateRangePicker = false },
-                         onPresetSelected = { start, end ->
-                             viewModel.onDateRangeSelected(start, end)
+                         onPresetSelected = { start, end, label ->
+                             viewModel.onDateRangeSelected(start, end, label)
                              showDateRangePicker = false
                          }
                      )
@@ -949,7 +941,7 @@ private fun EmptyDataMessage(message: String) {
 private fun DatePresetDropdown(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    onPresetSelected: (Long, Long) -> Unit
+    onPresetSelected: (Long, Long, String) -> Unit
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -957,49 +949,36 @@ private fun DatePresetDropdown(
     ) {
         val today = java.util.Calendar.getInstance()
 
-        // This Week
+        // 7 Days
         DropdownMenuItem(
-            text = { Text("This Week") },
+            text = { Text("7 days") },
             onClick = {
+                val end = System.currentTimeMillis()
                 val start = today.clone() as java.util.Calendar
-                start.set(java.util.Calendar.DAY_OF_WEEK, start.firstDayOfWeek)
-                onPresetSelected(start.timeInMillis, System.currentTimeMillis())
+                start.add(java.util.Calendar.DAY_OF_YEAR, -7)
+                onPresetSelected(start.timeInMillis, end, "7 days")
             }
         )
 
-        // Last Week
+        // 15 Days
         DropdownMenuItem(
-            text = { Text("Last Week") },
+            text = { Text("15 days") },
             onClick = {
+                val end = System.currentTimeMillis()
                 val start = today.clone() as java.util.Calendar
-                start.add(java.util.Calendar.WEEK_OF_YEAR, -1)
-                start.set(java.util.Calendar.DAY_OF_WEEK, start.firstDayOfWeek)
-                val end = start.clone() as java.util.Calendar
-                end.add(java.util.Calendar.DAY_OF_WEEK, 6)
-                onPresetSelected(start.timeInMillis, end.timeInMillis)
+                start.add(java.util.Calendar.DAY_OF_YEAR, -15)
+                onPresetSelected(start.timeInMillis, end, "15 days")
             }
         )
 
-        // This Month
+        // 30 Days
         DropdownMenuItem(
-            text = { Text("This Month") },
+            text = { Text("30 days") },
             onClick = {
+                val end = System.currentTimeMillis()
                 val start = today.clone() as java.util.Calendar
-                start.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                onPresetSelected(start.timeInMillis, System.currentTimeMillis())
-            }
-        )
-
-        // Last Month
-        DropdownMenuItem(
-            text = { Text("Last Month") },
-            onClick = {
-                val start = today.clone() as java.util.Calendar
-                start.add(java.util.Calendar.MONTH, -1)
-                start.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                val end = start.clone() as java.util.Calendar
-                end.set(java.util.Calendar.DAY_OF_MONTH, end.getActualMaximum(java.util.Calendar.DAY_OF_MONTH))
-                onPresetSelected(start.timeInMillis, end.timeInMillis)
+                start.add(java.util.Calendar.DAY_OF_YEAR, -30)
+                onPresetSelected(start.timeInMillis, end, "30 days")
             }
         )
     }

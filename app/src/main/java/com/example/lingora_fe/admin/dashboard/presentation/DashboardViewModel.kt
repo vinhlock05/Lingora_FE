@@ -126,8 +126,8 @@ class DashboardViewModel @Inject constructor(
         _state.update { it.copy(error = null) }
     }
 
-    fun onDateRangeSelected(start: Long?, end: Long?) {
-         _state.update { it.copy(startDate = start, endDate = end) }
+    fun onDateRangeSelected(start: Long?, end: Long?, label: String) {
+         _state.update { it.copy(startDate = start, endDate = end, dateRangeLabel = label) }
          // Reload all data with new filter
          loadOverviewData()
          loadUserAnalytics()

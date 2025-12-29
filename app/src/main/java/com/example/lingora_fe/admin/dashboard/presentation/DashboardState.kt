@@ -17,6 +17,7 @@ data class DashboardState(
     // Date Filter
     val startDate: Long? = null,
     val endDate: Long? = null,
+    val dateRangeLabel: String = "30 days",
     
     // Overview KPIs
     val overview: DashboardOverview? = null,

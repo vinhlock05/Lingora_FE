@@ -3,8 +3,8 @@ package com.example.lingora_fe.auth.presentation
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.auth.domain.repository.AuthRepository
+import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.notification.data.socket.NotificationSocketManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +18,8 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     val tokenManager: TokenManager,
-    private val socketManager: NotificationSocketManager
+    private val socketManager: NotificationSocketManager,
+    val googleAuthClient: GoogleAuthClient // Public so AuthScreen can use it for signIn()
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow(AuthState())
@@ -102,7 +103,6 @@ class AuthViewModel @Inject constructor(
                             userId = authData.user.id,
                             allRoles = allRoles,
                             activeRole = defaultActiveRole,
-                            refreshToken = authData.refreshToken
                         )
                         
                         // Store user data in state but NOT authenticated yet
@@ -133,7 +133,6 @@ class AuthViewModel @Inject constructor(
                             userId = authData.user.id,
                             allRoles = allRoles,
                             activeRole = defaultActiveRole,
-                            refreshToken = authData.refreshToken
                         )
                         _authState.value = _authState.value.copy(
                             isLoading = false,
@@ -146,6 +145,46 @@ class AuthViewModel @Inject constructor(
                 }
                 .onLeft { failure ->
                     Log.d("AuthViewModel", "Login failed: $failure")
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = failure.message
+                    )
+                }
+        }
+    }
+
+    fun googleLogin(idToken: String) {
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+
+            authRepository.googleLogin(idToken)
+                .onRight { authData ->
+
+                    // Get all roles from user
+                    val allRoles = authData.user.roles.map { it.name }
+                    val defaultActiveRole = if (allRoles.contains("ADMIN")) {
+                        "ADMIN"
+                    } else {
+                        allRoles.firstOrNull() ?: "LEARNER"
+                    }
+                    
+                    // Save all roles and active role
+                    saveAuthDataWithRoles(
+                        token = authData.accessToken,
+                        userId = authData.user.id,
+                        allRoles = allRoles,
+                        activeRole = defaultActiveRole,
+                    )
+                    
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        user = authData.user,
+                        token = authData.accessToken,
+                        isAuthenticated = true,
+                        error = null
+                    )
+                }
+                .onLeft { failure ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         error = failure.message
@@ -175,7 +214,6 @@ class AuthViewModel @Inject constructor(
                         userId = authData.user.id,
                         allRoles = allRoles,
                         activeRole = defaultActiveRole,
-                        refreshToken = authData.refreshToken
                     )
                     
                     // Store user data in state but NOT authenticated yet
@@ -238,78 +276,21 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun verifyOTP(email: String, otp: String) {
+    fun verifyEmail(otp: String) {
         viewModelScope.launch {
             _authState.value = _authState.value.copy(isLoading = true, error = null)
             
-            // TEST MODE: Accept "123456" to bypass OTP verification (remove this in production)
-            val isTestOTP = otp == "123456"
-            
-            if (isTestOTP) {
-                // Bypass API call for testing - directly proceed with profile fetch
-                Log.d("AuthViewModel", "Using test OTP mode: $otp")
-                // Get token from TokenManager (already saved during register/login)
-                val token = tokenManager.getAccessToken()
-                if (token != null) {
-                    // Get user profile to update status
-                    authRepository.getProfile(token)
-                        .onRight { user ->
-                            // Token already saved during register/login
-                            // Just update state to authenticated
-                            _authState.value = _authState.value.copy(
-                                isLoading = false,
-                                user = user,
-                                token = token,
-                                isAuthenticated = true,
-                                error = null
-                            )
-                        }
-                        .onLeft { failure ->
-                            _authState.value = _authState.value.copy(
-                                isLoading = false,
-                                error = failure.message
-                            )
-                        }
-                } else {
-                    // If no token, mark as verified (user will need to login)
+            authRepository.verifyEmail(otp)
+                .onRight { user ->
+                    // After successful OTP verification, user status is now ACTIVE
+                    // Token already saved during register/login
+                    // Just update state to authenticated
+                    val token = tokenManager.getAccessToken()
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = null
-                    )
-                }
-            } else {
-                // Normal flow: Call API to verify OTP
-                authRepository.verifyEmail(otp)
-                    .onRight { user ->
-                        // After successful OTP verification, user status is now ACTIVE
-                        // Token already saved during register/login
-                        // Just update state to authenticated
-                        _authState.value = _authState.value.copy(
-                            isLoading = false,
-                            user = user,
-                            token = tokenManager.getAccessToken(),
-                            isAuthenticated = true,
-                            error = null
-                        )
-                    }
-                    .onLeft { failure ->
-                        _authState.value = _authState.value.copy(
-                            isLoading = false,
-                            error = failure.message
-                        )
-                    }
-            }
-        }
-    }
-    
-    fun resendOTP(email: String) {
-        viewModelScope.launch {
-            _authState.value = _authState.value.copy(isLoading = true, error = null)
-            
-            authRepository.resendOTP(email)
-                .onRight {
-                    _authState.value = _authState.value.copy(
-                        isLoading = false,
+                        user = user,
+                        token = token,
+                        isAuthenticated = true,
                         error = null
                     )
                 }
@@ -348,7 +329,6 @@ class AuthViewModel @Inject constructor(
         userId: Int,
         allRoles: List<String>,
         activeRole: String,
-        refreshToken: String? = null
     ) {
         Log.d("AuthViewModel", "Saving auth data with roles - userId: $userId, roles: $allRoles, activeRole: $activeRole")
         // Lưu access token, tất cả roles và active role
@@ -385,8 +365,14 @@ class AuthViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
-            // Call logout API to invalidate refresh token on backend
-            // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+            try {
+                // 1. Sign out from Google
+                googleAuthClient.signOut()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            // 2. Call logout API to invalidate refresh token on backend
             authRepository.logout("")
                 .onRight {
                     Log.d("AuthViewModel", "Logout successful on backend")
@@ -395,7 +381,6 @@ class AuthViewModel @Inject constructor(
                     Log.e("AuthViewModel", "Logout error: ${failure.message}")
                 }
             // Không clear data ở đây, để caller tự quyết định khi nào clear
-            // (cần đợi logout API hoàn thành trước khi clear cookies)
         }
     }
     
@@ -403,8 +388,14 @@ class AuthViewModel @Inject constructor(
      * Logout và clear data - gọi logout API trước, sau đó clear data
      */
     suspend fun logoutAndClear() {
-        // Gọi logout API trước để xóa refreshToken trên backend
-        // Cookie (refreshToken) sẽ tự động được gửi bởi CookieJar
+        try {
+            // 1. Sign out from Google
+            googleAuthClient.signOut()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // 2. Gọi logout API trước để xóa refreshToken trên backend
         authRepository.logout("")
             .onRight {
                 Log.d("AuthViewModel", "Logout successful on backend")
@@ -492,27 +483,6 @@ class AuthViewModel @Inject constructor(
                 .onRight {
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = null
-                    )
-                }
-                .onLeft { failure ->
-                    _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        error = failure.message
-                    )
-                }
-        }
-    }
-    
-    fun verifyEmailWithCode(code: String) {
-        viewModelScope.launch {
-            _authState.value = _authState.value.copy(isLoading = true, error = null)
-            
-            authRepository.verifyEmail(code)
-                .onRight { user ->
-                    _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        user = user,
                         error = null
                     )
                 }

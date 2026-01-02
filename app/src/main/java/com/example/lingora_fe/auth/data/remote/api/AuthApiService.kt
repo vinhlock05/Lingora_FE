@@ -13,21 +13,16 @@ interface AuthApiService {
     suspend fun login(
         @Body request: LoginRequest
     ): ApiResponse<AuthMetaData>
+
+    @POST("auth/google")
+    suspend fun googleLogin(
+        @Body request: GoogleLoginRequest
+    ): ApiResponse<AuthMetaData>
     
     @POST("auth/register")
     suspend fun register(
         @Body request: RegisterRequest
     ): ApiResponse<AuthMetaData>
-    
-    @POST("auth/verify-otp")
-    suspend fun verifyOTP(
-        @Body request: VerifyOTPRequest
-    ): ApiResponse<OTPMetaData>
-    
-    @POST("auth/resend-otp")
-    suspend fun resendOTP(
-        @Body request: ResendOTPRequest
-    ): ApiResponse<OTPMetaData>
     
     @POST("auth/refresh-token")
     suspend fun refreshToken(): ApiResponse<RefreshTokenMetaData>

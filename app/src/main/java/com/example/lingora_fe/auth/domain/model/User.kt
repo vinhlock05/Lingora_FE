@@ -9,7 +9,8 @@ data class User(
     val status: String,
     val proficiency: String? = null,
     val createdAt: String? = null,
-    val deletedAt: String? = null
+    val deletedAt: String? = null,
+    val hasPassword: Boolean = false
 )
 
 data class Role(

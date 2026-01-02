@@ -78,6 +78,7 @@ material3-window-size = { module = "androidx.compose.material3:material3-window-
 
 # --- Coroutines ---
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines" }
 
 # --- Others ---
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrowCore" }

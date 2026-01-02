@@ -20,7 +20,9 @@ data class UserDto(
     @SerializedName("createdAt")
     val createdAt: String?,
     @SerializedName("deletedAt")
-    val deletedAt: String?
+    val deletedAt: String?,
+    @SerializedName("hasPassword")
+    val hasPassword: Boolean = false
 )
 
 data class RoleDto(

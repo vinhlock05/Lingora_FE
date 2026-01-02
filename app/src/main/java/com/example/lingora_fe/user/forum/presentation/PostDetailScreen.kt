@@ -316,6 +316,9 @@ fun PostDetailCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
+        var showImageViewer by remember { mutableStateOf(false) }
+        var selectedImageIndex by remember { mutableStateOf(0) }
+        
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -478,6 +481,10 @@ fun PostDetailCard(
                             .fillMaxWidth()
                             .height(200.dp)
                             .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                selectedImageIndex = 0
+                                showImageViewer = true
+                            }
                     )
                 } else {
                     Row(
@@ -493,12 +500,20 @@ fun PostDetailCard(
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    selectedImageIndex = 0
+                                    showImageViewer = true
+                                }
                         )
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    selectedImageIndex = 1
+                                    showImageViewer = true
+                                }
                         ) {
                             AsyncImage(
                                 model = thumbnails.getOrNull(1),
@@ -523,6 +538,15 @@ fun PostDetailCard(
                         }
                     }
                 }
+            }
+            
+            // Fullscreen Image Viewer
+            if (showImageViewer) {
+                FullscreenImageViewer(
+                    images = post.thumbnails,
+                    initialIndex = selectedImageIndex,
+                    onDismiss = { showImageViewer = false }
+                )
             }
             
             // Topic and Tags

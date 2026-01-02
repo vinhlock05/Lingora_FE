@@ -56,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
@@ -102,11 +103,11 @@ fun ChatbotScreen(
 
     Scaffold(
         modifier = Modifier.imePadding(),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = Color(0xFFF0F9F4),
         contentWindowInsets = WindowInsets.statusBars,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Lingora AI", fontWeight = FontWeight.SemiBold) },
+                title = { Text(text = "Lingora AI", fontWeight = FontWeight.SemiBold, color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -124,7 +125,10 @@ fun ChatbotScreen(
                             )
                         }
                     }
-                }
+                },
+                colors = androidx.compose.material3.TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.White
+                )
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -140,7 +144,7 @@ fun ChatbotScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(Color(0xFFF0F9F4))
                 .padding(padding)
         ) {
             if (uiState.isLoading && uiState.messages.isEmpty()) {
@@ -329,10 +333,9 @@ private fun ChatInputBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.White)
             .navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 20.dp)
-//            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         OutlinedTextField(
             value = value,
@@ -386,20 +389,21 @@ private fun ChatHistoryDialog(
     var sessionToConfirm by remember { mutableStateOf<ChatSession?>(null) }
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color.White,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Đóng")
+                Text("Đóng", color = GradientStart)
             }
         },
         title = {
-            Text(text = "Lịch sử hội thoại", fontWeight = FontWeight.SemiBold)
+            Text(text = "Lịch sử hội thoại", fontWeight = FontWeight.SemiBold, color = Color.Black)
         },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TextButton(onClick = onNewSession) {
-                    Text("Bắt đầu cuộc hội thoại mới")
+                    Text("Bắt đầu cuộc hội thoại mới", color = Color.Gray)
                 }
                 if (isLoading) {
                     Row(
@@ -413,7 +417,8 @@ private fun ChatHistoryDialog(
                 } else if (sessions.isEmpty()) {
                     Text(
                         text = "Chưa có cuộc hội thoại nào. Gửi câu hỏi để bắt đầu nhé!",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Black,
                     )
                 } else {
                     LazyColumn(
@@ -445,6 +450,7 @@ private fun ChatHistoryDialog(
                     sessionToConfirm = null
                 }
             },
+            containerColor = Color.White,
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -453,7 +459,7 @@ private fun ChatHistoryDialog(
                     },
                     enabled = !isDeleting
                 ) {
-                    Text("Xoá", color = MaterialTheme.colorScheme.error)
+                    Text("Xoá", color = Color(0xFFDC2626))
                 }
             },
             dismissButton = {
@@ -461,10 +467,10 @@ private fun ChatHistoryDialog(
                     onClick = { sessionToConfirm = null },
                     enabled = !isDeleting
                 ) {
-                    Text("Huỷ")
+                    Text("Huỷ", color = GradientStart)
                 }
             },
-            title = { Text("Xác nhận xoá") },
+            title = { Text("Xác nhận xoá", color = Color.Black) },
             text = {
                 Text(
                     text = "Bạn chắc chắn muốn xoá cuộc hội thoại \"${session.title.ifBlank { "Không tiêu đề" }}\"?",

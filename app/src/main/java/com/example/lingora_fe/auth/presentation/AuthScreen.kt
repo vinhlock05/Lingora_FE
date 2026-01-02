@@ -29,6 +29,13 @@ import androidx.navigation.NavController
 import com.example.lingora_fe.R
 import com.example.lingora_fe.core.ui.theme.*
 import com.example.lingora_fe.navigation.Route
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.IntentSenderRequest
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import android.widget.Toast
+import android.app.Activity
 
 @Composable
 fun AuthScreen(
@@ -37,6 +44,43 @@ fun AuthScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsState()
+    
+    // Google Auth Setup
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Use the injected client from ViewModel instead of creating a new one
+    val googleAuthClient = viewModel.googleAuthClient
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult(),
+        onResult = { result ->
+            android.util.Log.d("AuthScreen", "Google Sign-In Result Code: ${result.resultCode}")
+            if (result.resultCode == Activity.RESULT_OK) {
+                scope.launch {
+                    val signInResult = googleAuthClient.signInWithIntent(
+                        intent = result.data ?: return@launch
+                    )
+                    signInResult.idToken?.let { token ->
+                        android.util.Log.d("AuthScreen", "Got ID Token, calling ViewModel")
+                        viewModel.googleLogin(token)
+                    } ?: run {
+                        android.util.Log.e("AuthScreen", "No ID Token found in result")
+                        Toast.makeText(
+                            context,
+                            "Google Sign In Failed: ${signInResult.errorMessage}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            } else {
+                android.util.Log.e("AuthScreen", "Google Sign-In Failed or Cancelled. Result Code: ${result.resultCode}")
+                // Common failure: 0 (CANCELED) often means SHA-1 mismatch or network issue
+                if (result.resultCode == 0) {
+                     android.util.Log.e("AuthScreen", "Possible causes: SHA-1 mismatch, missing internet, or user cancelled.")
+                }
+            }
+        }
+    )
     
     var activeTab by remember { mutableStateOf(initialTab) }
     
@@ -88,13 +132,12 @@ fun AuthScreen(
             return@LaunchedEffect
         }
         
-        // Login successful - only navigate when authenticated and on login tab
+        // Login/Google Sign-In successful - navigate when authenticated
         if (authState.isAuthenticated && 
             authState.user != null && 
             authState.token != null && 
-            activeTab == "login" && 
             !authState.isLoading &&
-            !previousAuthState) {  // Chỉ navigate khi chuyển từ not authenticated -> authenticated
+            !previousAuthState) {  // Only navigate when transitioning from not authenticated -> authenticated
             // Login successful - check proficiency first
             val tokenManager = viewModel.tokenManager
             val activeRole = tokenManager.getActiveRole() ?: tokenManager.getUserRole()
@@ -283,8 +326,23 @@ fun AuthScreen(
                                     viewModel.login(loginIdentifier, loginPassword)
                                 }
                             },
+                            
                             onForgotPasswordClick = {
                                 navController.navigate(Route.ForgotPassword.route)
+                            },
+                            onGoogleLoginClick = {
+                                scope.launch {
+                                    val signInIntentSender = googleAuthClient.signIn()
+                                    if(signInIntentSender != null) {
+                                        launcher.launch(
+                                            IntentSenderRequest.Builder(
+                                                signInIntentSender
+                                            ).build()
+                                        )
+                                    } else {
+                                        Toast.makeText(context, "Google Sign In Init Failed", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                             },
                             isLoading = authState.isLoading,
                             error = authState.error
@@ -308,6 +366,20 @@ fun AuthScreen(
                                     viewModel.register(registerEmail, registerUsername, registerPassword)
                                     // Set email for OTP navigation
                                     registrationEmail = registerEmail
+                                }
+                            },
+                            onGoogleLoginClick = {
+                                scope.launch {
+                                    val signInIntentSender = googleAuthClient.signIn()
+                                    if(signInIntentSender != null) {
+                                        launcher.launch(
+                                            IntentSenderRequest.Builder(
+                                                signInIntentSender
+                                            ).build()
+                                        )
+                                    } else {
+                                        Toast.makeText(context, "Google Sign In Init Failed", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             },
                             isLoading = authState.isLoading,
@@ -340,6 +412,7 @@ fun LoginContent(
     onPasswordVisibilityChange: () -> Unit,
     onLoginClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
+    onGoogleLoginClick: () -> Unit,
     isLoading: Boolean,
     error: String?
 ) {
@@ -393,6 +466,29 @@ fun LoginContent(
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
+        
+        // Forgot Password Link - Right aligned below password field
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(y = (-8).dp), // Move up to sit closer to password field
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(
+                onClick = onForgotPasswordClick,
+                contentPadding = PaddingValues(0.dp) // Remove default padding
+            ) {
+                Text(
+                    text = "Quên mật khẩu?",
+                    color = GradientStart,
+                    fontSize = 14.sp,
+                    fontFamily = ArimoFontFamily,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Error Message
         if (error != null) {
@@ -439,19 +535,64 @@ fun LoginContent(
             }
         }
         
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Forgot Password Link
-        TextButton(
-            onClick = onForgotPasswordClick
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Divider
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Quên mật khẩu?",
-                color = GradientStart,
-                fontSize = 14.sp,
-                fontFamily = ArimoFontFamily,
-                fontWeight = FontWeight.Medium
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Color.Gray.copy(alpha = 0.3f)
             )
+            Text(
+                text = "Hoặc",
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = Color.Gray,
+                fontSize = 12.sp,
+                fontFamily = ArimoFontFamily
+            )
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Color.Gray.copy(alpha = 0.3f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Google Login Button
+        Button(
+            onClick = onGoogleLoginClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White
+            ),
+            shape = RoundedCornerShape(12.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f)),
+            enabled = !isLoading
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.google_ic),
+                    contentDescription = "Google Icon",
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.Unspecified // Preserve original colors
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Tiếp tục với Google",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = ArimoFontFamily,
+                    color = Color.Black
+                )
+            }
         }
     }
 }
@@ -471,6 +612,7 @@ fun RegisterContent(
     confirmPasswordVisible: Boolean,
     onConfirmPasswordVisibilityChange: () -> Unit,
     onRegisterClick: () -> Unit,
+    onGoogleLoginClick: () -> Unit,
     isLoading: Boolean,
     error: String?
 ) {
@@ -622,6 +764,66 @@ fun RegisterContent(
                     fontWeight = FontWeight.Bold,
                     fontFamily = ArimoFontFamily,
                     color = Color.White
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Divider
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Color.Gray.copy(alpha = 0.3f)
+            )
+            Text(
+                text = "Hoặc",
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = Color.Gray,
+                fontSize = 12.sp,
+                fontFamily = ArimoFontFamily
+            )
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = Color.Gray.copy(alpha = 0.3f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Google Register Button
+        Button(
+            onClick = onGoogleLoginClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White
+            ),
+            shape = RoundedCornerShape(12.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f)),
+            enabled = !isLoading
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.google_ic),
+                    contentDescription = "Google Icon",
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.Unspecified // Preserve original colors
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Tiếp tục với Google",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = ArimoFontFamily,
+                    color = Color.Black
                 )
             }
         }

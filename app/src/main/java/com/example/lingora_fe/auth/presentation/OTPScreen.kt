@@ -297,7 +297,7 @@ fun OTPScreen(
                             onClick = {
                                 if (otpValue.length == 6) {
                                     hasVerifiedOTP = true // Mark that OTP verification was initiated
-                                    viewModel.verifyOTP(email, otpValue)
+                                    viewModel.verifyEmail(otpValue)
                                 }
                             },
                             modifier = Modifier

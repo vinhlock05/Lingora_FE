@@ -12,7 +12,8 @@ fun UserDto.toDomainModel(): User {
         avatar = this.avatar,
         status = this.status,
         proficiency = this.proficiency,
-        createdAt = this.createdAt
+        createdAt = this.createdAt,
+        hasPassword = this.hasPassword
     )
 }
 

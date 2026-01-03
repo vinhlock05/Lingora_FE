@@ -445,8 +445,7 @@ fun LoginContent(
             onValueChange = onPasswordChange,
             label = { Text("Mật khẩu", fontFamily = ArimoFontFamily) },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
@@ -470,8 +469,7 @@ fun LoginContent(
         // Forgot Password Link - Right aligned below password field
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .offset(y = (-8).dp), // Move up to sit closer to password field
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(
@@ -487,9 +485,6 @@ fun LoginContent(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
         // Error Message
         if (error != null) {
             Text(
@@ -588,9 +583,9 @@ fun LoginContent(
                 Text(
                     text = "Tiếp tục với Google",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     fontFamily = ArimoFontFamily,
-                    color = Color.Black
+                    color = NavBarText
                 )
             }
         }
@@ -821,9 +816,9 @@ fun RegisterContent(
                 Text(
                     text = "Tiếp tục với Google",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     fontFamily = ArimoFontFamily,
-                    color = Color.Black
+                    color = NavBarText
                 )
             }
         }

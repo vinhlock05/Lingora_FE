@@ -542,6 +542,9 @@ fun PostCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
+        var showImageViewer by remember { mutableStateOf(false) }
+        var selectedImageIndex by remember { mutableStateOf(0) }
+        
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -690,7 +693,22 @@ fun PostCard(
 
             // Images
             if (post.thumbnails.isNotEmpty()) {
-                ImageSection(thumbnails = post.thumbnails)
+                ImageSection(
+                    thumbnails = post.thumbnails,
+                    onImageClick = { index ->
+                        selectedImageIndex = index
+                        showImageViewer = true
+                    }
+                )
+            }
+            
+            // Fullscreen Image Viewer
+            if (showImageViewer) {
+                FullscreenImageViewer(
+                    images = post.thumbnails,
+                    initialIndex = selectedImageIndex,
+                    onDismiss = { showImageViewer = false }
+                )
             }
 
             // Tags & Topic
@@ -793,7 +811,10 @@ fun PostCard(
 }
 
 @Composable
-fun ImageSection(thumbnails: List<String>) {
+fun ImageSection(
+    thumbnails: List<String>,
+    onImageClick: (Int) -> Unit = {}
+) {
     if (thumbnails.size == 1) {
         AsyncImage(
             model = thumbnails.first(),
@@ -803,6 +824,7 @@ fun ImageSection(thumbnails: List<String>) {
                 .fillMaxWidth()
                 .heightIn(max = 300.dp)
                 .clip(RoundedCornerShape(0.dp))
+                .clickable { onImageClick(0) }
         )
     } else {
         Row(
@@ -818,12 +840,14 @@ fun ImageSection(thumbnails: List<String>) {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
+                    .clickable { onImageClick(0) }
             )
 
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
+                    .clickable { onImageClick(1) }
             ) {
                 AsyncImage(
                     model = thumbnails.getOrNull(1),

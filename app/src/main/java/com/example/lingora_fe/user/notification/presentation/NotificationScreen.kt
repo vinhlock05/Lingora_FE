@@ -83,12 +83,12 @@ fun NotificationScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = Color.White,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }) else ({}) ,
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color(0xFFF0F9F4)
     ) { paddingValues ->
         if (state.isLoading && state.notifications.isEmpty()) {
             Box(
@@ -133,7 +133,7 @@ fun NotificationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background),
+                .background(Color(0xFFF0F9F4)),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(

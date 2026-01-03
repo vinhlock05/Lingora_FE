@@ -151,8 +151,8 @@ fun ChangePasswordScreen(
                                 trailingIcon = {
                                     IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
                                         Icon(
-                                            imageVector = if (showCurrentPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                            contentDescription = if (showCurrentPassword) "Hide password" else "Show password",
+                                            imageVector = if (showCurrentPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                            contentDescription = if (showCurrentPassword) "Show password" else "Hide password",
                                             tint = NavBarText
                                         )
                                     }
@@ -186,8 +186,8 @@ fun ChangePasswordScreen(
                             trailingIcon = {
                                 IconButton(onClick = { showNewPassword = !showNewPassword }) {
                                     Icon(
-                                        imageVector = if (showNewPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = if (showNewPassword) "Hide password" else "Show password",
+                                        imageVector = if (showNewPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                        contentDescription = if (showNewPassword) "Show password" else "Hide password",
                                         tint = NavBarText
                                     )
                                 }
@@ -225,8 +225,8 @@ fun ChangePasswordScreen(
                             trailingIcon = {
                                 IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
                                     Icon(
-                                        imageVector = if (showConfirmPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = if (showConfirmPassword) "Hide password" else "Show password",
+                                        imageVector = if (showConfirmPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                        contentDescription = if (showConfirmPassword) "Show password" else "Hide password",
                                         tint = NavBarText
                                     )
                                 }

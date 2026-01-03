@@ -104,12 +104,47 @@ class NotificationViewModel @Inject constructor(
 
         return when (type) {
             NotificationType.LIKE,
-            NotificationType.COMMENT,
+            NotificationType.COMMENT -> {
+                // Kiểm tra targetType để phân biệt giữa POST, STUDY_SET, COMMENT
+                val targetType = try { data?.get("targetType")?.asString } catch (_: Exception) { null }
+                val targetId = getInt("targetId")
+                
+                when (targetType) {
+                    "POST" -> {
+                        // Like/Comment trên bài viết -> chuyển đến bài viết
+                        if (targetId != null) Route.postDetail(targetId)
+                        else if (postId != null) Route.postDetail(postId)
+                        else null
+                    }
+                    "STUDY_SET" -> {
+                        // Like/Comment trên học liệu -> chuyển đến học liệu
+                        if (targetId != null) Route.studySetDetail(targetId)
+                        else {
+                            val id = studySetId ?: relatedId ?: objectId
+                            if (id != null) Route.studySetDetail(id)
+                            else null
+                        }
+                    }
+                    "COMMENT" -> {
+                        // Like trên comment -> chuyển đến bài viết chứa comment đó
+                        if (postId != null) Route.postDetail(postId)
+                        else null
+                    }
+                    else -> {
+                        // Fallback: ưu tiên postId trước
+                        if (postId != null) Route.postDetail(postId)
+                        else {
+                            val id = studySetId ?: relatedId ?: objectId
+                            if (id != null) Route.studySetDetail(id)
+                            else null
+                        }
+                    }
+                }
+            }
             NotificationType.ORDER -> {
+                // ORDER chỉ áp dụng cho học liệu
                 val id = studySetId ?: relatedId ?: objectId
-                if (id != null) Route.studySetDetail(id)
-                else if (postId != null) Route.postDetail(postId)
-                else null
+                if (id != null) Route.studySetDetail(id) else null
             }
             NotificationType.WARNING -> {
                 // WARNING notification contains targetType and targetId

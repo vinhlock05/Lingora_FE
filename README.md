@@ -8,6 +8,10 @@
 ## Description
 Android mobile application for **Lingora** - An intelligent English learning app with AI-powered features, vocabulary learning with SRS (Spaced Repetition System), IELTS exam practice, and community features.
 
+## 📲 Download APK
+
+[⬇️ Download latest APK](https://github.com/vinhlock05/Lingora_FE/releases/download/v1.0.0/lingora.apk)
+
 ## 🚀 Tech Stack
 
 ### Core

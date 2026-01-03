@@ -159,7 +159,8 @@ fun DashboardScreen(
                     when (DashboardTab.entries[page]) {
                         DashboardTab.OVERVIEW -> OverviewTab(
                             overview = state.overview,
-                            activities = state.activities
+                            activities = state.activities,
+                            dateLabel = dateRangeText
                         )
                         DashboardTab.USERS -> UsersTab(
                             userAnalytics = state.userAnalytics,
@@ -185,11 +186,11 @@ fun DashboardScreen(
 }
 
 // ==================== OVERVIEW TAB ====================
-// ==================== OVERVIEW TAB ====================
 @Composable
 private fun OverviewTab(
     overview: DashboardOverview?,
-    activities: List<Activity>
+    activities: List<Activity>,
+    dateLabel: String
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -197,7 +198,7 @@ private fun OverviewTab(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            overview?.let { KPICardsSection(it) }
+            overview?.let { KPICardsSection(it, dateLabel) }
         }
         item {
             if (activities.isNotEmpty()) {
@@ -211,42 +212,52 @@ private fun OverviewTab(
 }
 
 @Composable
-private fun KPICardsSection(overview: DashboardOverview) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        KPICard(
+private fun KPICardsSection(overview: DashboardOverview, dateLabel: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            title = "Users",
-            value = overview.users.total.toString(),
-            subtitle = "+${overview.users.new} new",
-            icon = Icons.Default.People,
-            iconBackground = Color(0xFF3B82F6),
-            growth = overview.users.growth
-        )
-        KPICard(
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            KPICard(
+                modifier = Modifier.weight(1f),
+                title = "Users",
+                value = overview.users.total.toString(),
+                subtitle = "+${overview.users.new} new",
+                icon = Icons.Default.People,
+                iconBackground = Color(0xFF3B82F6),
+                growth = overview.users.growth
+            )
+            KPICard(
+                modifier = Modifier.weight(1f),
+                title = "Study Sets",
+                value = overview.studySets.total.toString(),
+                subtitle = "${overview.studySets.published} published",
+                icon = Icons.Default.LibraryBooks,
+                iconBackground = Color(0xFF8B5CF6)
+            )
+        }
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            title = "Study Sets",
-            value = overview.studySets.total.toString(),
-            subtitle = "${overview.studySets.published} published",
-            icon = Icons.Default.LibraryBooks,
-            iconBackground = Color(0xFF8B5CF6)
-        )
-        KPICard(
-            modifier = Modifier.fillMaxWidth(),
-            title = "Revenue",
-            value = formatCurrency(overview.revenue.thisMonth),
-            subtitle = "This period",
-            icon = Icons.Default.AttachMoney,
-            iconBackground = Color(0xFF10B981),
-            growth = overview.revenue.growth
-        )
-        KPICard(
-            modifier = Modifier.fillMaxWidth(),
-            title = "Exams",
-            value = overview.exams.total.toString(),
-            subtitle = "${overview.exams.totalAttempts} attempts",
-            icon = Icons.Default.Assignment,
-            iconBackground = Color(0xFFF59E0B)
-        )
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            KPICard(
+                modifier = Modifier.weight(1f),
+                title = "Revenue",
+                value = formatCurrency(overview.revenue.thisMonth),
+                subtitle = dateLabel,
+                icon = Icons.Default.AttachMoney,
+                iconBackground = Color(0xFF10B981),
+                growth = overview.revenue.growth
+            )
+            KPICard(
+                modifier = Modifier.weight(1f),
+                title = "Exams",
+                value = overview.exams.total.toString(),
+                subtitle = "${overview.exams.totalAttempts} attempts",
+                icon = Icons.Default.Assignment,
+                iconBackground = Color(0xFFF59E0B)
+            )
+        }
     }
 }
 
@@ -286,7 +297,13 @@ private fun KPICard(
                 }
                 growth?.let { GrowthBadge(it) }
             }
-            Text(text = value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
             Text(text = title, style = MaterialTheme.typography.bodyMedium, color = NavBarText)
             Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = NavBarText.copy(alpha = 0.7f))
         }
@@ -540,7 +557,7 @@ private fun LearningTab(learning: LearningAnalytics?, isLoading: Boolean = false
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = topic.name, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = topic.name ?: "Unknown", style = MaterialTheme.typography.bodyMedium)
                             Text(text = "${topic.usersCount} users", style = MaterialTheme.typography.bodySmall, color = NavBarText)
                         }
                     }

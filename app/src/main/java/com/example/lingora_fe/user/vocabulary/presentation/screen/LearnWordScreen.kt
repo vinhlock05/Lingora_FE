@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -72,6 +73,10 @@ fun LearnWordScreen(
                 )
             }
         }
+    }
+    
+    val stopAudio: () -> Unit = remember {
+        { AudioPlayerHelper.stop() }
     }
 
     // Clean up MediaPlayer when composable is disposed
@@ -321,8 +326,8 @@ fun LearnWordScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(15.dp)
-                        .background(TopBarBorder, shape = RoundedCornerShape(4.dp))
-                        .border(width = 1.dp, color = Color.Black, shape = RoundedCornerShape(4.dp))
+                        .background(TopBarBorder, shape = CircleShape)
+                        .border(width = 1.dp, color = Color.Black, shape = CircleShape)
                 ) {
                     Box(
                         modifier = Modifier
@@ -332,7 +337,7 @@ fun LearnWordScreen(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(GradientStart, GradientEnd)
                                 ),
-                                shape = RoundedCornerShape(4.dp)
+                                shape = CircleShape
                             )
                     )
                 }
@@ -379,6 +384,7 @@ fun LearnWordScreen(
                                         correctAnswers = 0
                                     )
                                     // Reset quiz questions
+                                    stopAudio()
                                     currentQuizQuestions = quizQuestions
                                 }
                             }
@@ -421,6 +427,7 @@ fun LearnWordScreen(
                                                 typedAnswer = "",
                                                 isAnswerChecked = false
                                             )
+                                            stopAudio()
                                         }
                                     } else {
                                         // Sai - kiểm tra attempt count
@@ -448,6 +455,7 @@ fun LearnWordScreen(
                                                     typedAnswer = "",
                                                     isAnswerChecked = false
                                                 )
+                                                stopAudio()
                                             }
                                         } else {
                                             // Đưa xuống cuối với attemptCount tăng
@@ -559,6 +567,7 @@ fun LearnWordScreen(
                                             typedAnswer = "",
                                             isAnswerChecked = false
                                         )
+                                        stopAudio()
                                     }
                                 },
                                 onPronunciationClick = {
@@ -597,22 +606,25 @@ private fun generateQuizQuestions(
             when (questionType) {
                 QuestionType.LISTEN_FILL -> {
                     // Nghe điền từ - text input
-                    word.meaning?.let { meaning ->
-                        questions.add(
+                    if (!word.audioUrl.isNullOrEmpty()) {
+                        word.meaning?.let { meaning ->
+                            questions.add(
                             QuizQuestion(
                                 type = QuestionType.LISTEN_FILL,
-                                question = "Nghe và điền từ tiếng Anh của \"$meaning\":",
+                                question = "Nghe và viết lại từ bạn nghe được",
                                 correctAnswer = word.word,
                                 options = emptyList(), // Text input
                                 word = word
                             )
                         )
                     }
+                    }
                 }
                 QuestionType.LISTEN_CHOOSE -> {
                     // Nghe chọn từ - multiple choice
-                    val otherWords = words.filter { it != word }.shuffled().take(3)
-                    questions.add(
+                    if (!word.audioUrl.isNullOrEmpty()) {
+                        val otherWords = words.filter { it != word }.shuffled().take(3)
+                        questions.add(
                         QuizQuestion(
                             type = QuestionType.LISTEN_CHOOSE,
                             question = "Nghe và chọn từ đúng",
@@ -621,6 +633,7 @@ private fun generateQuizQuestions(
                             word = word
                         )
                     )
+                    }
                 }
                 QuestionType.TRUE_FALSE -> {
                     // Đúng/Sai
@@ -676,8 +689,9 @@ private fun generateQuizQuestions(
                 }
                 QuestionType.PRONUNCIATION -> {
                     // Luyện phát âm
-                    questions.add(
-                        QuizQuestion(
+                    if (!word.audioUrl.isNullOrEmpty()) {
+                        questions.add(
+                            QuizQuestion(
                             type = QuestionType.PRONUNCIATION,
                             question = "Phát âm từ \"${word.word}\"",
                             correctAnswer = word.word,
@@ -685,8 +699,24 @@ private fun generateQuizQuestions(
                             word = word
                         )
                     )
+                    }
                 }
             }
+        }
+
+        if (questions.none { it.word.id == word.id }) {
+             word.meaning?.let { meaning ->
+                val otherWords = words.filter { it != word }.shuffled().take(3)
+                questions.add(
+                    QuizQuestion(
+                        type = QuestionType.SEE_MEANING_CHOOSE_WORD,
+                        question = "Từ tiếng Anh nào khớp với nghĩa \"$meaning\"?",
+                        correctAnswer = word.word,
+                        options = (listOf(word.word) + otherWords.map { it.word }).shuffled(),
+                        word = word
+                    )
+                )
+             }
         }
     }
 

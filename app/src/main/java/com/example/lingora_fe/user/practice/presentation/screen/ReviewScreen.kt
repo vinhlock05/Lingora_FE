@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -46,6 +47,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -90,6 +92,10 @@ fun ReviewScreen(
                 )
             }
         }
+    }
+
+    val stopAudio: () -> Unit = remember {
+        { AudioPlayerHelper.stop() }
     }
 
     DisposableEffect(Unit) {
@@ -216,7 +222,7 @@ fun ReviewScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 LinearProgressIndicator(
                                     progress = progressFraction,
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth().clip(CircleShape),
                                     trackColor = Color(0xFFE2E8F0),
                                     color = GradientStart
                                 )
@@ -254,7 +260,9 @@ fun ReviewScreen(
                                                     0
                                                 }
                                             }
+
                                         } else {
+                                            stopAudio()
                                             val newAttemptCount = currentQuestion.attemptCount + 1
                                             val remaining = currentQuestions.filterIndexed { index, _ -> index != currentQuestionIndex }
                                             
@@ -530,31 +538,35 @@ private fun generateReviewQuizQuestions(
         questionTypes.forEach { questionType ->
             when (questionType) {
                 QuestionType.LISTEN_FILL -> {
-                    word.meaning?.let { meaning ->
-                        questions.add(
-                            QuizQuestion(
-                                type = QuestionType.LISTEN_FILL,
-                                question = "Nghe và điền từ tiếng Anh của \"$meaning\":",
-                                correctAnswer = word.word,
-                                options = emptyList(),
-                                word = word
+                    if (!word.audioUrl.isNullOrEmpty()) {
+                        word.meaning?.let { meaning ->
+                            questions.add(
+                                QuizQuestion(
+                                    type = QuestionType.LISTEN_FILL,
+                                    question = "Nghe và viết lại từ bạn nghe được",
+                                    correctAnswer = word.word,
+                                    options = emptyList(),
+                                    word = word
+                                )
                             )
-                        )
+                        }
                     }
                 }
 
                 QuestionType.LISTEN_CHOOSE -> {
-                    val otherWords = domainWords.filter { it.id != word.id }.shuffled().take(3)
-                    val options = (listOf(word.word) + otherWords.map { it.word }).shuffled()
-                    questions.add(
-                        QuizQuestion(
-                            type = QuestionType.LISTEN_CHOOSE,
-                            question = "Nghe và chọn từ đúng",
-                            correctAnswer = word.word,
-                            options = options,
-                            word = word
+                    if (!word.audioUrl.isNullOrEmpty()) {
+                        val otherWords = domainWords.filter { it.id != word.id }.shuffled().take(3)
+                        val options = (listOf(word.word) + otherWords.map { it.word }).shuffled()
+                        questions.add(
+                            QuizQuestion(
+                                type = QuestionType.LISTEN_CHOOSE,
+                                question = "Nghe và chọn từ đúng",
+                                correctAnswer = word.word,
+                                options = options,
+                                word = word
+                            )
                         )
-                    )
+                    }
                 }
 
                 QuestionType.TRUE_FALSE -> {
@@ -615,17 +627,37 @@ private fun generateReviewQuizQuestions(
                 }
                 
                 QuestionType.PRONUNCIATION -> {
-                    questions.add(
-                        QuizQuestion(
-                            type = QuestionType.PRONUNCIATION,
-                            question = "Phát âm từ \"${word.word}\"",
-                            correctAnswer = word.word,
-                            options = emptyList(),
-                            word = word
+                    if (!word.audioUrl.isNullOrEmpty()) {
+                        questions.add(
+                            QuizQuestion(
+                                type = QuestionType.PRONUNCIATION,
+                                question = "Phát âm từ \"${word.word}\"",
+                                correctAnswer = word.word,
+                                options = emptyList(),
+                                word = word
+                            )
                         )
-                    )
+                    }
                 }
             }
+        }
+        
+        // Fallback: If no questions were generated for this word (due to missing audio for selected types),
+        // add a non-audio question (SEE_MEANING_CHOOSE_WORD) so the word is not skipped.
+        if (questions.none { it.word.id == word.id }) {
+             word.meaning?.let { meaning ->
+                val otherWords = domainWords.filter { it.id != word.id }.shuffled().take(3)
+                val options = (listOf(word.word) + otherWords.map { it.word }).shuffled()
+                questions.add(
+                    QuizQuestion(
+                        type = QuestionType.SEE_MEANING_CHOOSE_WORD,
+                        question = "Từ tiếng Anh nào khớp với nghĩa \"$meaning\"?",
+                        correctAnswer = word.word,
+                        options = options,
+                        word = word
+                    )
+                )
+             }
         }
     }
 

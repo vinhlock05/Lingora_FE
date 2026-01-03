@@ -40,6 +40,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.draw.alpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -381,6 +383,16 @@ fun PronunciationQuizContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isListening) Color(0xFFEF4444) else MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            TextButton(
+                onClick = { onResult(false, "") },
+                colors = ButtonDefaults.textButtonColors(contentColor = Color.Gray),
+                modifier = Modifier.alpha(0.6f)
+            ) {
+                Text("Bỏ qua", style = MaterialTheme.typography.bodyMedium)
+            }
         }
         
         Spacer(modifier = Modifier.height(24.dp))

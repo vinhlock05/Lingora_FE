@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.studyset.presentation.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -311,21 +312,25 @@ private fun VisibilityChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .background(
-                color = if (isSelected) GradientStart else Color(0xFFF3F4F6),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) GradientStart else Color.White,
+        border = if (isSelected) null else BorderStroke(1.5.dp, GradientStart.copy(alpha = 0.3f)),
+        shadowElevation = if (isSelected) 4.dp else 0.dp
     ) {
-        Text(
-            text = text,
-            color = if (isSelected) Color.White else MainText,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) Color.White else GradientStart
+            )
+        }
     }
 }
 
@@ -336,21 +341,25 @@ private fun ContentTabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .background(
-                color = if (isSelected) GradientStart else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) GradientStart else Color.White,
+        border = if (isSelected) null else BorderStroke(1.5.dp, GradientStart.copy(alpha = 0.3f)),
+        shadowElevation = if (isSelected) 4.dp else 0.dp
     ) {
-        Text(
-            text = text,
-            color = if (isSelected) Color.White else MainText,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) Color.White else GradientStart
+            )
+        }
     }
 }
 

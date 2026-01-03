@@ -4,12 +4,16 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.util.AudioPlayerHelper
 import com.example.lingora_fe.core.ui.theme.NavBarText
 import com.example.lingora_fe.user.vocabulary.domain.model.Word
 
@@ -56,12 +62,20 @@ fun WordResultCard(word: Word) {
                             ),
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        if (word.audioUrl != null) {
-                            IconButton(onClick = { /* Play audio */ }) {
+                        if (!word.audioUrl.isNullOrEmpty()) {
+                            IconButton(
+                                onClick = {
+                                    AudioPlayerHelper.playAudio(word.audioUrl)
+                                },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(GradientEnd.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp))
+                            ) {
                                 Icon(
-                                    Icons.Default.PlayArrow,
-                                    contentDescription = "Play pronunciation",
-                                    tint = GradientStart
+                                    imageVector = Icons.Default.VolumeUp,
+                                    contentDescription = "Listen",
+                                    tint = GradientEnd,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -131,7 +145,8 @@ fun WordResultCard(word: Word) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = GradientStart.copy(alpha = 0.08f),
-                    border = BorderStroke(2.dp, GradientStart.copy(alpha = 0.3f))
+                    border = BorderStroke(2.dp, GradientStart.copy(alpha = 0.3f)),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp),

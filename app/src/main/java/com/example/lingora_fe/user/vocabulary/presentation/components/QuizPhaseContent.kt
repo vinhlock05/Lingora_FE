@@ -129,7 +129,7 @@ fun QuizPhaseContent(
                                 Icon(
                                     imageVector = Icons.Default.VolumeUp,
                                     contentDescription = "Listen",
-                                tint = if (question.word.audioUrl.isNullOrEmpty()) GradientEnd.copy(alpha = 0.3f) else GradientEnd,
+                                    tint = if (question.word.audioUrl.isNullOrEmpty()) GradientEnd.copy(alpha = 0.3f) else GradientEnd,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }

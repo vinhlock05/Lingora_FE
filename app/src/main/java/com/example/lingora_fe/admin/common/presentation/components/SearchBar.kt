@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.lingora_fe.core.ui.theme.GradientStart
+import com.example.lingora_fe.core.ui.theme.NavBarText
 
 @Composable
 fun SearchBar(
@@ -20,7 +21,7 @@ fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text(placeholder) },
+        placeholder = { Text(placeholder, color = NavBarText.copy(alpha = 0.6f)) },
         leadingIcon = { Icon(Icons.Default.Search, "Search") },
         trailingIcon = {
             if (query.isNotBlank()) {
@@ -33,7 +34,8 @@ fun SearchBar(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = GradientStart,
-            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            cursorColor = GradientStart
         )
     )
 }

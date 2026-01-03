@@ -61,28 +61,27 @@ fun DictionaryScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            GradientStart.copy(alpha = 0.06f),
-                            GradientEnd.copy(alpha = 0.02f)
-                        )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        GradientStart.copy(alpha = 0.06f),
+                        GradientEnd.copy(alpha = 0.02f)
                     )
                 )
-                .padding(paddingValues)
+            )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
             ModeToggleRow(
                 isDictionaryMode = state.isDictionaryMode,
                 onModeChange = { viewModel.setMode(it) }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (state.isDictionaryMode) {
                 DictionarySearchCard(
@@ -142,5 +141,12 @@ fun DictionaryScreen(
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+        )
     }
 }

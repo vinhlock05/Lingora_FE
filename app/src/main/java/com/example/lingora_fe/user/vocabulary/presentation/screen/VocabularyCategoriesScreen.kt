@@ -68,7 +68,7 @@ fun VocabularyCategoriesScreen(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
             color = Color.White,
             shadowElevation = 4.dp

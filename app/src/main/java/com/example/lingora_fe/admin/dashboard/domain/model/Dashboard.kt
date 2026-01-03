@@ -105,8 +105,8 @@ data class TopicsAnalytics(
 )
 
 data class PopularTopic(
-    val id: Int,
-    val name: String,
+    val id: Int?,
+    val name: String?,
     val usersCount: Int
 )
 

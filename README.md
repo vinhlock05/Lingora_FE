@@ -6,10 +6,8 @@
 - Dương Khánh Ngọc - 23521020
 
 ## Description
-Android mobile application for **Lingora** - An intelligent English learning app with AI-powered features, vocabulary learning with SRS (Spaced Repetition System), IELTS exam practice, and community features.
-
-## 📲 Download APK
-
+- Android mobile application for **Lingora** - An intelligent English learning app with AI-powered features, vocabulary learning with SRS (Spaced Repetition System), IELTS exam practice, and community features.
+- You can download the latest APK from GitHub Releases:
 [⬇️ Download latest APK](https://github.com/vinhlock05/Lingora_FE/releases/download/v1.0.0/lingora.apk)
 
 ## 🚀 Tech Stack

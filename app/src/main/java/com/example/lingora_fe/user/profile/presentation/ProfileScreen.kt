@@ -513,13 +513,13 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Đổi mật khẩu",
+                                text = if (profileState.user?.hasPassword == true) "Đổi mật khẩu" else "Đặt mật khẩu",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MainText
                             )
                             Text(
-                                text = "Thay đổi mật khẩu đăng nhập",
+                                text = if (profileState.user?.hasPassword == true) "Thay đổi mật khẩu đăng nhập" else "Thiết lập mật khẩu đăng nhập",
                                 fontSize = 13.sp,
                                 color = NavBarText,
                                 modifier = Modifier.padding(top = 2.dp)

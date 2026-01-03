@@ -26,6 +26,19 @@ class AuthRepositoryImpl @Inject constructor(
             )
         }.mapLeft { it.toAppFailure() }
     }
+
+    override suspend fun googleLogin(idToken: String): Either<AppFailure, AuthData> {
+        return Either.catch {
+            val response = authApiService.googleLogin(GoogleLoginRequest(idToken))
+            val metadata = response.metaData ?: throw Exception(response.message)
+            
+            AuthData(
+                user = metadata.user.toDomainModel(),
+                accessToken = metadata.accessToken,
+                refreshToken = metadata.refreshToken
+            )
+        }.mapLeft { it.toAppFailure() }
+    }
     
     override suspend fun register(email: String, username: String, password: String): Either<AppFailure, AuthData> {
         return Either.catch {
@@ -40,19 +53,7 @@ class AuthRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
     
-    override suspend fun verifyOTP(email: String, otp: String): Either<AppFailure, Boolean> {
-        return Either.catch {
-            val response = authApiService.verifyOTP(VerifyOTPRequest(email, otp))
-            response.metaData?.verified ?: throw Exception(response.message)
-        }.mapLeft { it.toAppFailure() }
-    }
-    
-    override suspend fun resendOTP(email: String): Either<AppFailure, Boolean> {
-        return Either.catch {
-            authApiService.resendOTP(ResendOTPRequest(email))
-            true
-        }.mapLeft { it.toAppFailure() }
-    }
+
     
     override suspend fun refreshToken(token: String): Either<AppFailure, String> {
         return Either.catch {

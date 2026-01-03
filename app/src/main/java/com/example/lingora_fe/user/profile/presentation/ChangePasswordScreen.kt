@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +44,11 @@ fun ChangePasswordScreen(
     var showConfirmPassword by remember { mutableStateOf(false) }
     
     // Validation
+    val hasPassword = viewModel.profileState.collectAsState().value.user?.hasPassword == true
     val isNewPasswordValid = newPassword.length >= 6
     val isConfirmPasswordValid = newPassword == confirmPassword
-    val canSave = currentPassword.isNotBlank() && 
+    // If user has password, current password is required. Otherwise (Set Password), it's not.
+    val canSave = (!hasPassword || currentPassword.isNotBlank()) && 
                   newPassword.isNotBlank() && 
                   confirmPassword.isNotBlank() &&
                   isNewPasswordValid && 
@@ -74,7 +75,7 @@ fun ChangePasswordScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Đổi mật khẩu",
+                        if (hasPassword) "Đổi mật khẩu" else "Đặt mật khẩu",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -120,7 +121,7 @@ fun ChangePasswordScreen(
                             .padding(20.dp)
                     ) {
                         Text(
-                            text = "Thay đổi mật khẩu",
+                            text = if (hasPassword) "Thay đổi mật khẩu" else "Đặt mật khẩu",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MainText,
@@ -134,39 +135,41 @@ fun ChangePasswordScreen(
                             modifier = Modifier.padding(bottom = 20.dp)
                         )
                         
-                        // Current password field
-                        OutlinedTextField(
-                            value = currentPassword,
-                            onValueChange = { currentPassword = it },
-                            label = { Text("Mật khẩu hiện tại") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = null,
-                                    tint = GradientStart
-                                )
-                            },
-                            trailingIcon = {
-                                IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
+                        // Current password field - Only show if user has password
+                        if (hasPassword) {
+                            OutlinedTextField(
+                                value = currentPassword,
+                                onValueChange = { currentPassword = it },
+                                label = { Text("Mật khẩu hiện tại") },
+                                leadingIcon = {
                                     Icon(
-                                        imageVector = if (showCurrentPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = if (showCurrentPassword) "Hide password" else "Show password",
-                                        tint = NavBarText
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = null,
+                                        tint = GradientStart
                                     )
-                                }
-                            },
-                            visualTransformation = if (showCurrentPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = GradientStart,
-                                focusedLabelColor = GradientStart
-                            ),
-                            singleLine = true
-                        )
+                                },
+                                trailingIcon = {
+                                    IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
+                                        Icon(
+                                            imageVector = if (showCurrentPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                            contentDescription = if (showCurrentPassword) "Hide password" else "Show password",
+                                            tint = NavBarText
+                                        )
+                                    }
+                                },
+                                visualTransformation = if (showCurrentPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = GradientStart,
+                                    focusedLabelColor = GradientStart
+                                ),
+                                singleLine = true
+                            )
+                        }
                         
                         // New password field
                         OutlinedTextField(
@@ -289,13 +292,13 @@ fun ChangePasswordScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Đang lưu...",
+                            text = if (hasPassword) "Đổi mật khẩu" else "Đặt mật khẩu",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
                     } else {
                         Text(
-                            text = "Đổi mật khẩu",
+                            text = if (hasPassword) "Đổi mật khẩu" else "Đặt mật khẩu",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )

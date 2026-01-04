@@ -126,9 +126,13 @@ class NotificationViewModel @Inject constructor(
                         }
                     }
                     "COMMENT" -> {
-                        // Like trên comment -> chuyển đến bài viết chứa comment đó
+                        // Like trên comment -> chuyển đến bài viết hoặc học liệu chứa comment đó
                         if (postId != null) Route.postDetail(postId)
-                        else null
+                        else {
+                            val id = studySetId ?: relatedId
+                            if (id != null) Route.studySetDetail(id)
+                            else null
+                        }
                     }
                     else -> {
                         // Fallback: ưu tiên postId trước

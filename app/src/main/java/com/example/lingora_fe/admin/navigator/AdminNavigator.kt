@@ -160,10 +160,6 @@ fun AdminNavigator(
                             }
                         }
                     },
-                    notificationCount = 0, // TODO: Get actual count
-                    onNotificationClick = {
-                        // TODO: Navigate to notifications
-                    },
                     showBackButton = isNestedScreen,
                     onBackClick = {
                         navController.popBackStack()
@@ -176,6 +172,23 @@ fun AdminNavigator(
                                 userId?.let { navController.navigate("admin_user_management/edit/$it") }
                             }) {
                                 Icon(Icons.Default.Edit, "Edit")
+                            }
+                        } else if (currentRoute.startsWith("admin_category_topics")) {
+                            // Action edit Category khi đang ở trong Topics in Category
+                            val categoryId = currentBackStackEntry?.arguments?.getInt("categoryId")
+                            IconButton(onClick = {
+                                categoryId?.let { navController.navigate("admin_category_management/edit/$it") }
+                            }) {
+                                Icon(Icons.Default.Edit, "Edit Category")
+                            }
+
+                        } else if (currentRoute.startsWith("admin_topic_words")) {
+                            // Action edit Topic khi đang ở trong Words In Topic
+                            val topicId = currentBackStackEntry?.arguments?.getInt("topicId")
+                            IconButton(onClick = {
+                                topicId?.let { navController.navigate("admin_topic_management/edit/$it") }
+                            }) {
+                                Icon(Icons.Default.Edit, "Edit Topic")
                             }
                         }
                     }

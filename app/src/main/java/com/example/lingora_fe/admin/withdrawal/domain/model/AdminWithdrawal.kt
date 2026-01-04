@@ -49,5 +49,6 @@ data class AdminWithdrawalFilterOptions(
     val limit: Int = 10,
     val status: WithdrawalStatus? = null,
     val userId: Int? = null,
+    val search: String? = null,
     val sort: String? = "-createdAt"
 )

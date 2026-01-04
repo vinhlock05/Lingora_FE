@@ -12,8 +12,6 @@ import androidx.compose.ui.text.font.FontWeight
 fun AdminTopBar(
     title: String,
     onMenuClick: () -> Unit,
-    notificationCount: Int = 0,
-    onNotificationClick: () -> Unit = {},
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {}
@@ -36,23 +34,6 @@ fun AdminTopBar(
         actions = {
             // Custom actions
             actions()
-            
-            // Notifications
-            BadgedBox(
-                badge = {
-                    if (notificationCount > 0) {
-                        Badge {
-                            Text(
-                                text = if (notificationCount > 99) "99+" else notificationCount.toString()
-                            )
-                        }
-                    }
-                }
-            ) {
-                IconButton(onClick = onNotificationClick) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                }
-            }
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,

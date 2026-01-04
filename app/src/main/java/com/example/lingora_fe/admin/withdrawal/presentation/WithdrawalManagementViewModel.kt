@@ -40,6 +40,7 @@ class WithdrawalManagementViewModel @Inject constructor(
                 limit = 10,
                 status = _state.value.selectedStatus,
                 userId = _state.value.selectedUserId,
+                search = _state.value.searchQuery.ifBlank { null },
                 sort = "-createdAt"
             )
 
@@ -64,6 +65,14 @@ class WithdrawalManagementViewModel @Inject constructor(
     }
 
     /**
+     * Search withdrawals
+     */
+    fun searchWithdrawals(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+        loadWithdrawals(page = 1)
+    }
+
+    /**
      * Filter by status
      */
     fun filterByStatus(status: WithdrawalStatus?) {
@@ -85,7 +94,8 @@ class WithdrawalManagementViewModel @Inject constructor(
     fun clearFilters() {
         _state.update { it.copy(
             selectedStatus = null,
-            selectedUserId = null
+            selectedUserId = null,
+            searchQuery = ""
         )}
         loadWithdrawals(page = 1)
     }

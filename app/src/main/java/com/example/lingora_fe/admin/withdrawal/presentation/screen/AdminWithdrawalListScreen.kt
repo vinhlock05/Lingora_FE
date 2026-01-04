@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -38,6 +40,8 @@ fun AdminWithdrawalListScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var showFilterDialog by remember { mutableStateOf(false) }
+
     // Load data on first launch
     LaunchedEffect(Unit) {
         viewModel.loadWithdrawals()
@@ -68,32 +72,61 @@ fun AdminWithdrawalListScreen(
                 .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Status Filter Chips
-                LazyRow(
+    // Search Bar and Filter Row
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val statuses = listOf(
-                        null to "All",
-                        WithdrawalStatus.PENDING to "Pending",
-                        WithdrawalStatus.PROCESSING to "Processing",
-                        WithdrawalStatus.COMPLETED to "Completed",
-                        WithdrawalStatus.REJECTED to "Rejected",
-                        WithdrawalStatus.FAILED to "Failed"
+                    SearchBar(
+                        query = state.searchQuery,
+                        onQueryChange = { 
+                            viewModel.searchWithdrawals(it) 
+                        },
+                        placeholder = "Search withdrawal...",
+                        modifier = Modifier.weight(1f)
                     )
-                    items(statuses.size) { index ->
-                        val (status, label) = statuses[index]
-                        FilterChip(
-                            selected = state.selectedStatus == status,
-                            onClick = { viewModel.filterByStatus(status) },
-                            label = { Text(label, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = GradientStart,
-                                selectedLabelColor = Color.White
+                    
+                    FilterButton(
+                        onClick = { showFilterDialog = true },
+                        hasActiveFilters = state.selectedStatus != null
+                    )
+                }
+
+                // Active Filters
+                if (state.selectedStatus != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        state.selectedStatus?.let { status ->
+                            val label = when(status) {
+                                WithdrawalStatus.PENDING -> "Pending"
+                                WithdrawalStatus.PROCESSING -> "Processing"
+                                WithdrawalStatus.COMPLETED -> "Completed"
+                                WithdrawalStatus.REJECTED -> "Rejected"
+                                WithdrawalStatus.FAILED -> "Failed"
+                            }
+                            FilterChip(
+                                selected = true,
+                                onClick = { viewModel.filterByStatus(null) },
+                                label = { 
+                                    Text(
+                                        label,
+                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)
+                                    ) 
+                                },
+                                trailingIcon = { Icon(Icons.Default.Close, "Remove", modifier = Modifier.size(16.dp)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = GradientStart.copy(alpha = 0.2f),
+                                    selectedLabelColor = GradientStart
+                                )
                             )
-                        )
+                        }
                     }
                 }
 
@@ -182,6 +215,22 @@ fun AdminWithdrawalListScreen(
                 }
             }
         }
+    }
+    
+    // Filter Dialog
+    if (showFilterDialog) {
+        WithdrawalFilterDialog(
+            selectedStatus = state.selectedStatus,
+            onDismiss = { showFilterDialog = false },
+            onApply = { status ->
+                viewModel.filterByStatus(status)
+                showFilterDialog = false
+            },
+            onClear = {
+                viewModel.filterByStatus(null)
+                showFilterDialog = false
+            }
+        )
     }
 
     // Reject Dialog
@@ -278,6 +327,67 @@ fun AdminWithdrawalListScreen(
             }
         )
     }
+}
+
+@Composable
+fun WithdrawalFilterDialog(
+    selectedStatus: WithdrawalStatus?,
+    onDismiss: () -> Unit,
+    onApply: (WithdrawalStatus?) -> Unit,
+    onClear: () -> Unit
+) {
+    var tempStatus by remember { mutableStateOf(selectedStatus) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Filter Withdrawals") },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Status", style = MaterialTheme.typography.titleSmall)
+                val statuses = listOf(
+                    WithdrawalStatus.PENDING to "Pending",
+                    WithdrawalStatus.PROCESSING to "Processing",
+                    WithdrawalStatus.COMPLETED to "Completed",
+                    WithdrawalStatus.REJECTED to "Rejected",
+                    WithdrawalStatus.FAILED to "Failed"
+                )
+                
+                statuses.forEach { (status, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { tempStatus = if (tempStatus == status) null else status }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = tempStatus == status,
+                            onClick = { tempStatus = if (tempStatus == status) null else status },
+                            colors = RadioButtonDefaults.colors(selectedColor = GradientStart)
+                        )
+                        Text(label, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onApply(tempStatus) },
+                colors = ButtonDefaults.textButtonColors(contentColor = GradientStart)
+            ) {
+                Text("Apply", fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onClear) { Text("Clear All") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        }
+    )
 }
 
 @Composable

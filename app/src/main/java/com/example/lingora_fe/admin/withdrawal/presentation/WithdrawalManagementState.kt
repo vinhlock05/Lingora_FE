@@ -18,6 +18,7 @@ data class WithdrawalManagementState(
     // Filters
     val selectedStatus: WithdrawalStatus? = null,
     val selectedUserId: Int? = null,
+    val searchQuery: String = "",
 
     // Selected withdrawal detail
     val selectedWithdrawal: AdminWithdrawal? = null,

@@ -173,14 +173,11 @@ fun ExamListTab(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             // Search Bar (Debounced)
-            OutlinedTextField(
-                value = state.examSearchQuery,
-                onValueChange = onSearch,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search exams...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp)
+            SearchBar(
+                query = state.examSearchQuery,
+                onQueryChange = onSearch,
+                placeholder = "Search exams...",
+                modifier = Modifier.fillMaxWidth()
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -307,14 +304,11 @@ fun AttemptListTab(
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Search (Debounced)
-        OutlinedTextField(
-            value = state.attemptSearchQuery,
-            onValueChange = onSearch,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search user or exam...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true,
-            shape = RoundedCornerShape(8.dp)
+        SearchBar(
+            query = state.attemptSearchQuery,
+            onQueryChange = onSearch,
+            placeholder = "Search user or exam...",
+            modifier = Modifier.fillMaxWidth()
         )
         
         Spacer(modifier = Modifier.height(16.dp))

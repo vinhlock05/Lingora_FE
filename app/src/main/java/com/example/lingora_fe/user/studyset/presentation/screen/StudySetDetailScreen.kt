@@ -389,6 +389,9 @@ fun StudySetDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
+            containerColor = Color.White,
+            titleContentColor = Color.Black,
+            textContentColor = Color.Black,
             title = { Text("Xóa học liệu") },
             text = { Text("Bạn có chắc chắn muốn xóa học liệu này? Hành động này không thể hoàn tác.") },
             confirmButton = {
@@ -400,14 +403,19 @@ fun StudySetDetailScreen(
                         }
                     },
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
+                        contentColor = Color(0xFF4CAF50)
                     )
                 ) {
                     Text("Xóa")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = Color(0xFFF44336)
+                    )
+                ) {
                     Text("Hủy")
                 }
             }
@@ -417,6 +425,9 @@ fun StudySetDetailScreen(
     if (showVerifyingDialog) {
         AlertDialog(
             onDismissRequest = { },
+            containerColor = Color.White,
+            titleContentColor = Color.Black,
+            textContentColor = Color.Black,
             title = {
                 Text("Đang xác thực thanh toán")
             },
@@ -428,7 +439,8 @@ fun StudySetDetailScreen(
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
+                        color = Color(0xFF4CAF50)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text("Vui lòng đợi...")
@@ -446,6 +458,9 @@ fun StudySetDetailScreen(
                     viewModel.refresh()
                 }
             },
+            containerColor = Color.White,
+            titleContentColor = Color.Black,
+            textContentColor = Color.Black,
             icon = {
                 Text(
                     text = if (verificationSuccess) "✅" else "❌",
@@ -473,7 +488,7 @@ fun StudySetDetailScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (verificationSuccess) GradientStart else MaterialTheme.colorScheme.error
+                        containerColor = Color(0xFF4CAF50)
                     )
                 ) {
                     Text("OK")
@@ -521,8 +536,8 @@ private fun StudySetInfoCard(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TagChip(text = "${studySet.flashcards.size} thẻ")
-                TagChip(text = "${studySet.quizzes.size} câu hỏi")
+                TagChip(text = "${studySet.totalFlashcards ?: studySet.flashcards.size} thẻ")
+                TagChip(text = "${studySet.totalQuizzes ?: studySet.quizzes.size} câu hỏi")
             }
 
             Row(

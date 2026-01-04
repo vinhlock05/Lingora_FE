@@ -117,7 +117,7 @@ fun CreateEditStudySetScreen(
                 )
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(16.dp).imePadding(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Basic Information Section

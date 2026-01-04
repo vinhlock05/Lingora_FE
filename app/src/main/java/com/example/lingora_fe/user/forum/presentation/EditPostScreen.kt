@@ -164,7 +164,7 @@ fun EditPostScreen(
                 .padding(paddingValues)
                 .background(Color(0xFFF9FAFB))
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(16.dp).imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(

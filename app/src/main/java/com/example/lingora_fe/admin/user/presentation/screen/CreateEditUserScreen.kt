@@ -302,36 +302,74 @@ fun CreateEditUserScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    UserStatus.values().forEach { status ->
-                        if (status != UserStatus.DELETED) {
-                            val chipColor = when (status.value) {
-                                "ACTIVE" -> GradientStart
-                                "INACTIVE" -> Color(0xFFFF9800)
-                                "BANNED" -> Color(0xFFF44336)
-                                else -> Color.Gray
+                    UserStatus.values().filter { it != UserStatus.DELETED }.forEach { status ->
+                        val statusColor = when (status) {
+                            UserStatus.ACTIVE -> GradientStart
+                            UserStatus.INACTIVE -> Color(0xFFeab308)
+                            UserStatus.SUSPENDED -> Color(0xFFf97316)
+                            UserStatus.BANNED -> Color(0xFFef4444)
+                            UserStatus.DELETED -> Color(0xFF6b7280)
+                        }
+                        val isSelected = formState.selectedStatus == status
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) {
+                                    statusColor.copy(alpha = 0.1f)
+                                } else {
+                                    Color.Transparent
+                                }
+                            ),
+                            border = if (isSelected) {
+                                androidx.compose.foundation.BorderStroke(1.5.dp, statusColor)
+                            } else {
+                                androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
+                            },
+                            onClick = { 
+                                viewModel.updateFormState(formState.copy(selectedStatus = status))
                             }
-                            FilterChip(
-                                selected = formState.selectedStatus == status,
-                                onClick = { 
-                                    viewModel.updateFormState(formState.copy(selectedStatus = status))
-                                },
-                                label = { 
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = { 
+                                        viewModel.updateFormState(formState.copy(selectedStatus = status))
+                                    },
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = statusColor
+                                    )
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        status.value,
-                                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-                                        fontWeight = if (formState.selectedStatus == status) FontWeight.SemiBold else FontWeight.Normal
-                                    ) 
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = chipColor.copy(alpha = 0.2f),
-                                    selectedLabelColor = chipColor
-                                ),
-                                modifier = Modifier.weight(1f)
-                            )
+                                        text = status.value,
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isSelected) statusColor else MainText
+                                    )
+                                    Text(
+                                        text = when (status) {
+                                            UserStatus.ACTIVE -> "User can access all features"
+                                            UserStatus.INACTIVE -> "User account is inactive"
+                                            UserStatus.SUSPENDED -> "Temporarily restricted access"
+                                            UserStatus.BANNED -> "Permanently banned from platform"
+                                            UserStatus.DELETED -> "Account has been deleted"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                                        color = NavBarText
+                                    )
+                                }
+                            }
                         }
                     }
                 }

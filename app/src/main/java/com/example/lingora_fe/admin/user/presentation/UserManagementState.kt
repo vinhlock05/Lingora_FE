@@ -30,6 +30,8 @@ data class UserManagementState(
     val isUpdating: Boolean = false,
     val isDeleting: Boolean = false,
     val isRestoring: Boolean = false,
+    val isBanning: Boolean = false,
+    val isSuspending: Boolean = false,
     
     val actionSuccess: String? = null,
     val actionError: String? = null
@@ -126,6 +128,11 @@ sealed class UserManagementEvent {
     
     data class DeleteUser(val userId: Int) : UserManagementEvent()
     data class RestoreUser(val userId: Int) : UserManagementEvent()
+    
+    // Ban/Suspend operations
+    data class BanUser(val userId: Int, val reason: String) : UserManagementEvent()
+    data class SuspendUser(val userId: Int, val reason: String, val durationDays: Int) : UserManagementEvent()
+    data class UnbanUser(val userId: Int) : UserManagementEvent()
     
     // UI actions
     object ClearError : UserManagementEvent()

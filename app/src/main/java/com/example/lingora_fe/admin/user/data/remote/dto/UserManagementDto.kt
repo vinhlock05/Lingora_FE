@@ -30,7 +30,11 @@ data class AdminUserDto(
     @SerializedName("proficiency")
     val proficiency: String,
     @SerializedName("created_at")
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    @SerializedName("suspendedUntil")
+    val suspendedUntil: String? = null,
+    @SerializedName("banReason")
+    val banReason: String? = null
 )
 
 data class UserRoleDto(
@@ -70,7 +74,11 @@ data class UpdateUserRequest(
     @SerializedName("status")
     val status: String?,
     @SerializedName("avatar")
-    val avatar: String?
+    val avatar: String?,
+    @SerializedName("banReason")
+    val banReason: String? = null,
+    @SerializedName("suspendedUntil")
+    val suspendedUntil: String? = null
 )
 
 // Request for updating only proficiency field

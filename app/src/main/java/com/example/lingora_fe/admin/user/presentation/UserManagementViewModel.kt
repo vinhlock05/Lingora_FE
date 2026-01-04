@@ -74,6 +74,11 @@ class UserManagementViewModel @Inject constructor(
             is UserManagementEvent.DeleteUser -> deleteUser(event.userId)
             is UserManagementEvent.RestoreUser -> restoreUser(event.userId)
             
+            // Ban/Suspend handlers
+            is UserManagementEvent.BanUser -> banUser(event.userId, event.reason)
+            is UserManagementEvent.SuspendUser -> suspendUser(event.userId, event.reason, event.durationDays)
+            is UserManagementEvent.UnbanUser -> unbanUser(event.userId)
+            
             is UserManagementEvent.ClearError -> clearError()
             is UserManagementEvent.ClearActionMessages -> clearActionMessages()
         }
@@ -297,6 +302,99 @@ class UserManagementViewModel @Inject constructor(
                 .onLeft { failure ->
                     _state.value = _state.value.copy(
                         isRestoring = false,
+                        actionError = failure.message
+                    )
+                }
+        }
+    }
+
+    private fun banUser(userId: Int, reason: String) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isBanning = true, actionError = null)
+            
+            val token = getToken() ?: return@launch
+
+            val userData = UpdateUserData(
+                status = UserStatus.BANNED.value,
+                banReason = reason
+            )
+
+            repository.updateUser(token, userId, userData)
+                .onRight {
+                    _state.value = _state.value.copy(
+                        isBanning = false,
+                        actionSuccess = "User banned successfully"
+                    )
+                    loadUsers()
+                }
+                .onLeft { failure ->
+                    _state.value = _state.value.copy(
+                        isBanning = false,
+                        actionError = failure.message
+                    )
+                }
+        }
+    }
+
+    private fun suspendUser(userId: Int, reason: String, durationDays: Int) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSuspending = true, actionError = null)
+            
+            val token = getToken() ?: return@launch
+
+            // Calculate suspendedUntil date
+            val calendar = java.util.Calendar.getInstance()
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, durationDays)
+            val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault())
+            dateFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val suspendedUntil = dateFormat.format(calendar.time)
+
+            val userData = UpdateUserData(
+                status = UserStatus.SUSPENDED.value,
+                banReason = reason,
+                suspendedUntil = suspendedUntil
+            )
+
+            repository.updateUser(token, userId, userData)
+                .onRight {
+                    _state.value = _state.value.copy(
+                        isSuspending = false,
+                        actionSuccess = "User suspended for $durationDays days"
+                    )
+                    loadUsers()
+                }
+                .onLeft { failure ->
+                    _state.value = _state.value.copy(
+                        isSuspending = false,
+                        actionError = failure.message
+                    )
+                }
+        }
+    }
+
+    private fun unbanUser(userId: Int) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isUpdating = true, actionError = null)
+            
+            val token = getToken() ?: return@launch
+
+            val userData = UpdateUserData(
+                status = UserStatus.ACTIVE.value,
+                banReason = null,
+                suspendedUntil = null
+            )
+
+            repository.updateUser(token, userId, userData)
+                .onRight {
+                    _state.value = _state.value.copy(
+                        isUpdating = false,
+                        actionSuccess = "User unbanned successfully"
+                    )
+                    loadUsers()
+                }
+                .onLeft { failure ->
+                    _state.value = _state.value.copy(
+                        isUpdating = false,
                         actionError = failure.message
                     )
                 }

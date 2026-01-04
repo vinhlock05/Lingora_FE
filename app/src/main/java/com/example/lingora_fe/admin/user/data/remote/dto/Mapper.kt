@@ -16,7 +16,9 @@ fun AdminUserDto.toDomain(): AdminUser {
         avatar = avatar,
         status = status,
         proficiency = proficiency,
-        createdAt = createdAt
+        createdAt = createdAt,
+        suspendedUntil = suspendedUntil,
+        banReason = banReason
     )
 }
 
@@ -56,7 +58,9 @@ fun UpdateUserData.toDto(): UpdateUserRequest {
         roleIds = roleIds,
         proficiency = proficiency,
         status = status,
-        avatar = avatar
+        avatar = avatar,
+        banReason = banReason,
+        suspendedUntil = suspendedUntil
     )
 }
 

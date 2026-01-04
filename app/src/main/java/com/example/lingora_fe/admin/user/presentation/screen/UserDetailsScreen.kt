@@ -12,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -149,12 +151,21 @@ fun UserDetailsContent(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = user.username.take(2).uppercase(),
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 48.sp),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
+                if (!user.avatar.isNullOrBlank() && user.avatar != "N/A") {
+                    AsyncImage(
+                        model = user.avatar,
+                        contentDescription = "User Avatar",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = user.username.take(2).uppercase(),
+                        style = MaterialTheme.typography.displayMedium.copy(fontSize = 48.sp),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Text(
@@ -193,6 +204,79 @@ fun UserDetailsContent(
             )
         }
 
+        // Ban/Suspend Info (only show if user is banned or suspended)
+        if (user.status == "BANNED" || user.status == "SUSPENDED") {
+            InfoSection(title = "Account Restriction") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (user.status == "BANNED") 
+                            Color(0xFFef4444).copy(alpha = 0.15f)
+                        else 
+                            Color(0xFFf97316).copy(alpha = 0.15f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                if (user.status == "BANNED") Icons.Default.Block else Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = if (user.status == "BANNED") Color(0xFFef4444) else Color(0xFFf97316),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = if (user.status == "BANNED") "Permanently Banned" else "Temporarily Suspended",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = if (user.status == "BANNED") Color(0xFFef4444) else Color(0xFFf97316)
+                            )
+                        }
+
+                        user.banReason?.let { reason ->
+                            Column {
+                                Text(
+                                    text = "Reason",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = NavBarText
+                                )
+                                Text(
+                                    text = reason,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MainText
+                                )
+                            }
+                        }
+
+                        if (user.status == "SUSPENDED" && user.suspendedUntil != null) {
+                            Column {
+                                Text(
+                                    text = "Suspended Until",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = NavBarText
+                                )
+                                Text(
+                                    text = formatDate(user.suspendedUntil),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFFf97316)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Roles
         InfoSection(title = "Roles & Permissions") {
             user.roles.forEach { role ->
@@ -201,7 +285,7 @@ fun UserDetailsContent(
                     colors = CardDefaults.cardColors(
                         containerColor = GradientStart.copy(alpha = 0.15f)
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -251,7 +335,7 @@ fun UserDetailsContent(
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     }
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
                     modifier = Modifier

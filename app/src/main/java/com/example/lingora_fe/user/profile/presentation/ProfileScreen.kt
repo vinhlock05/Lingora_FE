@@ -12,6 +12,10 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -48,6 +52,20 @@ fun ProfileScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showProficiencyDialog by remember { mutableStateOf(false) }
     var selectedProficiency by remember { mutableStateOf<String?>(null) }
+    
+    // Refresh profile on resume
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadUserProfile()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     
     // Check if user can switch roles
     val canSwitchRoles = viewModel.canSwitchRoles()
@@ -224,6 +242,50 @@ fun ProfileScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+                // Streak Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(GradientStart, GradientEnd)
+                                )
+                            )
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Fire emoji icon
+                        Text(
+                            text = "🔥",
+                            fontSize = 40.sp
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${profileState.user?.currentStreak ?: 0} ngày liên tiếp",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Kỷ lục: ${profileState.user?.longestStreak ?: 0} ngày",
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }

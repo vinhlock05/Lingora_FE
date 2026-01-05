@@ -13,7 +13,10 @@ fun UserDto.toDomainModel(): User {
         status = this.status,
         proficiency = this.proficiency,
         createdAt = this.createdAt,
-        hasPassword = this.hasPassword
+        hasPassword = this.hasPassword,
+        currentStreak = this.currentStreak,
+        longestStreak = this.longestStreak,
+        lastActivityDate = this.lastActivityDate
     )
 }
 

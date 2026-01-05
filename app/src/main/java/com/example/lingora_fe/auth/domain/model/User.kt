@@ -10,7 +10,10 @@ data class User(
     val proficiency: String? = null,
     val createdAt: String? = null,
     val deletedAt: String? = null,
-    val hasPassword: Boolean = false
+    val hasPassword: Boolean = false,
+    val currentStreak: Int = 0,
+    val longestStreak: Int = 0,
+    val lastActivityDate: String? = null
 )
 
 data class Role(

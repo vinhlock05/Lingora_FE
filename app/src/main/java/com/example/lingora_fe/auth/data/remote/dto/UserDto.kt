@@ -22,7 +22,13 @@ data class UserDto(
     @SerializedName("deletedAt")
     val deletedAt: String?,
     @SerializedName("hasPassword")
-    val hasPassword: Boolean = false
+    val hasPassword: Boolean = false,
+    @SerializedName("currentStreak")
+    val currentStreak: Int = 0,
+    @SerializedName("longestStreak")
+    val longestStreak: Int = 0,
+    @SerializedName("lastActivityDate")
+    val lastActivityDate: String? = null
 )
 
 data class RoleDto(

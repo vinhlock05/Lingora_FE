@@ -133,7 +133,8 @@ fun UserNavigator(
         Route.StudySetList.route -> 2
         Route.DictionaryTab.route -> 3
         Route.ForumTab.route -> 4
-        Route.ProfileTab.route -> 5
+        Route.ClassroomTab.route -> 5
+        Route.ProfileTab.route -> 6
         else -> 0
     }
 
@@ -145,6 +146,7 @@ fun UserNavigator(
             Route.StudySetList.route,
             Route.DictionaryTab.route,
             Route.ForumTab.route,
+            Route.ClassroomTab.route,
             Route.ProfileTab.route -> true
 
             else -> false
@@ -194,6 +196,7 @@ fun UserNavigator(
                             Route.StudySetList.route -> "Học liệu"
                     Route.DictionaryTab.route -> "Từ điển"
                     Route.ForumTab.route -> "Diễn đàn"
+                    Route.ClassroomTab.route -> "Lớp học"
                     Route.ProfileTab.route -> "Cá nhân"
                     else -> ""
                 }
@@ -221,6 +224,25 @@ fun UserNavigator(
                         {
                             Button(
                                 onClick = { navController.navigate(Route.StudySetCreate.route) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF10B981),
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(38.dp)
+                            ) {
+                                Text(
+                                    text = "+ Tạo mới",
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                    Route.ClassroomTab.route -> {
+                        {
+                            Button(
+                                onClick = { navController.navigate(Route.CreateClassroom.route) },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF10B981),
                                     contentColor = Color.White
@@ -265,7 +287,8 @@ fun UserNavigator(
                             Route.StudySetList.route -> 2
                             Route.DictionaryTab.route -> 3
                             Route.ForumTab.route -> 4
-                            Route.ProfileTab.route -> 5
+                            Route.ClassroomTab.route -> 5
+                            Route.ProfileTab.route -> 6
                             else -> 0
                         }
 
@@ -317,6 +340,79 @@ fun UserNavigator(
             composable(Route.Chatbot.route) {
                 ChatbotScreen(
                     onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            // Chatbot Conversational UI
+            composable(Route.ContextSelection.route) {
+                com.example.lingora_fe.user.chatbot.presentation.ContextSelectionScreen(
+                    onBack = { navController.popBackStack() },
+                    onContextSelected = { contextId ->
+                        navController.navigate(Route.conversationChat(contextId))
+                    }
+                )
+            }
+
+            composable(
+                route = Route.ConversationChat.route,
+                arguments = listOf(
+                    navArgument("contextId") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val contextId = backStackEntry.arguments?.getInt("contextId") ?: 0
+                com.example.lingora_fe.user.chatbot.presentation.ConversationChatScreen(
+                    contextId = contextId,
+                    onBack = { navController.popBackStack() },
+                    onSessionEnded = { sessionId ->
+                        navController.navigate(Route.sessionSummary(sessionId)) {
+                            popUpTo(Route.ContextSelection.route)
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = Route.SessionSummary.route,
+                arguments = listOf(
+                    navArgument("sessionId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
+                com.example.lingora_fe.user.chatbot.presentation.SessionSummaryScreen(
+                    sessionId = sessionId,
+                    onRetry = {
+                        // For mock UI, just pop back into chat
+                        navController.popBackStack()
+                    },
+                    onNewContext = {
+                        navController.popBackStack(Route.ContextSelection.route, inclusive = false)
+                    }
+                )
+            }
+
+            // Classroom Tab
+            composable(Route.ClassroomTab.route) {
+                com.example.lingora_fe.user.classroom.presentation.ClassroomListScreen(
+                    navController = navController
+                )
+            }
+
+            composable(Route.CreateClassroom.route) {
+                com.example.lingora_fe.user.classroom.presentation.CreateClassroomScreen(
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.ClassroomDetail.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.ClassroomDetailScreen(
+                    classroomId = classroomId,
+                    navController = navController
                 )
             }
 

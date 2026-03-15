@@ -69,6 +69,18 @@ fun PracticeScreen(
                     navController.navigate("practice/vocabulary_review")
                 }
             )
+
+            // Luyện hội thoại
+            PracticeCard(
+                icon = Icons.Default.Mic,
+                iconColor = Color(0xFFF59E0B), // Amber/Orange
+                iconBackgroundColor = Color(0xFFFEF3C7),
+                title = "Luyện hội thoại",
+                subtitle = "Luyện nói tiếng Anh với Chatbot AI",
+                onClick = {
+                    navController.navigate(com.example.lingora_fe.navigation.Route.ContextSelection.route)
+                }
+            )
         }
 }
 

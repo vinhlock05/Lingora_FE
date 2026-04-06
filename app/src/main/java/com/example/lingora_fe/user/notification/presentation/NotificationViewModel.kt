@@ -224,8 +224,7 @@ class NotificationViewModel @Inject constructor(
     private fun connectSocket() {
         val token = tokenManager.getAccessToken() ?: return
         if (!socketManager.isConnected()) {
-            val userId = tokenManager.getUserId()
-            socketManager.connect(token, com.example.lingora_fe.util.Constant.BASE_URL, userId)
+            socketManager.connect(token, com.example.lingora_fe.util.Constant.BASE_URL)
         }
     }
 

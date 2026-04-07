@@ -13,16 +13,25 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
@@ -43,7 +52,18 @@ fun ClassroomListScreen(
             .fillMaxSize()
             .background(Color(0xFFF0F9F4))
     ) {
-        // Header: Search + Tabs
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(currentBackStackEntry) {
+        val entry = currentBackStackEntry
+        entry?.savedStateHandle?.get<Boolean>("showJoinDialog")?.let { show ->
+            if (show) {
+                viewModel.showJoinDialog()
+                entry.savedStateHandle.remove<Boolean>("showJoinDialog")
+            }
+        }
+    }
+
+        // Header Section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -51,6 +71,7 @@ fun ClassroomListScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Search Bar
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -92,19 +113,25 @@ fun ClassroomListScreen(
                         }
                     )
                     if (state.searchQuery.isNotEmpty()) {
-                        TextButton(
+                        IconButton(
                             onClick = {
                                 viewModel.onSearchQueryChange("")
                                 viewModel.applySearch()
                             },
-                            contentPadding = PaddingValues(0.dp)
+                            modifier = Modifier.size(24.dp)
                         ) {
-                            Text("Xóa", fontSize = 12.sp, color = NavBarText)
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = NavBarText,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }
             }
 
+            // Tab Filters
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -126,6 +153,31 @@ fun ClassroomListScreen(
                         onClick = { viewModel.selectTab(1) },
                         modifier = Modifier.weight(1f)
                     )
+                }
+            }
+
+            // Status Filter Chips (Only for "My Classrooms")
+            if (state.selectedTab == 1) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val filters = listOf("Tất cả", "Công khai", "Lưu trữ", "Bản nháp")
+                    filters.forEachIndexed { index, title ->
+                        FilterChip(
+                            selected = state.selectedStatusFilter == index,
+                            onClick = { viewModel.onStatusFilterChange(index) },
+                            label = { Text(title, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFF5CB85C),
+                                selectedLabelColor = Color.White,
+                                containerColor = Color.White,
+                                labelColor = MainText
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -171,10 +223,17 @@ fun ClassroomListScreen(
                         items(state.classrooms, key = { it.id }) { classroom ->
                             ClassroomItemCard(
                                 classroom = classroom,
+                                currentUserId = state.currentUserId,
                                 onClick = {
                                     navController.navigate(
                                         Route.classroomDetail(classroom.id.toString())
                                     )
+                                },
+                                onEdit = {
+                                    navController.navigate(Route.createClassroomWithId(classroom.id.toString()))
+                                },
+                                onArchive = {
+                                    viewModel.archiveClassroom(classroom.id)
                                 },
                                 onDelete = { viewModel.deleteClassroom(classroom.id) }
                             )
@@ -184,15 +243,31 @@ fun ClassroomListScreen(
             }
         }
     }
+
+    // Join Classroom Dialog
+    if (state.showJoinDialog) {
+        JoinClassroomDialog(
+            joinCode = state.joinCode,
+            onJoinCodeChange = { viewModel.onJoinCodeChange(it) },
+            joinError = state.joinError,
+            isJoining = state.isJoining,
+            onConfirm = { viewModel.joinByCode() },
+            onDismiss = { viewModel.dismissJoinDialog() }
+        )
+    }
 }
 
 @Composable
 fun ClassroomItemCard(
     classroom: Classroom,
+    currentUserId: Int?,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
+    onArchive: () -> Unit,
     onDelete: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val isTeacher = currentUserId != null && classroom.teacher?.id == currentUserId
 
     Card(
         modifier = Modifier
@@ -210,7 +285,19 @@ fun ClassroomItemCard(
                     .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Ảnh bìa", color = Color.Gray)
+                if (classroom.coverImageUrl != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(classroom.coverImageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Ảnh bìa lớp học",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(text = "Ảnh bìa", color = Color.Gray)
+                }
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
@@ -253,13 +340,34 @@ fun ClassroomItemCard(
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text("Xóa", color = Color.Red) },
-                                onClick = {
-                                    expanded = false
-                                    onDelete()
-                                }
-                            )
+                            if (isTeacher) {
+                                DropdownMenuItem(
+                                    text = { Text("Chỉnh sửa") },
+                                    onClick = {
+                                        expanded = false
+                                        onEdit()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Lưu trữ") },
+                                    onClick = {
+                                        expanded = false
+                                        onArchive()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Xóa", color = Color.Red) },
+                                    onClick = {
+                                        expanded = false
+                                        onDelete()
+                                    }
+                                )
+                            } else {
+                                DropdownMenuItem(
+                                    text = { Text("Báo cáo") },
+                                    onClick = { expanded = false }
+                                )
+                            }
                         }
                     }
                 }
@@ -297,7 +405,7 @@ fun ClassroomItemCard(
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = if (classroom.status == ClassroomStatus.ACTIVE)
-                            MaterialTheme.colorScheme.primary
+                            Color(0xFF5CB85C)
                         else
                             Color.Gray
                     )
@@ -315,14 +423,15 @@ fun FilterButton(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
         modifier = modifier.height(36.dp),
         shape = RoundedCornerShape(8.dp),
         color = if (isSelected) Color.White else Color.Transparent,
         shadowElevation = if (isSelected) 2.dp else 0.dp
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -333,4 +442,67 @@ fun FilterButton(
             )
         }
     }
+}
+
+@Composable
+fun JoinClassroomDialog(
+    joinCode: String,
+    onJoinCodeChange: (String) -> Unit,
+    joinError: String?,
+    isJoining: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Tham gia lớp học") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = joinCode,
+                    onValueChange = onJoinCodeChange,
+                    label = { Text("Mã lớp học") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isJoining,
+                    singleLine = true
+                )
+                if (joinError != null) {
+                    Text(
+                        text = joinError,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isJoining
+            ) {
+                if (isJoining) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(end = 8.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                }
+                Text("Tham gia")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isJoining
+            ) {
+                Text("Hủy")
+            }
+        }
+    )
 }

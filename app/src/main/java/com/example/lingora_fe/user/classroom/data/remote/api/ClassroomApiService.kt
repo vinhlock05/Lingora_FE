@@ -2,15 +2,25 @@ package com.example.lingora_fe.user.classroom.data.remote.api
 
 import com.example.lingora_fe.core.network.ApiResponse
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomDto
+import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomFlashcardDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomLessonDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomListMetaData
+import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomMemberDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomMessageDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomQuizDto
+import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomQuizQuestionDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.CreateClassroomRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.CreateFlashcardRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.CreateLessonRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.CreateQuizQuestionRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.CreateQuizRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.ImportStudySetRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.JoinClassroomRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateClassroomRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateFlashcardRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateLessonRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateQuizQuestionRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateQuizRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -33,7 +43,9 @@ interface ClassroomApiService {
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int? = null,
         @Query("search") search: String? = null,
+        @Query("status") status: String? = null,
         @Query("isPublic") isPublic: Boolean? = null,
+        @Query("teacherId") teacherId: Int? = null,
         @Query("sort") sort: String? = null
     ): ApiResponse<ClassroomListMetaData>
 
@@ -85,6 +97,35 @@ interface ClassroomApiService {
         @Path("lessonId") lessonId: Int
     ): ApiResponse<Any>
 
+    @POST("classrooms/{id}/lessons/{lessonId}/flashcards")
+    suspend fun createFlashcard(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Body request: CreateFlashcardRequest
+    ): ApiResponse<ClassroomFlashcardDto>
+
+    @PATCH("classrooms/{id}/lessons/{lessonId}/flashcards/{flashcardId}")
+    suspend fun updateFlashcard(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Path("flashcardId") flashcardId: Int,
+        @Body request: UpdateFlashcardRequest
+    ): ApiResponse<ClassroomFlashcardDto>
+
+    @DELETE("classrooms/{id}/lessons/{lessonId}/flashcards/{flashcardId}")
+    suspend fun deleteFlashcard(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Path("flashcardId") flashcardId: Int
+    ): ApiResponse<Any>
+
+    @POST("classrooms/{id}/lessons/{lessonId}/import-studyset")
+    suspend fun importFlashcardsFromStudySet(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Body request: ImportStudySetRequest
+    ): ApiResponse<ClassroomLessonDto>
+
     // ── Quizzes ───────────────────────────────────────────────────────────────
 
     @POST("classrooms/{id}/quizzes")
@@ -110,6 +151,55 @@ interface ClassroomApiService {
         @Path("quizId") quizId: Int
     ): ApiResponse<Any>
 
+    @PATCH("classrooms/{id}/quizzes/{quizId}")
+    suspend fun updateQuiz(
+        @Path("id") classroomId: Int,
+        @Path("quizId") quizId: Int,
+        @Body request: UpdateQuizRequest
+    ): ApiResponse<ClassroomQuizDto>
+
+    @POST("classrooms/{id}/quizzes/{quizId}/questions")
+    suspend fun createQuizQuestion(
+        @Path("id") classroomId: Int,
+        @Path("quizId") quizId: Int,
+        @Body request: CreateQuizQuestionRequest
+    ): ApiResponse<ClassroomQuizQuestionDto>
+
+    @PATCH("classrooms/{id}/quizzes/{quizId}/questions/{questionId}")
+    suspend fun updateQuizQuestion(
+        @Path("id") classroomId: Int,
+        @Path("quizId") quizId: Int,
+        @Path("questionId") questionId: Int,
+        @Body request: UpdateQuizQuestionRequest
+    ): ApiResponse<ClassroomQuizQuestionDto>
+
+    @DELETE("classrooms/{id}/quizzes/{quizId}/questions/{questionId}")
+    suspend fun deleteQuizQuestion(
+        @Path("id") classroomId: Int,
+        @Path("quizId") quizId: Int,
+        @Path("questionId") questionId: Int
+    ): ApiResponse<Any>
+
+    @POST("classrooms/{id}/quizzes/{quizId}/import-studyset")
+    suspend fun importQuestionsFromStudySet(
+        @Path("id") classroomId: Int,
+        @Path("quizId") quizId: Int,
+        @Body request: ImportStudySetRequest
+    ): ApiResponse<ClassroomQuizDto>
+
+    // ── Members ───────────────────────────────────────────────────────────
+
+    @GET("classrooms/{id}/members")
+    suspend fun getMembers(
+        @Path("id") classroomId: Int
+    ): ApiResponse<List<ClassroomMemberDto>>
+
+    @DELETE("classrooms/{id}/members/{memberId}")
+    suspend fun removeMember(
+        @Path("id") classroomId: Int,
+        @Path("memberId") memberId: Int
+    ): ApiResponse<Any>
+
     // ── Chat ──────────────────────────────────────────────────────────────────
 
     @GET("classrooms/{id}/messages")
@@ -118,4 +208,11 @@ interface ClassroomApiService {
         @Query("limit") limit: Int? = null,
         @Query("beforeId") beforeId: Int? = null
     ): ApiResponse<List<ClassroomMessageDto>>
+
+    // ── Join by Code ───────────────────────────────────────────────────────────
+
+    @POST("classrooms/join")
+    suspend fun joinClassroomByCode(
+        @Body request: JoinClassroomRequest
+    ): ApiResponse<ClassroomDto>
 }

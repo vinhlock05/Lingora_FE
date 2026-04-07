@@ -1,17 +1,22 @@
 package com.example.lingora_fe.user.classroom.data.remote.dto
 
 import com.example.lingora_fe.user.classroom.domain.model.Classroom
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomFlashcard
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomLesson
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomListResult
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomMember
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomUser
 import com.example.lingora_fe.user.classroom.util.ClassroomLessonType
 import com.example.lingora_fe.user.classroom.util.ClassroomMemberRole
 import com.example.lingora_fe.user.classroom.util.ClassroomMemberStatus
 import com.example.lingora_fe.user.classroom.util.ClassroomMessageType
 import com.example.lingora_fe.user.classroom.util.ClassroomStatus
+import com.example.lingora_fe.user.classroom.util.QuizType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -103,4 +108,52 @@ fun ClassroomMessageDto.toDomain(): ClassroomMessage = ClassroomMessage(
     attachmentUrl = attachmentUrl,
     repliedTo = repliedTo?.toDomain(),
     createdAt = parseDate(createdAt)
+)
+
+fun ClassroomFlashcardDto.toDomain(): ClassroomFlashcard = ClassroomFlashcard(
+    id = id,
+    frontText = frontText,
+    backText = backText,
+    example = example,
+    audioUrl = audioUrl,
+    imageUrl = imageUrl
+)
+
+fun ClassroomQuizQuestionDto.toDomain(): ClassroomQuizQuestion = ClassroomQuizQuestion(
+    id = id,
+    type = QuizType.fromValue(type),
+    question = question,
+    options = options,
+    correctAnswer = correctAnswer,
+    explanation = explanation
+)
+
+fun ClassroomLessonDto.toDetailDomain(): ClassroomLessonDetail = ClassroomLessonDetail(
+    id = id,
+    title = title,
+    description = description,
+    lessonType = ClassroomLessonType.fromValue(lessonType),
+    content = content,
+    sortOrder = sortOrder ?: 0,
+    isPublished = isPublished ?: false,
+    scheduledAt = parseDate(scheduledAt),
+    flashcards = flashcards?.map { it.toDomain() } ?: emptyList(),
+    createdAt = parseDate(createdAt),
+    updatedAt = parseDate(updatedAt)
+)
+
+fun ClassroomQuizDto.toDetailDomain(): ClassroomQuizDetail = ClassroomQuizDetail(
+    id = id,
+    title = title,
+    description = description,
+    lessonId = lessonId,
+    timeLimitSeconds = timeLimitSeconds,
+    maxAttempts = maxAttempts,
+    passingScore = passingScore,
+    isPublished = isPublished,
+    opensAt = parseDate(opensAt),
+    closesAt = parseDate(closesAt),
+    questions = questions?.map { it.toDomain() } ?: emptyList(),
+    createdAt = parseDate(createdAt),
+    updatedAt = parseDate(updatedAt)
 )

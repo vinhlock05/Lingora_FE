@@ -5,16 +5,29 @@ import com.example.lingora_fe.core.error.AppFailure
 import com.example.lingora_fe.core.error.toAppFailure
 import com.example.lingora_fe.user.classroom.data.remote.api.ClassroomApiService
 import com.example.lingora_fe.user.classroom.data.remote.dto.CreateClassroomRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.CreateFlashcardRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.CreateLessonRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.CreateQuizQuestionRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.CreateQuizRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.ImportStudySetRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.JoinClassroomRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateClassroomRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateFlashcardRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateLessonRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateQuizQuestionRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateQuizRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.toDomain
+import com.example.lingora_fe.user.classroom.data.remote.dto.toDetailDomain
 import com.example.lingora_fe.user.classroom.domain.model.Classroom
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomFlashcard
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomLesson
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomListResult
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomMember
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
 import com.example.lingora_fe.user.classroom.domain.repository.ClassroomRepository
 import javax.inject.Inject
 
@@ -29,7 +42,8 @@ class ClassroomRepositoryImpl @Inject constructor(
         description: String?,
         coverImageUrl: String?,
         maxStudents: Int?,
-        isPublic: Boolean?
+        isPublic: Boolean?,
+        status: String?
     ): Either<AppFailure, Classroom> {
         return Either.catch {
             val request = CreateClassroomRequest(
@@ -37,7 +51,8 @@ class ClassroomRepositoryImpl @Inject constructor(
                 description = description,
                 coverImageUrl = coverImageUrl,
                 maxStudents = maxStudents,
-                isPublic = isPublic
+                isPublic = isPublic,
+                status = status
             )
             val response = apiService.createClassroom(request)
             val dto = response.metaData ?: throw Exception(response.message)
@@ -49,7 +64,9 @@ class ClassroomRepositoryImpl @Inject constructor(
         page: Int,
         limit: Int?,
         search: String?,
+        status: String?,
         isPublic: Boolean?,
+        teacherId: Int?,
         sort: String?
     ): Either<AppFailure, ClassroomListResult> {
         return Either.catch {
@@ -57,7 +74,9 @@ class ClassroomRepositoryImpl @Inject constructor(
                 page = page,
                 limit = limit,
                 search = search,
+                status = status,
                 isPublic = isPublic,
+                teacherId = teacherId,
                 sort = sort
             )
             val dto = response.metaData ?: throw Exception(response.message)
@@ -181,15 +200,99 @@ class ClassroomRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
 
+    override suspend fun getLessonDetail(
+        classroomId: Int,
+        lessonId: Int
+    ): Either<AppFailure, ClassroomLessonDetail> {
+        return Either.catch {
+            val response = apiService.getLessonById(classroomId, lessonId)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDetailDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun createFlashcard(
+        classroomId: Int,
+        lessonId: Int,
+        frontText: String,
+        backText: String,
+        example: String?,
+        audioUrl: String?,
+        imageUrl: String?
+    ): Either<AppFailure, ClassroomFlashcard> {
+        return Either.catch {
+            val request = CreateFlashcardRequest(
+                frontText = frontText,
+                backText = backText,
+                example = example,
+                audioUrl = audioUrl,
+                imageUrl = imageUrl
+            )
+            val response = apiService.createFlashcard(classroomId, lessonId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun updateFlashcard(
+        classroomId: Int,
+        lessonId: Int,
+        flashcardId: Int,
+        frontText: String?,
+        backText: String?,
+        example: String?,
+        audioUrl: String?,
+        imageUrl: String?
+    ): Either<AppFailure, ClassroomFlashcard> {
+        return Either.catch {
+            val request = UpdateFlashcardRequest(
+                frontText = frontText,
+                backText = backText,
+                example = example,
+                audioUrl = audioUrl,
+                imageUrl = imageUrl
+            )
+            val response = apiService.updateFlashcard(classroomId, lessonId, flashcardId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun deleteFlashcard(
+        classroomId: Int,
+        lessonId: Int,
+        flashcardId: Int
+    ): Either<AppFailure, Unit> {
+        return Either.catch {
+            apiService.deleteFlashcard(classroomId, lessonId, flashcardId)
+            Unit
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun importFlashcardsFromStudySet(
+        classroomId: Int,
+        lessonId: Int,
+        studySetId: Int
+    ): Either<AppFailure, ClassroomLessonDetail> {
+        return Either.catch {
+            val request = ImportStudySetRequest(studySetId = studySetId)
+            val response = apiService.importFlashcardsFromStudySet(classroomId, lessonId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDetailDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
     // ── Quizzes ───────────────────────────────────────────────────────────────
 
     override suspend fun createQuiz(
         classroomId: Int,
         title: String,
         description: String?,
+        lessonId: Int?,
         timeLimitSeconds: Int?,
         maxAttempts: Int?,
         passingScore: Double?,
+        isPublished: Boolean?,
         opensAt: String?,
         closesAt: String?
     ): Either<AppFailure, ClassroomQuiz> {
@@ -197,6 +300,7 @@ class ClassroomRepositoryImpl @Inject constructor(
             val request = CreateQuizRequest(
                 title = title,
                 description = description,
+                lessonId = lessonId,
                 timeLimitSeconds = timeLimitSeconds,
                 maxAttempts = maxAttempts,
                 passingScore = passingScore,
@@ -235,6 +339,136 @@ class ClassroomRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
 
+    override suspend fun getQuizDetail(
+        classroomId: Int,
+        quizId: Int
+    ): Either<AppFailure, ClassroomQuizDetail> {
+        return Either.catch {
+            val response = apiService.getQuizById(classroomId, quizId)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDetailDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun updateQuiz(
+        classroomId: Int,
+        quizId: Int,
+        title: String?,
+        description: String?,
+        lessonId: Int?,
+        timeLimitSeconds: Int?,
+        maxAttempts: Int?,
+        passingScore: Double?,
+        isPublished: Boolean?,
+        opensAt: String?,
+        closesAt: String?
+    ): Either<AppFailure, ClassroomQuiz> {
+        return Either.catch {
+            val request = UpdateQuizRequest(
+                title = title,
+                description = description,
+                lessonId = lessonId,
+                timeLimitSeconds = timeLimitSeconds,
+                maxAttempts = maxAttempts,
+                passingScore = passingScore,
+                isPublished = isPublished,
+                opensAt = opensAt,
+                closesAt = closesAt
+            )
+            val response = apiService.updateQuiz(classroomId, quizId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun createQuizQuestion(
+        classroomId: Int,
+        quizId: Int,
+        type: String,
+        question: String,
+        options: List<String>,
+        correctAnswer: String,
+        explanation: String?
+    ): Either<AppFailure, ClassroomQuizQuestion> {
+        return Either.catch {
+            val request = CreateQuizQuestionRequest(
+                type = type,
+                question = question,
+                options = options,
+                correctAnswer = correctAnswer,
+                explanation = explanation
+            )
+            val response = apiService.createQuizQuestion(classroomId, quizId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun updateQuizQuestion(
+        classroomId: Int,
+        quizId: Int,
+        questionId: Int,
+        type: String?,
+        question: String?,
+        options: List<String>?,
+        correctAnswer: String?,
+        explanation: String?
+    ): Either<AppFailure, ClassroomQuizQuestion> {
+        return Either.catch {
+            val request = UpdateQuizQuestionRequest(
+                type = type,
+                question = question,
+                options = options,
+                correctAnswer = correctAnswer,
+                explanation = explanation
+            )
+            val response = apiService.updateQuizQuestion(classroomId, quizId, questionId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun deleteQuizQuestion(
+        classroomId: Int,
+        quizId: Int,
+        questionId: Int
+    ): Either<AppFailure, Unit> {
+        return Either.catch {
+            apiService.deleteQuizQuestion(classroomId, quizId, questionId)
+            Unit
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun importQuestionsFromStudySet(
+        classroomId: Int,
+        quizId: Int,
+        studySetId: Int
+    ): Either<AppFailure, ClassroomQuizDetail> {
+        return Either.catch {
+            val request = ImportStudySetRequest(studySetId = studySetId)
+            val response = apiService.importQuestionsFromStudySet(classroomId, quizId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDetailDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    // ── Members ──────────────────────────────────────────────────────────────
+
+    override suspend fun getMembers(classroomId: Int): Either<AppFailure, List<ClassroomMember>> {
+        return Either.catch {
+            val response = apiService.getMembers(classroomId)
+            val dtos = response.metaData ?: throw Exception(response.message)
+            dtos.map { it.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun removeMember(classroomId: Int, memberId: Int): Either<AppFailure, Unit> {
+        return Either.catch {
+            apiService.removeMember(classroomId, memberId)
+            Unit
+        }.mapLeft { it.toAppFailure() }
+    }
+
     // ── Chat ──────────────────────────────────────────────────────────────────
 
     override suspend fun getChatHistory(
@@ -246,6 +480,15 @@ class ClassroomRepositoryImpl @Inject constructor(
             val response = apiService.getChatHistory(classroomId, limit, beforeId)
             val dtos = response.metaData ?: throw Exception(response.message)
             dtos.map { it.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun joinClassroomByCode(code: String): Either<AppFailure, Classroom> {
+        return Either.catch {
+            val request = JoinClassroomRequest(code = code)
+            val response = apiService.joinClassroomByCode(request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
         }.mapLeft { it.toAppFailure() }
     }
 }

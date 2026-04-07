@@ -5,11 +5,14 @@ import arrow.core.Either
 import com.example.lingora_fe.core.error.AppFailure
 import com.example.lingora_fe.user.classroom.domain.model.Classroom
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomLesson
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomMember
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomUser
 import com.example.lingora_fe.user.classroom.domain.repository.ClassroomRepository
 import com.example.lingora_fe.user.classroom.util.ClassroomLessonType
+import com.example.lingora_fe.user.classroom.util.ClassroomMemberRole
+import com.example.lingora_fe.user.classroom.util.ClassroomMemberStatus
 import com.example.lingora_fe.user.classroom.util.ClassroomMessageType
 import com.example.lingora_fe.user.classroom.util.ClassroomStatus
 import com.example.lingora_fe.user.notification.data.socket.NotificationSocketManager
@@ -101,10 +104,11 @@ class ClassroomDetailViewModelTest {
         coEvery { repository.getClassroomById(classroomId) } returns Either.Right(testClassroom)
         coEvery { repository.getLessons(classroomId) } returns Either.Right(listOf(testLesson))
         coEvery { repository.getQuizzes(classroomId) } returns Either.Right(listOf(testQuiz))
-        coEvery { repository.getChatHistory(classroomId, any(), any()) } returns Either.Right(listOf(testMessage))
-        every { socketManager.joinClassroom(any(), any(), any()) } just runs
+        coEvery { repository.getMembers(classroomId) } returns Either.Right(emptyList())
+        coEvery { repository.getChatHistory(classroomId, any()) } returns Either.Right(listOf(testMessage))
+        every { socketManager.joinClassroom(any()) } just runs
         every { socketManager.leaveClassroom(any()) } just runs
-        every { socketManager.sendClassroomMessage(any(), any(), any(), any(), any()) } just runs
+        every { socketManager.sendClassroomMessage(any(), any()) } just runs
         every { socketManager.classroomMessageFlow() } returns emptyFlow()
     }
 
@@ -167,7 +171,7 @@ class ClassroomDetailViewModelTest {
     fun `joins socket room on init`() = runTest {
         createViewModel()
 
-        verify { socketManager.joinClassroom(eq(classroomId), any(), any()) }
+        verify { socketManager.joinClassroom(eq(classroomId)) }
     }
 
     @Test
@@ -196,7 +200,7 @@ class ClassroomDetailViewModelTest {
 
         viewModel.sendMessage()
 
-        verify { socketManager.sendClassroomMessage(eq(classroomId), eq("Hello"), any(), any(), any()) }
+        verify { socketManager.sendClassroomMessage(eq(classroomId), eq("Hello")) }
         assertEquals("", viewModel.state.value.chatInput)
     }
 
@@ -208,7 +212,7 @@ class ClassroomDetailViewModelTest {
         viewModel.sendMessage()
 
         verify(exactly = 0) {
-            socketManager.sendClassroomMessage(any(), any(), any(), any(), any())
+            socketManager.sendClassroomMessage(any(), any())
         }
     }
 
@@ -269,5 +273,96 @@ class ClassroomDetailViewModelTest {
         }
 
         verify { socketManager.leaveClassroom(eq(classroomId)) }
+    }
+
+    @Test
+    fun `showRemoveMemberDialog updates state`() = runTest {
+        val member = ClassroomMember(
+            id = 5,
+            user = testMessage.sender,
+            role = ClassroomMemberRole.STUDENT,
+            status = ClassroomMemberStatus.ACTIVE,
+            joinedAt = null,
+            removedAt = null
+        )
+        val viewModel = createViewModel()
+
+        viewModel.showRemoveMemberDialog(member)
+
+        assertEquals(member, viewModel.state.value.memberToRemove)
+    }
+
+    @Test
+    fun `dismissRemoveMemberDialog clears state`() = runTest {
+        val member = ClassroomMember(
+            id = 5,
+            user = testMessage.sender,
+            role = ClassroomMemberRole.STUDENT,
+            status = ClassroomMemberStatus.ACTIVE,
+            joinedAt = null,
+            removedAt = null
+        )
+        val viewModel = createViewModel()
+        viewModel.showRemoveMemberDialog(member)
+        viewModel.dismissRemoveMemberDialog()
+
+        assertNull(viewModel.state.value.memberToRemove)
+    }
+
+    @Test
+    fun `confirmRemoveMember calls repository and reloads members on success`() = runTest {
+        val member = ClassroomMember(
+            id = 5,
+            user = testMessage.sender,
+            role = ClassroomMemberRole.STUDENT,
+            status = ClassroomMemberStatus.ACTIVE,
+            joinedAt = null,
+            removedAt = null
+        )
+        coEvery { repository.removeMember(classroomId, member.id) } returns Either.Right(Unit)
+        val viewModel = createViewModel()
+
+        viewModel.showRemoveMemberDialog(member)
+        viewModel.confirmRemoveMember()
+
+        coVerify {
+            repository.removeMember(classroomId, member.id)
+        }
+        assertNull(viewModel.state.value.memberToRemove)
+        assertFalse(viewModel.state.value.isRemovingMember)
+    }
+
+    @Test
+    fun `confirmRemoveMember failure sets error`() = runTest {
+        val member = ClassroomMember(
+            id = 5,
+            user = testMessage.sender,
+            role = ClassroomMemberRole.STUDENT,
+            status = ClassroomMemberStatus.ACTIVE,
+            joinedAt = null,
+            removedAt = null
+        )
+        coEvery {
+            repository.removeMember(classroomId, member.id)
+        } returns Either.Left(AppFailure.ServerError("Cannot remove member"))
+        val viewModel = createViewModel()
+
+        viewModel.showRemoveMemberDialog(member)
+        viewModel.confirmRemoveMember()
+
+        assertEquals("Cannot remove member", viewModel.state.value.error)
+        assertFalse(viewModel.state.value.isRemovingMember)
+        assertNull(viewModel.state.value.memberToRemove)
+    }
+
+    @Test
+    fun `confirmRemoveMember with no member selected does nothing`() = runTest {
+        val viewModel = createViewModel()
+        // memberToRemove is null by default
+        viewModel.confirmRemoveMember()
+
+        coVerify(exactly = 0) {
+            repository.removeMember(any(), any())
+        }
     }
 }

@@ -180,4 +180,89 @@ class ClassroomListViewModelTest {
             repository.getAllClassrooms(any(), any(), any(), any(), any())
         }
     }
+
+    @Test
+    fun `showJoinDialog updates state correctly`() = runTest {
+        val viewModel = ClassroomListViewModel(repository)
+        viewModel.showJoinDialog()
+
+        assertTrue(viewModel.state.value.showJoinDialog)
+        assertEquals("", viewModel.state.value.joinCode)
+        assertNull(viewModel.state.value.joinError)
+        assertFalse(viewModel.state.value.isJoining)
+    }
+
+    @Test
+    fun `dismissJoinDialog clears state`() = runTest {
+        val viewModel = ClassroomListViewModel(repository)
+        viewModel.showJoinDialog()
+        viewModel.onJoinCodeChange("ABC123")
+        viewModel.dismissJoinDialog()
+
+        assertFalse(viewModel.state.value.showJoinDialog)
+        assertEquals("", viewModel.state.value.joinCode)
+        assertNull(viewModel.state.value.joinError)
+        assertFalse(viewModel.state.value.isJoining)
+    }
+
+    @Test
+    fun `joinByCode with empty code sets joinError`() = runTest {
+        val viewModel = ClassroomListViewModel(repository)
+        viewModel.showJoinDialog()
+        viewModel.onJoinCodeChange("")
+        viewModel.joinByCode()
+
+        assertEquals("Vui lòng nhập mã lớp học", viewModel.state.value.joinError)
+        assertTrue(viewModel.state.value.showJoinDialog)
+    }
+
+    @Test
+    fun `joinByCode with whitespace code sets joinError`() = runTest {
+        val viewModel = ClassroomListViewModel(repository)
+        viewModel.showJoinDialog()
+        viewModel.onJoinCodeChange("   ")
+        viewModel.joinByCode()
+
+        assertEquals("Vui lòng nhập mã lớp học", viewModel.state.value.joinError)
+    }
+
+    @Test
+    fun `joinByCode success reloads classrooms and dismisses dialog`() = runTest {
+        coEvery { repository.joinClassroomByCode("ABC123") } returns Either.Right(testClassroom)
+        val viewModel = ClassroomListViewModel(repository)
+        viewModel.showJoinDialog()
+        viewModel.onJoinCodeChange("ABC123")
+        viewModel.joinByCode()
+
+        assertFalse(viewModel.state.value.showJoinDialog)
+        assertNull(viewModel.state.value.joinError)
+        assertFalse(viewModel.state.value.isJoining)
+        coVerify {
+            repository.joinClassroomByCode("ABC123")
+        }
+    }
+
+    @Test
+    fun `joinByCode failure shows error message`() = runTest {
+        coEvery {
+            repository.joinClassroomByCode("INVALID")
+        } returns Either.Left(AppFailure.NotFoundError("Classroom not found"))
+
+        val viewModel = ClassroomListViewModel(repository)
+        viewModel.showJoinDialog()
+        viewModel.onJoinCodeChange("INVALID")
+        viewModel.joinByCode()
+
+        assertEquals("Classroom not found", viewModel.state.value.joinError)
+        assertTrue(viewModel.state.value.showJoinDialog)
+        assertFalse(viewModel.state.value.isJoining)
+    }
+
+    @Test
+    fun `onJoinCodeChange updates joinCode`() = runTest {
+        val viewModel = ClassroomListViewModel(repository)
+        viewModel.onJoinCodeChange("ABC123")
+
+        assertEquals("ABC123", viewModel.state.value.joinCode)
+    }
 }

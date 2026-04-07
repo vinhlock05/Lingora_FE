@@ -60,6 +60,11 @@ sealed class Route(
     // Classroom Navigation
     object ClassroomDetail : Route("classroom/detail/{classroomId}")
     object CreateClassroom : Route("classroom/create")
+    object EditClassroom : Route("classroom/edit/{classroomId}")
+    object LessonDetail : Route("classroom/{classroomId}/lessons/{lessonId}")
+    object CreateLesson : Route("classroom/{classroomId}/lessons/create")
+    object QuizDetail : Route("classroom/{classroomId}/quizzes/{quizId}")
+    object CreateQuiz : Route("classroom/{classroomId}/quizzes/create")
 
     // StudySet Navigation
     object StudySetList : Route("studyset/list")
@@ -139,6 +144,11 @@ sealed class Route(
         fun studySetQuiz(studySetId: Int) = "studyset/$studySetId/quiz"
         // Classroom routes
         fun classroomDetail(classroomId: String) = "classroom/detail/$classroomId"
+        fun createClassroomWithId(classroomId: String) = "classroom/edit/$classroomId"
+        fun lessonDetail(classroomId: String, lessonId: String) = "classroom/$classroomId/lessons/$lessonId"
+        fun createLesson(classroomId: String) = "classroom/$classroomId/lessons/create"
+        fun quizDetail(classroomId: String, quizId: String) = "classroom/$classroomId/quizzes/$quizId"
+        fun createQuiz(classroomId: String) = "classroom/$classroomId/quizzes/create"
         
         // Chatbot routes
         fun conversationChat(sessionId: String) = "chatbot/chat/$sessionId"

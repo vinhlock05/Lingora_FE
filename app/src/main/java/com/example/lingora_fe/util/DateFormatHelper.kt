@@ -32,6 +32,21 @@ object DateFormatHelper {
         }
     }
 
+    fun formatDateAsChatTime(date: java.util.Date?, includeDate: Boolean = false): String {
+        if (date == null) return ""
+        return try {
+            val instant = date.toInstant()
+            val zonedDateTime = instant.atZone(ZoneId.systemDefault())
+            if (includeDate) {
+                zonedDateTime.format(sessionTimeFormatter)
+            } else {
+                zonedDateTime.format(chatTimeFormatter)
+            }
+        } catch (e: Exception) {
+            date.toString()
+        }
+    }
+
     fun formatTimeAgo(raw: String?): String {
         if (raw.isNullOrBlank()) return ""
         return try {

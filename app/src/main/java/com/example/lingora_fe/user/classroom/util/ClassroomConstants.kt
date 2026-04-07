@@ -11,10 +11,10 @@ enum class ClassroomStatus(val value: String) {
     }
 }
 
-enum class ClassroomMemberRole(val value: String) {
-    STUDENT("STUDENT"),
-    ASSISTANT("ASSISTANT"),
-    OBSERVER("OBSERVER");
+enum class ClassroomMemberRole(val value: String, val displayName: String) {
+    STUDENT("STUDENT", "Học sinh"),
+    ASSISTANT("ASSISTANT", "Trợ giáo"),
+    OBSERVER("OBSERVER", "Quan sát viên");
 
     companion object {
         fun fromValue(value: String): ClassroomMemberRole =
@@ -22,10 +22,10 @@ enum class ClassroomMemberRole(val value: String) {
     }
 }
 
-enum class ClassroomMemberStatus(val value: String) {
-    ACTIVE("ACTIVE"),
-    REMOVED("REMOVED"),
-    LEFT("LEFT");
+enum class ClassroomMemberStatus(val value: String, val displayName: String) {
+    ACTIVE("ACTIVE", "Hoạt động"),
+    REMOVED("REMOVED", "Bị xóa"),
+    LEFT("LEFT", "Đã rời");
 
     companion object {
         fun fromValue(value: String): ClassroomMemberStatus =
@@ -33,11 +33,11 @@ enum class ClassroomMemberStatus(val value: String) {
     }
 }
 
-enum class ClassroomLessonType(val value: String) {
-    VIDEO("VIDEO"),
-    STUDYSET("STUDYSET"),
-    TEXT("TEXT"),
-    MIXED("MIXED");
+enum class ClassroomLessonType(val value: String, val displayName: String) {
+    VIDEO("VIDEO", "Video"),
+    STUDYSET("STUDYSET", "Study Set"),
+    TEXT("TEXT", "Văn bản"),
+    MIXED("MIXED", "Hỗn hợp");
 
     companion object {
         fun fromValue(value: String): ClassroomLessonType =
@@ -53,5 +53,16 @@ enum class ClassroomMessageType(val value: String) {
     companion object {
         fun fromValue(value: String): ClassroomMessageType =
             entries.find { it.value == value } ?: TEXT
+    }
+}
+
+enum class QuizType(val value: String) {
+    MULTIPLE_CHOICE("MULTIPLE_CHOICE"),
+    TRUE_FALSE("TRUE_FALSE"),
+    FILL_IN("FILL_IN");
+
+    companion object {
+        fun fromValue(value: String): QuizType =
+            entries.find { it.value == value } ?: MULTIPLE_CHOICE
     }
 }

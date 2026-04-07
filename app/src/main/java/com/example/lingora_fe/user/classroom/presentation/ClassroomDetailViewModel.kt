@@ -3,6 +3,7 @@ package com.example.lingora_fe.user.classroom.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomMember
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomUser
 import com.example.lingora_fe.user.classroom.domain.repository.ClassroomRepository
@@ -21,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ClassroomDetailViewModel @Inject constructor(
     private val repository: ClassroomRepository,
-    private val socketManager: NotificationSocketManager,
+    private val socketManager: com.example.lingora_fe.user.notification.data.socket.NotificationSocketManager,
+    private val tokenManager: com.example.lingora_fe.core.network.TokenManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -34,6 +36,8 @@ class ClassroomDetailViewModel @Inject constructor(
     val state: StateFlow<ClassroomDetailState> = _state.asStateFlow()
 
     init {
+        val userId = tokenManager.getUserId()
+        _state.value = _state.value.copy(currentUserId = userId)
         loadDetail()
     }
 
@@ -43,6 +47,7 @@ class ClassroomDetailViewModel @Inject constructor(
             loadClassroom()
             loadLessons()
             loadQuizzes()
+            loadMembers()
             loadChatHistory()
             _state.value = _state.value.copy(isLoading = false)
             joinRoomAndListenMessages()
@@ -78,6 +83,31 @@ class ClassroomDetailViewModel @Inject constructor(
                 _state.value = _state.value.copy(quizzes = quizzes)
             }
         )
+    }
+
+    private suspend fun loadMembers() {
+        _state.value = _state.value.copy(isMembersLoading = true)
+        val currentUserId = _state.value.currentUserId
+        repository.getMembers(classroomId).fold(
+            ifLeft = { /* non-fatal, keep existing list */ },
+            ifRight = { members ->
+                // Determine current user's role
+                val userMember = members.find { it.user.id == currentUserId }
+                var role = userMember?.role?.value
+                
+                // If it's the teacher, force ASSISTANT role for UI purposes (or keep original)
+                // Actually, the teacher is often the one who created it.
+                if (_state.value.classroom?.teacher?.id == currentUserId) {
+                    role = "ASSISTANT" // Assuming ASSISTANT is the teacher/admin role for this UI
+                }
+                
+                _state.value = _state.value.copy(
+                    members = members,
+                    currentUserRole = role
+                )
+            }
+        )
+        _state.value = _state.value.copy(isMembersLoading = false)
     }
 
     private suspend fun loadChatHistory() {
@@ -151,6 +181,77 @@ class ClassroomDetailViewModel @Inject constructor(
                 ifRight = {
                     val updated = _state.value.quizzes.filterNot { it.id == quizId }
                     _state.value = _state.value.copy(quizzes = updated)
+                }
+            )
+        }
+    }
+
+    fun showRemoveMemberDialog(member: ClassroomMember) {
+        _state.value = _state.value.copy(memberToRemove = member)
+    }
+
+    fun dismissRemoveMemberDialog() {
+        _state.value = _state.value.copy(memberToRemove = null)
+    }
+
+    fun confirmRemoveMember() {
+        val member = _state.value.memberToRemove ?: return
+        _state.value = _state.value.copy(isRemovingMember = true)
+
+        viewModelScope.launch {
+            repository.removeMember(classroomId, member.id).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        error = error.message ?: "Không thể loại bỏ thành viên",
+                        isRemovingMember = false,
+                        memberToRemove = null
+                    )
+                },
+                ifRight = {
+                    val updated = _state.value.members.filterNot { it.id == member.id }
+                    _state.value = _state.value.copy(
+                        members = updated,
+                        isRemovingMember = false,
+                        memberToRemove = null
+                    )
+                }
+            )
+        }
+    }
+
+    fun archiveClassroom() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            repository.updateClassroom(
+                id = classroomId,
+                status = "ARCHIVED"
+            ).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Không thể lưu trữ lớp học"
+                    )
+                },
+                ifRight = {
+                    loadClassroom()
+                    _state.value = _state.value.copy(isLoading = false)
+                }
+            )
+        }
+    }
+
+    fun deleteClassroom() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            repository.deleteClassroom(classroomId).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Không thể xóa lớp học"
+                    )
+                },
+                ifRight = {
+                    _state.value = _state.value.copy(isLoading = false, isDeleted = true)
                 }
             )
         }

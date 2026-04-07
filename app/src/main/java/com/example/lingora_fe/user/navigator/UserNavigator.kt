@@ -2,10 +2,13 @@ package com.example.lingora_fe.user.navigator
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -166,6 +169,7 @@ fun UserNavigator(
                     route == Route.StudySetList.route -> true
             route == Route.DictionaryTab.route -> true
             route == Route.ForumTab.route -> true
+            route == Route.ClassroomTab.route -> true
             route == Route.ProfileTab.route -> true
             else -> false
         }
@@ -244,20 +248,43 @@ fun UserNavigator(
                     }
                     Route.ClassroomTab.route -> {
                         {
-                            Button(
-                                onClick = { navController.navigate(Route.CreateClassroom.route) },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF10B981),
-                                    contentColor = Color.White
-                                ),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.height(38.dp)
-                            ) {
-                                Text(
-                                    text = "+ Tạo mới",
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Button(
+                                    onClick = { 
+                                        runCatching {
+                                            navController.getBackStackEntry(Route.ClassroomTab.route)
+                                                .savedStateHandle.set("showJoinDialog", true)
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF3B82F6),
+                                        contentColor = Color.White
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.height(38.dp)
+                                ) {
+                                    Text(
+                                        text = "Tham gia",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = { navController.navigate(Route.CreateClassroom.route) },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF10B981),
+                                        contentColor = Color.White
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.height(38.dp)
+                                ) {
+                                    Text(
+                                        text = "+ Tạo mới",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
                         }
                     }
@@ -423,6 +450,17 @@ fun UserNavigator(
             }
 
             composable(
+                route = Route.EditClassroom.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType }
+                )
+            ) {
+                com.example.lingora_fe.user.classroom.presentation.CreateClassroomScreen(
+                    navController = navController
+                )
+            }
+
+            composable(
                 route = Route.ClassroomDetail.route,
                 arguments = listOf(
                     navArgument("classroomId") { type = NavType.StringType }
@@ -431,6 +469,59 @@ fun UserNavigator(
                 val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
                 com.example.lingora_fe.user.classroom.presentation.ClassroomDetailScreen(
                     classroomId = classroomId,
+                    navController = navController
+                )
+            }
+
+            // Lesson routes
+            composable(
+                route = Route.CreateLesson.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.CreateLessonScreen(
+                    classroomId = classroomId,
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.LessonDetail.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("lessonId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.LessonDetailScreen(
+                    navController = navController
+                )
+            }
+
+            // Quiz routes
+            composable(
+                route = Route.CreateQuiz.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.CreateQuizScreen(
+                    classroomId = classroomId,
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.QuizDetail.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("quizId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                com.example.lingora_fe.user.classroom.presentation.QuizDetailScreen(
                     navController = navController
                 )
             }

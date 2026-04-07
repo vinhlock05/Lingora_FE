@@ -41,6 +41,7 @@ data class CreateClassroomRequest(
     @SerializedName("coverImageUrl") val coverImageUrl: String? = null,
     @SerializedName("maxStudents") val maxStudents: Int? = null,
     @SerializedName("isPublic") val isPublic: Boolean? = null,
+    @SerializedName("status") val status: String? = null,
     @SerializedName("settings") val settings: Map<String, Any>? = null
 )
 
@@ -56,6 +57,31 @@ data class UpdateClassroomRequest(
 
 // ─── Lesson ───────────────────────────────────────────────────────────────────
 
+data class ClassroomFlashcardDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("frontText") val frontText: String,
+    @SerializedName("backText") val backText: String,
+    @SerializedName("example") val example: String? = null,
+    @SerializedName("audioUrl") val audioUrl: String? = null,
+    @SerializedName("imageUrl") val imageUrl: String? = null
+)
+
+data class CreateFlashcardRequest(
+    @SerializedName("frontText") val frontText: String,
+    @SerializedName("backText") val backText: String,
+    @SerializedName("example") val example: String? = null,
+    @SerializedName("audioUrl") val audioUrl: String? = null,
+    @SerializedName("imageUrl") val imageUrl: String? = null
+)
+
+data class UpdateFlashcardRequest(
+    @SerializedName("frontText") val frontText: String? = null,
+    @SerializedName("backText") val backText: String? = null,
+    @SerializedName("example") val example: String? = null,
+    @SerializedName("audioUrl") val audioUrl: String? = null,
+    @SerializedName("imageUrl") val imageUrl: String? = null
+)
+
 data class ClassroomLessonDto(
     @SerializedName("id") val id: Int,
     @SerializedName("title") val title: String,
@@ -65,6 +91,7 @@ data class ClassroomLessonDto(
     @SerializedName("sortOrder") val sortOrder: Int? = null,
     @SerializedName("isPublished") val isPublished: Boolean? = null,
     @SerializedName("scheduledAt") val scheduledAt: String? = null,
+    @SerializedName("flashcards") val flashcards: List<ClassroomFlashcardDto>? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName("updatedAt") val updatedAt: String? = null
 )
@@ -104,19 +131,63 @@ data class ClassroomQuizDto(
     @SerializedName("id") val id: Int,
     @SerializedName("title") val title: String,
     @SerializedName("description") val description: String? = null,
+    @SerializedName("lessonId") val lessonId: Int? = null,
     @SerializedName("timeLimitSeconds") val timeLimitSeconds: Int? = null,
     @SerializedName("maxAttempts") val maxAttempts: Int,
     @SerializedName("passingScore") val passingScore: Double,
     @SerializedName("isPublished") val isPublished: Boolean,
     @SerializedName("opensAt") val opensAt: String? = null,
     @SerializedName("closesAt") val closesAt: String? = null,
+    @SerializedName("questions") val questions: List<ClassroomQuizQuestionDto>? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName("updatedAt") val updatedAt: String? = null
+)
+
+data class ClassroomQuizQuestionDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("type") val type: String,
+    @SerializedName("question") val question: String,
+    @SerializedName("options") val options: List<String>,
+    @SerializedName("correctAnswer") val correctAnswer: String,
+    @SerializedName("explanation") val explanation: String? = null
+)
+
+data class CreateQuizQuestionRequest(
+    @SerializedName("type") val type: String,
+    @SerializedName("question") val question: String,
+    @SerializedName("options") val options: List<String>,
+    @SerializedName("correctAnswer") val correctAnswer: String,
+    @SerializedName("explanation") val explanation: String? = null
+)
+
+data class UpdateQuizQuestionRequest(
+    @SerializedName("type") val type: String? = null,
+    @SerializedName("question") val question: String? = null,
+    @SerializedName("options") val options: List<String>? = null,
+    @SerializedName("correctAnswer") val correctAnswer: String? = null,
+    @SerializedName("explanation") val explanation: String? = null
+)
+
+data class UpdateQuizRequest(
+    @SerializedName("title") val title: String? = null,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("lessonId") val lessonId: Int? = null,
+    @SerializedName("timeLimitSeconds") val timeLimitSeconds: Int? = null,
+    @SerializedName("maxAttempts") val maxAttempts: Int? = null,
+    @SerializedName("passingScore") val passingScore: Double? = null,
+    @SerializedName("isPublished") val isPublished: Boolean? = null,
+    @SerializedName("opensAt") val opensAt: String? = null,
+    @SerializedName("closesAt") val closesAt: String? = null
+)
+
+data class ImportStudySetRequest(
+    @SerializedName("studySetId") val studySetId: Int
 )
 
 data class CreateQuizRequest(
     @SerializedName("title") val title: String,
     @SerializedName("description") val description: String? = null,
+    @SerializedName("lessonId") val lessonId: Int? = null,
     @SerializedName("timeLimitSeconds") val timeLimitSeconds: Int? = null,
     @SerializedName("maxAttempts") val maxAttempts: Int? = null,
     @SerializedName("passingScore") val passingScore: Double? = null,

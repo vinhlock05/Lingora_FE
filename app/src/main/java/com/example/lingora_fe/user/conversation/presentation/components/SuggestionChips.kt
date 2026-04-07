@@ -1,4 +1,4 @@
-package com.example.lingora_fe.user.chatbot.presentation.components
+package com.example.lingora_fe.user.conversation.presentation.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow

@@ -51,7 +51,7 @@ sealed class Route(
     // Chatbot
     object Chatbot : Route("chatbot")
     object ContextSelection : Route("chatbot/context_selection")
-    object ConversationChat : Route("chatbot/chat/{contextId}")
+    object ConversationChat : Route("chatbot/chat/{sessionId}")
     object SessionSummary : Route("chatbot/summary/{sessionId}")
 
     // Vocabulary Navigation
@@ -141,7 +141,7 @@ sealed class Route(
         fun classroomDetail(classroomId: String) = "classroom/detail/$classroomId"
         
         // Chatbot routes
-        fun conversationChat(contextId: Int) = "chatbot/chat/$contextId"
+        fun conversationChat(sessionId: String) = "chatbot/chat/$sessionId"
         fun sessionSummary(sessionId: String) = "chatbot/summary/$sessionId"
 
         // Forum routes

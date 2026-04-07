@@ -1,4 +1,4 @@
-package com.example.lingora_fe.user.chatbot.presentation.components
+package com.example.lingora_fe.user.conversation.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

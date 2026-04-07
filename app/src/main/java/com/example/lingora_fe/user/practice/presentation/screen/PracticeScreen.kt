@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Whatsapp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,11 +73,11 @@ fun PracticeScreen(
 
             // Luyện hội thoại
             PracticeCard(
-                icon = Icons.Default.Mic,
+                icon = Icons.Default.Whatsapp,
                 iconColor = Color(0xFFF59E0B), // Amber/Orange
                 iconBackgroundColor = Color(0xFFFEF3C7),
                 title = "Luyện hội thoại",
-                subtitle = "Luyện nói tiếng Anh với Chatbot AI",
+                subtitle = "Luyện hội thoại theo ngữ cảnh với Chatbot AI",
                 onClick = {
                     navController.navigate(com.example.lingora_fe.navigation.Route.ContextSelection.route)
                 }

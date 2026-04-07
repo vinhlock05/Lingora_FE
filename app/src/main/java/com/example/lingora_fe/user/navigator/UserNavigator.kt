@@ -38,6 +38,9 @@ import androidx.navigation.navArgument
 import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.chatbot.presentation.ChatbotScreen
 import com.example.lingora_fe.user.components.FloatingActionButton
+import com.example.lingora_fe.user.conversation.presentation.ContextSelectionScreen
+import com.example.lingora_fe.user.conversation.presentation.ConversationChatScreen
+import com.example.lingora_fe.user.conversation.presentation.ConversationViewModel
 import com.example.lingora_fe.user.dictionary.presentation.DictionaryScreen
 import com.example.lingora_fe.user.forum.presentation.ForumScreen
 import com.example.lingora_fe.user.forum.presentation.*
@@ -345,10 +348,16 @@ fun UserNavigator(
 
             // Chatbot Conversational UI
             composable(Route.ContextSelection.route) {
-                com.example.lingora_fe.user.chatbot.presentation.ContextSelectionScreen(
+                ContextSelectionScreen(
                     onBack = { navController.popBackStack() },
-                    onContextSelected = { contextId ->
-                        navController.navigate(Route.conversationChat(contextId))
+                    onSessionStarted = { sessionId ->
+                        navController.navigate(Route.conversationChat(sessionId))
+                    },
+                    onSessionResumed = { sessionId ->
+                        navController.navigate(Route.conversationChat(sessionId))
+                    },
+                    onSessionViewed = { sessionId ->
+                        navController.navigate(Route.conversationChat(sessionId))
                     }
                 )
             }
@@ -356,18 +365,25 @@ fun UserNavigator(
             composable(
                 route = Route.ConversationChat.route,
                 arguments = listOf(
-                    navArgument("contextId") { type = NavType.IntType }
+                    navArgument("sessionId") { type = NavType.StringType }
                 )
             ) { backStackEntry ->
-                val contextId = backStackEntry.arguments?.getInt("contextId") ?: 0
-                com.example.lingora_fe.user.chatbot.presentation.ConversationChatScreen(
-                    contextId = contextId,
+                val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
+                // Share viewModel with ContextSelection screen
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(Route.ContextSelection.route)
+                }
+                val sharedViewModel: ConversationViewModel = hiltViewModel(parentEntry)
+                ConversationChatScreen(
+                    contextId = 0,
+                    sessionId = sessionId,
                     onBack = { navController.popBackStack() },
-                    onSessionEnded = { sessionId ->
-                        navController.navigate(Route.sessionSummary(sessionId)) {
+                    onSessionEnded = { endedSessionId ->
+                        navController.navigate(Route.sessionSummary(endedSessionId)) {
                             popUpTo(Route.ContextSelection.route)
                         }
-                    }
+                    },
+                    viewModel = sharedViewModel
                 )
             }
 
@@ -378,12 +394,15 @@ fun UserNavigator(
                 )
             ) { backStackEntry ->
                 val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
-                com.example.lingora_fe.user.chatbot.presentation.SessionSummaryScreen(
+                // Share viewModel with ContextSelection screen to read endedSession
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(Route.ContextSelection.route)
+                }
+                val sharedViewModel: ConversationViewModel = hiltViewModel(parentEntry)
+                com.example.lingora_fe.user.conversation.presentation.SessionSummaryScreen(
                     sessionId = sessionId,
-                    onRetry = {
-                        // For mock UI, just pop back into chat
-                        navController.popBackStack()
-                    },
+                    viewModel = sharedViewModel,
+                    onRetry = { navController.popBackStack() },
                     onNewContext = {
                         navController.popBackStack(Route.ContextSelection.route, inclusive = false)
                     }

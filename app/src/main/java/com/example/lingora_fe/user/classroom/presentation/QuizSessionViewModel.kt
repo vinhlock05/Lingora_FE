@@ -17,7 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class QuizSessionViewModel @Inject constructor(
     private val repository: ClassroomRepository,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val classroomId: Int =
@@ -30,7 +30,9 @@ class QuizSessionViewModel @Inject constructor(
             "quizId is required"
         }
 
-    private val _state = MutableStateFlow(QuizSessionState())
+    private val _state = MutableStateFlow(QuizSessionState(
+        timeLeftSeconds = savedStateHandle.get<Int>("timeLeftSeconds") ?: 0
+    ))
     val state: StateFlow<QuizSessionState> = _state.asStateFlow()
 
     private var timerJob: Job? = null
@@ -50,10 +52,11 @@ class QuizSessionViewModel @Inject constructor(
                     )
                 },
                 ifRight = { quiz ->
+                    val savedTime = savedStateHandle.get<Int>("timeLeftSeconds") as? Int
                     _state.value = _state.value.copy(
                         isLoading = false,
                         quiz = quiz,
-                        timeLeftSeconds = quiz.timeLimitSeconds ?: 0,
+                        timeLeftSeconds = savedTime ?: quiz.timeLimitSeconds ?: 0,
                         totalQuestions = quiz.questions?.size ?: 0
                     )
                     if (quiz.timeLimitSeconds != null && quiz.timeLimitSeconds > 0) {
@@ -72,6 +75,7 @@ class QuizSessionViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     timeLeftSeconds = _state.value.timeLeftSeconds - 1
                 )
+                savedStateHandle["timeLeftSeconds"] = _state.value.timeLeftSeconds
             }
             if (_state.value.timeLeftSeconds <= 0 && !_state.value.isFinished) {
                 finishQuiz()

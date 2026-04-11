@@ -27,13 +27,15 @@ class ClassroomDetailViewModel @Inject constructor(
     private val repository: ClassroomRepository,
     private val socketManager: com.example.lingora_fe.user.notification.data.socket.NotificationSocketManager,
     private val tokenManager: com.example.lingora_fe.core.network.TokenManager,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val classroomId: Int =
         requireNotNull(savedStateHandle.get<String>("classroomId")?.toIntOrNull()) {
             "classroomId is required"
         }
+    
+    private var socketCollectionJob: kotlinx.coroutines.Job? = null
 
     private val _state = MutableStateFlow(ClassroomDetailState())
     val state: StateFlow<ClassroomDetailState> = _state.asStateFlow()
@@ -173,7 +175,9 @@ class ClassroomDetailViewModel @Inject constructor(
     private fun joinRoomAndListenMessages() {
         socketManager.joinClassroom(classroomId)
 
-        viewModelScope.launch {
+        if (socketCollectionJob?.isActive == true) return
+
+        socketCollectionJob = viewModelScope.launch {
             socketManager.classroomMessageFlow()
                 .catch { /* ignore socket errors */ }
                 .collect { json ->

@@ -1,6 +1,5 @@
 package com.example.lingora_fe.user.classroom.presentation
 
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -77,7 +76,10 @@ fun ClassroomDetailScreen(
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     LaunchedEffect(currentBackStackEntry) {
         // Refresh detail whenever we return to this screen (e.g. from creation/edit)
-        viewModel.loadDetail()
+        // Check if we are actually on the classroom detail screen
+        if (currentBackStackEntry?.destination?.route == com.example.lingora_fe.navigation.Route.ClassroomDetail.route) {
+            viewModel.loadDetail()
+        }
     }
 
     Scaffold(

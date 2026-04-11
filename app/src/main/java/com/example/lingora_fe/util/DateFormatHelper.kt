@@ -32,6 +32,21 @@ object DateFormatHelper {
         }
     }
 
+    fun formatDateAsChatTime(date: java.util.Date?, includeDate: Boolean = false): String {
+        if (date == null) return ""
+        return try {
+            val instant = date.toInstant()
+            val zonedDateTime = instant.atZone(ZoneId.systemDefault())
+            if (includeDate) {
+                zonedDateTime.format(sessionTimeFormatter)
+            } else {
+                zonedDateTime.format(chatTimeFormatter)
+            }
+        } catch (e: Exception) {
+            date.toString()
+        }
+    }
+
     fun formatTimeAgo(raw: String?): String {
         if (raw.isNullOrBlank()) return ""
         return try {
@@ -70,6 +85,23 @@ object DateFormatHelper {
                 } else raw
             } catch (_: Exception) {
                 raw
+            }
+        }
+    }
+
+    fun parseDate(raw: String?): java.util.Date? {
+        if (raw.isNullOrBlank()) return null
+        return try {
+            val instant = Instant.parse(raw)
+            java.util.Date.from(instant)
+        } catch (_: Exception) {
+            try {
+                val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault()).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }
+                format.parse(raw)
+            } catch (_: Exception) {
+                null
             }
         }
     }

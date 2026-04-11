@@ -30,6 +30,11 @@ sealed class BottomNavItem(
         icon = com.example.lingora_fe.R.drawable.ic_forum,
         selectedIcon = com.example.lingora_fe.R.drawable.ic_forum_selected
     )
+    object Classroom : BottomNavItem(
+        label = "Lớp học",
+        icon = com.example.lingora_fe.R.drawable.ic_material, // using material as placeholder
+        selectedIcon = com.example.lingora_fe.R.drawable.ic_material_selected
+    )
     object Profile : BottomNavItem(
         label = "Cá nhân",
         icon = com.example.lingora_fe.R.drawable.ic_profile,

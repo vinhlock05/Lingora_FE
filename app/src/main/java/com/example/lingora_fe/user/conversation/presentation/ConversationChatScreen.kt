@@ -62,6 +62,13 @@ fun ConversationChatScreen(
         }
     }
 
+    // Auto-navigate to summary when AI ends the session
+    LaunchedEffect(uiState.endedSession) {
+        uiState.endedSession?.let { session ->
+            onSessionEnded(session.id)
+        }
+    }
+
     Scaffold(
         topBar = {
             Column {

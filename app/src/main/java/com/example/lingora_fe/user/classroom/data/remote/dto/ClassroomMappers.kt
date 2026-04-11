@@ -53,6 +53,7 @@ fun ClassroomDto.toDomain(): Classroom = Classroom(
     settings = settings ?: emptyMap(),
     teacher = teacher?.toDomain(),
     totalMembers = totalMembers ?: 0,
+    myStatus = myStatus?.let { ClassroomMemberStatus.fromValue(it) },
     createdAt = parseDate(createdAt),
     updatedAt = parseDate(updatedAt)
 )
@@ -154,6 +155,22 @@ fun ClassroomQuizDto.toDetailDomain(): ClassroomQuizDetail = ClassroomQuizDetail
     opensAt = parseDate(opensAt),
     closesAt = parseDate(closesAt),
     questions = questions?.map { it.toDomain() } ?: emptyList(),
+    userAttempts = userAttempts,
     createdAt = parseDate(createdAt),
     updatedAt = parseDate(updatedAt)
+)
+
+fun ClassroomQuizAttemptDto.toDomain(): com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizAttempt = com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizAttempt(
+    id = id,
+    attemptNumber = attemptNumber,
+    score = score,
+    correctCount = correctCount,
+    answers = answers,
+    startedAt = parseDate(startedAt),
+    submittedAt = parseDate(submittedAt)
+)
+
+fun SubmitQuizAttemptResponseDto.toDomain(): com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult = com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult(
+    attempt = attempt.toDomain(),
+    isPassing = isPassing
 )

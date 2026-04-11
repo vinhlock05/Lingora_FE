@@ -22,8 +22,43 @@ class CreateQuizViewModel @Inject constructor(
             "classroomId is required"
         }
 
+    private val quizId: Int? = savedStateHandle.get<String>("quizId")?.toIntOrNull()
+
     private val _state = MutableStateFlow(CreateQuizState())
     val state: StateFlow<CreateQuizState> = _state.asStateFlow()
+
+    init {
+        quizId?.let { 
+            _state.value = _state.value.copy(isEditMode = true)
+            loadQuizData(it) 
+        }
+    }
+
+    private fun loadQuizData(id: Int) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            repository.getQuizById(classroomId, id).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Không thể tải thông tin bài kiểm tra"
+                    )
+                },
+                ifRight = { quiz ->
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        isEditMode = true,
+                        title = quiz.title,
+                        description = quiz.description ?: "",
+                        timeLimitSeconds = quiz.timeLimitSeconds,
+                        maxAttempts = quiz.maxAttempts,
+                        passingScore = (quiz.passingScore * 100).toInt().toString(),
+                        isPublished = quiz.isPublished
+                    )
+                }
+            )
+        }
+    }
 
     fun onTitleChange(title: String) {
         _state.value = _state.value.copy(title = title)
@@ -42,7 +77,7 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun onPassingScoreChange(value: String) {
-        _state.value = _state.value.copy(passingScore = value.toDoubleOrNull() ?: 70.0)
+        _state.value = _state.value.copy(passingScore = value)
     }
 
     fun onIsPublishedChange(isPublished: Boolean) {
@@ -56,21 +91,39 @@ class CreateQuizViewModel @Inject constructor(
             return
         }
 
+        val scaledScore = current.passingScore.toDoubleOrNull()?.let { it / 100.0 } ?: 0.7
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
 
-            repository.createQuiz(
-                classroomId = classroomId,
-                title = current.title.trim(),
-                description = current.description.trim().takeIf { it.isNotEmpty() },
-                timeLimitSeconds = current.timeLimitSeconds,
-                maxAttempts = current.maxAttempts,
-                passingScore = current.passingScore
-            ).fold(
+            val result = if (quizId != null) {
+                repository.updateQuiz(
+                    classroomId = classroomId,
+                    quizId = quizId,
+                    title = current.title.trim(),
+                    description = current.description.trim().takeIf { it.isNotEmpty() },
+                    timeLimitSeconds = current.timeLimitSeconds,
+                    maxAttempts = current.maxAttempts,
+                    passingScore = scaledScore,
+                    isPublished = current.isPublished
+                )
+            } else {
+                repository.createQuiz(
+                    classroomId = classroomId,
+                    title = current.title.trim(),
+                    description = current.description.trim().takeIf { it.isNotEmpty() },
+                    timeLimitSeconds = current.timeLimitSeconds,
+                    maxAttempts = current.maxAttempts,
+                    passingScore = scaledScore,
+                    isPublished = current.isPublished
+                )
+            }
+
+            result.fold(
                 ifLeft = { error ->
                     _state.value = _state.value.copy(
                         isLoading = false,
-                        error = error.message ?: "Không thể tạo bài kiểm tra"
+                        error = error.message ?: "Không thể lưu bài kiểm tra"
                     )
                 },
                 ifRight = {

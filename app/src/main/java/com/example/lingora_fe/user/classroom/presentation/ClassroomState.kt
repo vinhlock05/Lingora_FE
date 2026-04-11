@@ -12,6 +12,10 @@ import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
 import com.example.lingora_fe.user.classroom.util.ClassroomLessonType
 import com.example.lingora_fe.user.classroom.util.QuizType
 
+sealed class ClassroomListEvent {
+    data class ShowToast(val message: String) : ClassroomListEvent()
+}
+
 data class ClassroomListState(
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -26,7 +30,8 @@ data class ClassroomListState(
     val isJoining: Boolean = false,
     val joinError: String? = null,
     val currentUserId: Int? = null,
-    val selectedStatusFilter: Int = 0 // 0: Tất cả, 1: Công khai (Active), 2: Lưu trữ, 3: Nháp
+    val selectedStatusFilter: Int = 0, // 0: Tất cả, 1: Công khai (Active), 2: Lưu trữ, 3: Nháp
+    val publicClassToJoin: Classroom? = null
 )
 
 data class ClassroomDetailState(
@@ -38,6 +43,8 @@ data class ClassroomDetailState(
     val members: List<ClassroomMember> = emptyList(),
     val chatMessages: List<ClassroomMessage> = emptyList(),
     val isChatLoading: Boolean = false,
+    val isChatLoadingMore: Boolean = false,
+    val hasMoreChatMessages: Boolean = true,
     val chatInput: String = "",
     val isSendingMessage: Boolean = false,
     val isMembersLoading: Boolean = false,
@@ -46,7 +53,12 @@ data class ClassroomDetailState(
     val currentUserId: Int? = null,
     val memberToRemove: ClassroomMember? = null,
     val isRemovingMember: Boolean = false,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    // Chat reply & attachment
+    val replyingTo: ClassroomMessage? = null,
+    val pendingAttachmentUrl: String? = null,
+    val pendingAttachmentType: String? = null,  // "IMAGE" or "FILE"
+    val isUploadingAttachment: Boolean = false,
 )
 
 data class CreateClassroomState(
@@ -73,10 +85,12 @@ data class CreateLessonState(
     val content: String = "",
     val sortOrder: Int = 0,
     val isPublished: Boolean = false,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val isEditMode: Boolean = false
 )
 
 data class LessonDetailState(
+    val isTeacher: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val lesson: ClassroomLessonDetail? = null,
@@ -106,12 +120,15 @@ data class CreateQuizState(
     val description: String = "",
     val timeLimitSeconds: Int? = null,
     val maxAttempts: Int = 1,
-    val passingScore: Double = 70.0,
+    val passingScore: String = "",
     val isPublished: Boolean = false,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val isEditMode: Boolean = false
 )
 
 data class QuizDetailState(
+    val classroomId: String = "",
+    val isTeacher: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val quiz: ClassroomQuizDetail? = null,
@@ -129,4 +146,17 @@ data class QuizDetailState(
     val isLoadingStudySets: Boolean = false,
     val isImporting: Boolean = false,
     val selectedStudySetId: Int? = null
+)
+
+data class QuizSessionState(
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val quiz: ClassroomQuizDetail? = null,
+    val currentQuestionIndex: Int = 0,
+    val userChoices: Map<Int, String> = emptyMap(), // questionId -> choice
+    val timeLeftSeconds: Int = 0,
+    val isFinished: Boolean = false,
+    val score: Int = 0,
+    val totalQuestions: Int = 0,
+    val isPassing: Boolean = false
 )

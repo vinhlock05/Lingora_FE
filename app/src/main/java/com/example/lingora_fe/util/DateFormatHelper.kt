@@ -88,4 +88,21 @@ object DateFormatHelper {
             }
         }
     }
+
+    fun parseDate(raw: String?): java.util.Date? {
+        if (raw.isNullOrBlank()) return null
+        return try {
+            val instant = Instant.parse(raw)
+            java.util.Date.from(instant)
+        } catch (_: Exception) {
+            try {
+                val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault()).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }
+                format.parse(raw)
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
 }

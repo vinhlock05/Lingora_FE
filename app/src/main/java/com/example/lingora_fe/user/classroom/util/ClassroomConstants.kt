@@ -23,6 +23,7 @@ enum class ClassroomMemberRole(val value: String, val displayName: String) {
 }
 
 enum class ClassroomMemberStatus(val value: String, val displayName: String) {
+    PENDING("PENDING", "Chờ duyệt"),
     ACTIVE("ACTIVE", "Hoạt động"),
     REMOVED("REMOVED", "Bị xóa"),
     LEFT("LEFT", "Đã rời");

@@ -24,6 +24,7 @@ data class ClassroomDto(
     @SerializedName("settings") val settings: Map<String, Any>? = null,
     @SerializedName("teacher") val teacher: ClassroomUserDto? = null,
     @SerializedName("totalMembers") val totalMembers: Int? = null,
+    @SerializedName("myStatus") val myStatus: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName("updatedAt") val updatedAt: String? = null
 )
@@ -101,7 +102,8 @@ data class CreateLessonRequest(
     @SerializedName("description") val description: String? = null,
     @SerializedName("lessonType") val lessonType: String? = null,
     @SerializedName("content") val content: String? = null,
-    @SerializedName("sortOrder") val sortOrder: Int? = null
+    @SerializedName("sortOrder") val sortOrder: Int? = null,
+    @SerializedName("isPublished") val isPublished: Boolean? = null
 )
 
 data class UpdateLessonRequest(
@@ -139,6 +141,7 @@ data class ClassroomQuizDto(
     @SerializedName("opensAt") val opensAt: String? = null,
     @SerializedName("closesAt") val closesAt: String? = null,
     @SerializedName("questions") val questions: List<ClassroomQuizQuestionDto>? = null,
+    @SerializedName("userAttempts") val userAttempts: Int? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName("updatedAt") val updatedAt: String? = null
 )
@@ -191,6 +194,7 @@ data class CreateQuizRequest(
     @SerializedName("timeLimitSeconds") val timeLimitSeconds: Int? = null,
     @SerializedName("maxAttempts") val maxAttempts: Int? = null,
     @SerializedName("passingScore") val passingScore: Double? = null,
+    @SerializedName("isPublished") val isPublished: Boolean? = null,
     @SerializedName("opensAt") val opensAt: String? = null,
     @SerializedName("closesAt") val closesAt: String? = null
 )

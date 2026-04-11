@@ -477,7 +477,12 @@ fun UserNavigator(
             composable(
                 route = Route.CreateLesson.route,
                 arguments = listOf(
-                    navArgument("classroomId") { type = NavType.StringType }
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("lessonId") { 
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
                 )
             ) { backStackEntry ->
                 val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
@@ -504,7 +509,12 @@ fun UserNavigator(
             composable(
                 route = Route.CreateQuiz.route,
                 arguments = listOf(
-                    navArgument("classroomId") { type = NavType.StringType }
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("quizId") { 
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
                 )
             ) { backStackEntry ->
                 val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
@@ -522,6 +532,20 @@ fun UserNavigator(
                 )
             ) { backStackEntry ->
                 com.example.lingora_fe.user.classroom.presentation.QuizDetailScreen(
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.QuizSession.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("quizId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                val quizId = backStackEntry.arguments?.getString("quizId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.QuizSessionScreen(
                     navController = navController
                 )
             }

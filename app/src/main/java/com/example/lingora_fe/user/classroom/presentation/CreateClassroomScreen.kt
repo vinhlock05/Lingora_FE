@@ -49,10 +49,15 @@ fun CreateClassroomScreen(
     }
 
     LaunchedEffect(state.isSuccess, state.createdClassroomId) {
-        if (state.isSuccess && state.createdClassroomId != null) {
-            navController.navigate(Route.classroomDetail(state.createdClassroomId.toString())) {
-                val routeToPop = if (state.isEditMode) Route.EditClassroom.route else Route.CreateClassroom.route
-                popUpTo(routeToPop) { inclusive = true }
+        if (state.isSuccess) {
+            if (state.isEditMode) {
+                // Return to detail screen
+                navController.popBackStack()
+            } else if (state.createdClassroomId != null) {
+                // Navigate to detail of newly created classroom
+                navController.navigate(Route.classroomDetail(state.createdClassroomId.toString())) {
+                    popUpTo(Route.CreateClassroom.route) { inclusive = true }
+                }
             }
         }
     }
@@ -73,6 +78,7 @@ fun CreateClassroomScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .imePadding()
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)

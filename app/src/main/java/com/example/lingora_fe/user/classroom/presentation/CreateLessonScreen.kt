@@ -37,7 +37,7 @@ fun CreateLessonScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tạo bài học mới") },
+                title = { Text(if (state.isEditMode) "Chỉnh sửa bài học" else "Thêm bài học mới") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
@@ -50,6 +50,7 @@ fun CreateLessonScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .imePadding()
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -154,7 +155,7 @@ fun CreateLessonScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Create button
             Button(
@@ -171,7 +172,7 @@ fun CreateLessonScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Tạo Bài Học")
+                    Text(if (state.isEditMode) "Cập nhật bài học" else "Tạo Bài Học")
                 }
             }
         }

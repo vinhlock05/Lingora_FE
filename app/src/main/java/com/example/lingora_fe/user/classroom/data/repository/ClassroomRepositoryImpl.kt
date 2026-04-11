@@ -28,7 +28,10 @@ import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizAttempt
+import com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult
 import com.example.lingora_fe.user.classroom.domain.repository.ClassroomRepository
+import com.example.lingora_fe.util.DateFormatHelper
 import javax.inject.Inject
 
 class ClassroomRepositoryImpl @Inject constructor(
@@ -67,6 +70,7 @@ class ClassroomRepositoryImpl @Inject constructor(
         status: String?,
         isPublic: Boolean?,
         teacherId: Int?,
+        membership: String?,
         sort: String?
     ): Either<AppFailure, ClassroomListResult> {
         return Either.catch {
@@ -77,6 +81,7 @@ class ClassroomRepositoryImpl @Inject constructor(
                 status = status,
                 isPublic = isPublic,
                 teacherId = teacherId,
+                membership = membership,
                 sort = sort
             )
             val dto = response.metaData ?: throw Exception(response.message)
@@ -131,7 +136,8 @@ class ClassroomRepositoryImpl @Inject constructor(
         description: String?,
         lessonType: String?,
         content: String?,
-        sortOrder: Int?
+        sortOrder: Int?,
+        isPublished: Boolean?
     ): Either<AppFailure, ClassroomLesson> {
         return Either.catch {
             val request = CreateLessonRequest(
@@ -139,7 +145,8 @@ class ClassroomRepositoryImpl @Inject constructor(
                 description = description,
                 lessonType = lessonType,
                 content = content,
-                sortOrder = sortOrder
+                sortOrder = sortOrder,
+                isPublished = isPublished
             )
             val response = apiService.createLesson(classroomId, request)
             val dto = response.metaData ?: throw Exception(response.message)
@@ -304,6 +311,7 @@ class ClassroomRepositoryImpl @Inject constructor(
                 timeLimitSeconds = timeLimitSeconds,
                 maxAttempts = maxAttempts,
                 passingScore = passingScore,
+                isPublished = isPublished,
                 opensAt = opensAt,
                 closesAt = closesAt
             )
@@ -452,13 +460,46 @@ class ClassroomRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
 
+    override suspend fun submitQuizAttempt(
+        classroomId: Int,
+        quizId: Int,
+        answers: Map<String, String>
+    ): Either<AppFailure, SubmitQuizAttemptResult> {
+        return Either.catch {
+            val request = com.example.lingora_fe.user.classroom.data.remote.dto.SubmitQuizAttemptRequest(answers)
+            val response = apiService.submitQuizAttempt(classroomId, quizId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            SubmitQuizAttemptResult(
+                attempt = dto.attempt.let { att -> 
+                    ClassroomQuizAttempt(
+                        id = att.id,
+                        attemptNumber = att.attemptNumber,
+                        score = att.score,
+                        answers = att.answers,
+                        startedAt = DateFormatHelper.parseDate(att.startedAt),
+                        submittedAt = att.submittedAt?.let { DateFormatHelper.parseDate(it) }
+                    ) 
+                },
+                isPassing = dto.isPassing
+            )
+        }.mapLeft { it.toAppFailure() }
+    }
+
     // ── Members ──────────────────────────────────────────────────────────────
 
-    override suspend fun getMembers(classroomId: Int): Either<AppFailure, List<ClassroomMember>> {
+    override suspend fun getMembers(classroomId: Int, status: String?): Either<AppFailure, List<ClassroomMember>> {
         return Either.catch {
-            val response = apiService.getMembers(classroomId)
+            val response = apiService.getMembers(classroomId, status)
             val dtos = response.metaData ?: throw Exception(response.message)
             dtos.map { it.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun approveMember(classroomId: Int, memberId: Int): Either<AppFailure, ClassroomMember> {
+        return Either.catch {
+            val response = apiService.approveMember(classroomId, memberId)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
         }.mapLeft { it.toAppFailure() }
     }
 

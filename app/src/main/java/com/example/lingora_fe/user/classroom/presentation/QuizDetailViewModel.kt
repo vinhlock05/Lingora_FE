@@ -31,10 +31,23 @@ class QuizDetailViewModel @Inject constructor(
             "quizId is required"
         }
 
-    private val _state = MutableStateFlow(QuizDetailState())
+    private val isTeacher: Boolean = savedStateHandle.get<String>("isTeacher")?.toBoolean() ?: false
+
+    private val _state = MutableStateFlow(QuizDetailState(
+        classroomId = savedStateHandle.get<String>("classroomId") ?: "",
+        isTeacher = isTeacher
+    ))
     val state: StateFlow<QuizDetailState> = _state.asStateFlow()
 
     init {
+        loadQuizDetail()
+    }
+
+    fun clearError() {
+        _state.value = _state.value.copy(error = null)
+    }
+
+    fun refresh() {
         loadQuizDetail()
     }
 
@@ -243,7 +256,7 @@ class QuizDetailViewModel @Inject constructor(
             limit = 100
         )
 
-        studySetRepository.getOwnStudySets(
+        studySetRepository.getAllStudySets(
             token = tokenManager.getAccessToken() ?: "",
             filterOptions = filterOptions
         ).fold(
@@ -282,6 +295,8 @@ class QuizDetailViewModel @Inject constructor(
                 ifLeft = { error ->
                     _state.value = _state.value.copy(
                         isImporting = false,
+                        showImportStudySetDialog = false,
+                        selectedStudySetId = null,
                         error = error.message ?: "Không thể import câu hỏi"
                     )
                 },

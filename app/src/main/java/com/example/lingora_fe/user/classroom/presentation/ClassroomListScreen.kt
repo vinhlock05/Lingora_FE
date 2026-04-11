@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -18,8 +17,6 @@ import androidx.compose.runtime.*
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -31,13 +28,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.core.ui.theme.NavBarText
+import com.example.lingora_fe.user.classroom.util.ClassroomMemberStatus
+import com.example.lingora_fe.user.classroom.util.ClassroomStatus
 import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.classroom.domain.model.Classroom
-import com.example.lingora_fe.user.classroom.util.ClassroomStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +43,14 @@ fun ClassroomListScreen(
     viewModel: ClassroomListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val joinSuccessClassroomId by viewModel.joinSuccessEvent.collectAsState()
+
+    LaunchedEffect(joinSuccessClassroomId) {
+        joinSuccessClassroomId?.let { id ->
+            navController.navigate(Route.classroomDetail(id.toString()))
+            viewModel.clearJoinSuccessEvent()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -164,7 +169,7 @@ fun ClassroomListScreen(
                         .padding(top = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val filters = listOf("Tất cả", "Công khai", "Lưu trữ", "Bản nháp")
+                    val filters = listOf("Tất cả", "Đã tạo", "Đã tham gia")
                     filters.forEachIndexed { index, title ->
                         FilterChip(
                             selected = state.selectedStatusFilter == index,
@@ -225,9 +230,23 @@ fun ClassroomListScreen(
                                 classroom = classroom,
                                 currentUserId = state.currentUserId,
                                 onClick = {
-                                    navController.navigate(
-                                        Route.classroomDetail(classroom.id.toString())
-                                    )
+                                    val isTeacher = classroom.teacher?.id == state.currentUserId
+                                    if (state.selectedTab == 0 && !isTeacher) {
+                                        when (classroom.myStatus) {
+                                            ClassroomMemberStatus.ACTIVE -> {
+                                                navController.navigate(Route.classroomDetail(classroom.id.toString()))
+                                            }
+                                            ClassroomMemberStatus.PENDING -> {
+                                                viewModel.onEvent(ClassroomListEvent.ShowToast("Yêu cầu tham gia của bạn đang chờ duyệt"))
+                                            }
+                                            else -> {
+                                                viewModel.promptJoinPublicClass(classroom)
+                                            }
+                                        }
+                                    } else {
+                                        // Tab "Của tôi" or tab "Khám phá" but is Teacher
+                                        navController.navigate(Route.classroomDetail(classroom.id.toString()))
+                                    }
                                 },
                                 onEdit = {
                                     navController.navigate(Route.createClassroomWithId(classroom.id.toString()))
@@ -253,6 +272,40 @@ fun ClassroomListScreen(
             isJoining = state.isJoining,
             onConfirm = { viewModel.joinByCode() },
             onDismiss = { viewModel.dismissJoinDialog() }
+        )
+    }
+
+    val publicClass = state.publicClassToJoin
+    if (publicClass != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelJoinPublicClass() },
+            title = {
+                Text(
+                    text = "Tham gia lớp học",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("Bạn có chắc chắn muốn tham gia lớp học \"${publicClass.name}\" không?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.joinPublicClass() },
+                    modifier = Modifier.padding(start = 8.dp),
+                    enabled = !state.isJoining
+                ) {
+                    if (state.isJoining) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                    } else {
+                        Text("Tham gia")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelJoinPublicClass() }, enabled = !state.isJoining) {
+                    Text("Hủy")
+                }
+            }
         )
     }
 }

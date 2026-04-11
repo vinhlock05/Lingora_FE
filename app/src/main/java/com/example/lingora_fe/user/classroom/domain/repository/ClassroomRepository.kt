@@ -12,6 +12,7 @@ import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
+import com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult
 
 interface ClassroomRepository {
 
@@ -33,6 +34,7 @@ interface ClassroomRepository {
         status: String? = null,
         isPublic: Boolean? = null,
         teacherId: Int? = null,
+        membership: String? = null,
         sort: String? = null
     ): Either<AppFailure, ClassroomListResult>
 
@@ -58,7 +60,8 @@ interface ClassroomRepository {
         description: String? = null,
         lessonType: String? = null,
         content: String? = null,
-        sortOrder: Int? = null
+        sortOrder: Int? = null,
+        isPublished: Boolean? = null
     ): Either<AppFailure, ClassroomLesson>
 
     suspend fun getLessons(classroomId: Int): Either<AppFailure, List<ClassroomLesson>>
@@ -184,9 +187,17 @@ interface ClassroomRepository {
         studySetId: Int
     ): Either<AppFailure, ClassroomQuizDetail>
 
+    suspend fun submitQuizAttempt(
+        classroomId: Int,
+        quizId: Int,
+        answers: Map<String, String>
+    ): Either<AppFailure, SubmitQuizAttemptResult>
+
     // ── Members ───────────────────────────────────────────────────────────────
 
-    suspend fun getMembers(classroomId: Int): Either<AppFailure, List<ClassroomMember>>
+    suspend fun getMembers(classroomId: Int, status: String? = null): Either<AppFailure, List<ClassroomMember>>
+
+    suspend fun approveMember(classroomId: Int, memberId: Int): Either<AppFailure, ClassroomMember>
 
     suspend fun removeMember(classroomId: Int, memberId: Int): Either<AppFailure, Unit>
 

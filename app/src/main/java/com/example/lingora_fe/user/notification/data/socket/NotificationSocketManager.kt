@@ -134,6 +134,20 @@ class NotificationSocketManager @Inject constructor(
         awaitClose { socket?.off("classroom:message", listener) }
     }
 
+    /**
+     * Flow nhận thông báo khi được duyệt vào lớp (PENDING -> ACTIVE).
+     */
+    fun classroomApprovalFlow(): Flow<JSONObject> = callbackFlow {
+        val listener = io.socket.emitter.Emitter.Listener { args ->
+            try {
+                val data = args.firstOrNull() as? JSONObject ?: return@Listener
+                trySend(data)
+            } catch (_: Exception) { }
+        }
+        socket?.on("classroom:approved", listener)
+        awaitClose { socket?.off("classroom:approved", listener) }
+    }
+
     // ─────────────────────────────────────────────────
 
     private fun setupListeners() {

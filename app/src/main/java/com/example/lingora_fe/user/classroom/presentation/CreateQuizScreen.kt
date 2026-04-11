@@ -35,7 +35,7 @@ fun CreateQuizScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tạo bài kiểm tra mới") },
+                title = { Text(if (state.isEditMode) "Chỉnh sửa bài kiểm tra" else "Thêm bài kiểm tra mới") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
@@ -48,6 +48,7 @@ fun CreateQuizScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .imePadding()
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -96,12 +97,13 @@ fun CreateQuizScreen(
 
             // Passing Score field
             OutlinedTextField(
-                value = state.passingScore.toString(),
+                value = state.passingScore,
                 onValueChange = { viewModel.onPassingScoreChange(it) },
                 label = { Text("Điểm đạt (%)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                placeholder = { Text("70") }
             )
 
             // Published toggle
@@ -126,7 +128,7 @@ fun CreateQuizScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Create button
             Button(
@@ -143,7 +145,7 @@ fun CreateQuizScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Tạo Bài Kiểm Tra")
+                    Text(if (state.isEditMode) "Cập nhật bài kiểm tra" else "Tạo Bài Kiểm Tra")
                 }
             }
         }

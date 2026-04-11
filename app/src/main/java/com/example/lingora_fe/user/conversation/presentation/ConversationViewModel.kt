@@ -106,11 +106,14 @@ class ConversationViewModel @Inject constructor(
                         val idx = msgs.indexOfLast { it.id.startsWith("temp_") }
                         if (idx != -1) msgs.removeAt(idx)
                         msgs.addAll(messages)
+                        val isCompleted = session.status == "COMPLETED"
                         state.copy(
                             chatMessages = msgs,
-                            currentSuggestions = messages.lastOrNull()?.suggestions ?: emptyList(),
+                            currentSuggestions = if (isCompleted) emptyList() else messages.lastOrNull()?.suggestions ?: emptyList(),
                             currentPhase = session.currentPhase,
                             isSendingMessage = false,
+                            isReviewMode = isCompleted,
+                            endedSession = if (isCompleted) session else null,
                             errorMessage = null
                         )
                     }

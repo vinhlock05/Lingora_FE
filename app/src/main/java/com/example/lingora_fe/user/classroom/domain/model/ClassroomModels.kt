@@ -26,6 +26,7 @@ data class Classroom(
     val settings: Map<String, Any>,
     val teacher: ClassroomUser?,
     val totalMembers: Int,
+    val myStatus: ClassroomMemberStatus? = null,
     val createdAt: Date?,
     val updatedAt: Date?
 )
@@ -127,6 +128,22 @@ data class ClassroomQuizDetail(
     val opensAt: Date?,
     val closesAt: Date?,
     val questions: List<ClassroomQuizQuestion>,
+    val userAttempts: Int? = null,
     val createdAt: Date?,
     val updatedAt: Date?
+)
+
+data class ClassroomQuizAttempt(
+    val id: Int,
+    val attemptNumber: Int,
+    val score: Double,
+    val correctCount: Int? = null,
+    val answers: Map<String, String>,
+    val startedAt: Date?,
+    val submittedAt: Date?
+)
+
+data class SubmitQuizAttemptResult(
+    val attempt: ClassroomQuizAttempt,
+    val isPassing: Boolean
 )

@@ -1,6 +1,5 @@
 package com.example.lingora_fe.user.classroom.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,8 +11,14 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,6 +34,16 @@ fun LessonDetailScreen(
 ) {
     val uiState = viewModel.state.collectAsState()
     val state = uiState.value
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
+            if (state.lesson != null) {
+                snackbarHostState.showSnackbar(error)
+                viewModel.clearError()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -40,20 +55,25 @@ fun LessonDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Import từ StudySet"
-                        )
+                    if (state.isTeacher) {
+                        IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Import từ StudySet"
+                            )
+                        }
                     }
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.showAddFlashcardDialog() }
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Thêm flashcard")
+            if (state.isTeacher) {
+                FloatingActionButton(
+                    onClick = { viewModel.showAddFlashcardDialog() }
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Thêm flashcard")
+                }
             }
         }
     ) { paddingValues ->
@@ -69,18 +89,26 @@ fun LessonDetailScreen(
                 }
             }
 
-            state.error != null -> {
+            state.error != null && state.lesson == null -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = state.error ?: "Đã xảy ra lỗi",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = state.error ?: "Đã xảy ra lỗi",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Button(onClick = { viewModel.refresh() }) {
+                            Text("Thử lại")
+                        }
+                    }
                 }
             }
 
@@ -148,40 +176,54 @@ fun LessonDetailScreen(
                     }
 
                     // Flashcards section
-                    Text(
-                        text = "Flashcards (${lesson.flashcards.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
+                    if (state.isTeacher) {
+                        Text(
+                            text = "Flashcards (${lesson.flashcards.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
 
-                    if (lesson.flashcards.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Chưa có flashcard nào. Nhấn + để thêm.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(lesson.flashcards) { flashcard ->
-                                FlashcardItem(
-                                    flashcard = flashcard,
-                                    onEdit = { viewModel.editFlashcard(flashcard) },
-                                    onDelete = { viewModel.deleteFlashcard(flashcard.id) }
+                        if (lesson.flashcards.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Chưa có flashcard nào. Nhấn + để thêm.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(lesson.flashcards) { flashcard ->
+                                    FlashcardItem(
+                                        flashcard = flashcard,
+                                        onEdit = { viewModel.editFlashcard(flashcard) },
+                                        onDelete = { viewModel.deleteFlashcard(flashcard.id) }
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // Student Mode: Pager View
+                        if (lesson.flashcards.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Bài học này chưa có nội dung học tập.")
+                            }
+                        } else {
+                            LessonStudyPager(flashcards = lesson.flashcards)
                         }
                     }
                 }
@@ -472,4 +514,109 @@ fun ImportStudySetDialog(
             }
         }
     )
+}
+
+@Composable
+fun LessonStudyPager(flashcards: List<ClassroomFlashcard>) {
+    val pagerState = rememberPagerState(pageCount = { flashcards.size })
+    
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = PaddingValues(horizontal = 32.dp),
+            pageSpacing = 16.dp
+        ) { page ->
+            FlippableFlashcard(flashcard = flashcards[page])
+        }
+        
+        Text(
+            text = "${pagerState.currentPage + 1} / ${flashcards.size}",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(bottom = 32.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
+    var rotated by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(
+        targetValue = if (rotated) 180f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "rotation"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(0.8f)
+            .graphicsLayer {
+                rotationY = rotation
+                cameraDistance = 8 * density
+            }
+            .clickable { rotated = !rotated },
+        contentAlignment = Alignment.Center
+    ) {
+        if (rotation <= 90f) {
+            // Front Side
+            Card(
+                modifier = Modifier.fillMaxSize(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = flashcard.frontText,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        } else {
+            // Back Side
+            Card(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationY = 180f },
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = flashcard.backText,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    if (!flashcard.example.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Ví dụ:",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = flashcard.example,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

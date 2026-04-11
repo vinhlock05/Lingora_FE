@@ -46,6 +46,7 @@ interface ClassroomApiService {
         @Query("status") status: String? = null,
         @Query("isPublic") isPublic: Boolean? = null,
         @Query("teacherId") teacherId: Int? = null,
+        @Query("membership") membership: String? = null,
         @Query("sort") sort: String? = null
     ): ApiResponse<ClassroomListMetaData>
 
@@ -145,6 +146,13 @@ interface ClassroomApiService {
         @Path("quizId") quizId: Int
     ): ApiResponse<ClassroomQuizDto>
 
+    @POST("classrooms/{id}/quizzes/{quizId}/attempt")
+    suspend fun submitQuizAttempt(
+        @Path("id") classroomId: Int,
+        @Path("quizId") quizId: Int,
+        @Body request: com.example.lingora_fe.user.classroom.data.remote.dto.SubmitQuizAttemptRequest
+    ): ApiResponse<com.example.lingora_fe.user.classroom.data.remote.dto.SubmitQuizAttemptResponseDto>
+
     @DELETE("classrooms/{id}/quizzes/{quizId}")
     suspend fun deleteQuiz(
         @Path("id") classroomId: Int,
@@ -191,8 +199,15 @@ interface ClassroomApiService {
 
     @GET("classrooms/{id}/members")
     suspend fun getMembers(
-        @Path("id") classroomId: Int
+        @Path("id") classroomId: Int,
+        @Query("status") status: String? = null
     ): ApiResponse<List<ClassroomMemberDto>>
+
+    @PATCH("classrooms/{id}/members/{memberId}/approve")
+    suspend fun approveMember(
+        @Path("id") classroomId: Int,
+        @Path("memberId") memberId: Int
+    ): ApiResponse<ClassroomMemberDto>
 
     @DELETE("classrooms/{id}/members/{memberId}")
     suspend fun removeMember(

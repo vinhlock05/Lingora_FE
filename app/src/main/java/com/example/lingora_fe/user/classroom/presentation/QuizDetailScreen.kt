@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -12,6 +13,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -31,6 +36,30 @@ fun QuizDetailScreen(
     val uiState = viewModel.state.collectAsState()
     val state = uiState.value
     var expandedQuestionType by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
+            if (state.quiz != null) {
+                snackbarHostState.showSnackbar(error)
+                viewModel.clearError()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -42,20 +71,25 @@ fun QuizDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Import từ StudySet"
-                        )
+                    if (state.isTeacher) {
+                        IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Import từ StudySet"
+                            )
+                        }
                     }
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.showAddQuestionDialog() }
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Thêm câu hỏi")
+            if (state.isTeacher) {
+                FloatingActionButton(
+                    onClick = { viewModel.showAddQuestionDialog() }
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Thêm câu hỏi")
+                }
             }
         }
     ) { paddingValues ->
@@ -71,18 +105,26 @@ fun QuizDetailScreen(
                 }
             }
 
-            state.error != null -> {
+            state.error != null && state.quiz == null -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = state.error ?: "Đã xảy ra lỗi",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = state.error ?: "Đã xảy ra lỗi",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Button(onClick = { viewModel.refresh() }) {
+                            Text("Thử lại")
+                        }
+                    }
                 }
             }
 
@@ -130,7 +172,7 @@ fun QuizDetailScreen(
 
                                 AssistChip(
                                     onClick = {},
-                                    label = { Text("${quiz.passingScore}% để đạt") }
+                                    label = { Text("${quiz.passingScore * 100}% để đạt") }
                                 )
 
                                 if (quiz.isPublished) {
@@ -143,42 +185,58 @@ fun QuizDetailScreen(
                         }
                     }
 
-                    // Questions section
-                    Text(
-                        text = "Câu hỏi (${quiz.questions.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
+                    // Questions section (Teacher only)
+                    if (state.isTeacher) {
+                        Text(
+                            text = "Câu hỏi (${quiz.questions.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
 
-                    if (quiz.questions.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Chưa có câu hỏi nào. Nhấn + để thêm.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(quiz.questions) { question ->
-                                QuestionItem(
-                                    question = question,
-                                    onEdit = { viewModel.editQuestion(question) },
-                                    onDelete = { viewModel.deleteQuestion(question.id) }
+                        if (quiz.questions.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Chưa có câu hỏi nào. Nhấn + để thêm.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(quiz.questions) { question ->
+                                    QuestionItem(
+                                        question = question,
+                                        onEdit = { viewModel.editQuestion(question) },
+                                        onDelete = { viewModel.deleteQuestion(question.id) }
+                                    )
+                                }
+                            }
                         }
+                    } else {
+                        // Student Preview Mode
+                        QuizOverviewContent(
+                            quiz = quiz,
+                            isTeacher = state.isTeacher,
+                            onStart = {
+                                navController.navigate(
+                                    com.example.lingora_fe.navigation.Route.quizSession(
+                                        classroomId = state.classroomId,
+                                        quizId = quiz.id.toString()
+                                    )
+                                )
+                            }
+                        )
                     }
                 }
             }
@@ -518,5 +576,132 @@ fun ImportStudySetDialog(
             }
         }
     )
+}
+
+@Composable
+fun QuizOverviewContent(
+    quiz: com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail,
+    isTeacher: Boolean,
+    onStart: () -> Unit
+) {
+    val userAttempts = quiz.userAttempts ?: 0
+    val maxAttempts = quiz.maxAttempts
+    val isLimitReached = !isTeacher && userAttempts >= maxAttempts
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Surface(
+            modifier = Modifier.size(100.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = if (isLimitReached) "Hết lượt làm bài" else "Sẵn sàng bắt đầu?",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (isLimitReached) MaterialTheme.colorScheme.error else Color.Unspecified
+            )
+            Text(
+                text = "Bài kiểm tra này có ${quiz.questions.size} câu hỏi",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.Gray
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard(
+                label = "Thời gian",
+                value = quiz.timeLimitSeconds?.let { "${it / 60} phút" } ?: "Không giới hạn",
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                label = "Lượt làm bài",
+                value = if (isTeacher) "∞" else "$userAttempts / $maxAttempts",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        if (!quiz.description.isNullOrEmpty()) {
+            Text(
+                text = quiz.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+
+        if (isLimitReached) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Bạn đã đạt giới hạn số lần làm bài cho bài kiểm tra này.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = onStart,
+            enabled = !isLimitReached,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                text = if (isTeacher) "Xem trước" else "Bắt đầu làm bài",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FA))
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        }
+    }
 }
 

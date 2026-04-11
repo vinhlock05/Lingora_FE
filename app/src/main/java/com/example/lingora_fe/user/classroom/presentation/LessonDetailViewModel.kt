@@ -30,10 +30,20 @@ class LessonDetailViewModel @Inject constructor(
             "lessonId is required"
         }
 
-    private val _state = MutableStateFlow(LessonDetailState())
+    private val isTeacher: Boolean = savedStateHandle.get<String>("isTeacher")?.toBoolean() ?: false
+
+    private val _state = MutableStateFlow(LessonDetailState(isTeacher = isTeacher))
     val state: StateFlow<LessonDetailState> = _state.asStateFlow()
 
     init {
+        loadLessonDetail()
+    }
+
+    fun clearError() {
+        _state.value = _state.value.copy(error = null)
+    }
+
+    fun refresh() {
         loadLessonDetail()
     }
 
@@ -220,7 +230,7 @@ class LessonDetailViewModel @Inject constructor(
             limit = 100
         )
 
-        studySetRepository.getOwnStudySets(
+        studySetRepository.getAllStudySets(
             token = tokenManager.getAccessToken() ?: "",
             filterOptions = filterOptions
         ).fold(
@@ -259,6 +269,8 @@ class LessonDetailViewModel @Inject constructor(
                 ifLeft = { error ->
                     _state.value = _state.value.copy(
                         isImporting = false,
+                        showImportStudySetDialog = false,
+                        selectedStudySetId = null,
                         error = error.message ?: "Không thể import flashcard"
                     )
                 },

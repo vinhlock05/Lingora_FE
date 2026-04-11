@@ -1,15 +1,22 @@
 package com.example.lingora_fe.user.dictionary.presentation
 
+import android.graphics.Bitmap
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.user.dictionary.domain.model.TranslateResult
 import com.example.lingora_fe.user.dictionary.domain.repository.TranslateRepository
+import com.example.lingora_fe.user.scan.data.ml.DetectedObject
+import com.example.lingora_fe.user.scan.domain.repository.ScanRepository
 import com.example.lingora_fe.user.vocabulary.domain.model.Word
 import com.example.lingora_fe.user.vocabulary.domain.repository.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,7 +42,8 @@ data class DictionaryState(
 @HiltViewModel
 class DictionaryViewModel @Inject constructor(
     private val wordRepository: WordRepository,
-    private val translateRepository: TranslateRepository
+    private val translateRepository: TranslateRepository,
+    private val scanRepository: ScanRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DictionaryState())
@@ -109,6 +117,41 @@ class DictionaryViewModel @Inject constructor(
 
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)
+    }
+
+    // Scan image
+    var detectedObjects by mutableStateOf<List<DetectedObject>>(emptyList())
+    var currentBitmap by mutableStateOf<Bitmap?>(null)
+
+    fun onImageCaptured(bitmap: Bitmap) {
+        currentBitmap = bitmap
+
+        viewModelScope.launch {
+            detectedObjects = scanRepository.detect(bitmap)
+        }
+    }
+
+    fun onObjectSelected(label: String) {
+        val keyword = label.lowercase().trim()
+
+        viewModelScope.launch {
+            wordRepository.lookupWord(keyword)
+                .onRight { word ->
+                    _state.update {
+                        it.copy(
+                            selectedWord = word,
+                            searchTerm = keyword
+                        )
+                    }
+                    currentBitmap = null
+                    detectedObjects = emptyList()
+                }
+                .onLeft { failure ->
+                    _state.value = _state.value.copy(
+                        errorMessage = failure.message ?: "Failed to lookup word"
+                    )
+                }
+        }
     }
 
     // Translate phrase

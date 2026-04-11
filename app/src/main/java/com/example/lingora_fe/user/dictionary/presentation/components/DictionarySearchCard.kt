@@ -1,6 +1,6 @@
 package com.example.lingora_fe.user.dictionary.presentation.components
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.MaterialTheme
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.NavBarText
@@ -27,7 +28,8 @@ import com.example.lingora_fe.core.ui.theme.NavBarText
 fun DictionarySearchCard(
     query: String,
     onQueryChange: (String) -> Unit,
-    onSearch: () -> Unit
+    onSearch: () -> Unit,
+    onOpenCamera: () -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -52,16 +54,29 @@ fun DictionarySearchCard(
                     contentDescription = null,
                 )
             },
+
             trailingIcon = {
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = { onQueryChange("") }) {
+                Row {
+                    // Clear text
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Clear",
+                            )
+                        }
+                    }
+
+                    // Camera
+                    IconButton(onClick = onOpenCamera) {
                         Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Clear",
+                            Icons.Default.CameraAlt,
+                            contentDescription = "Open Camera",
                         )
                     }
                 }
             },
+
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
@@ -69,10 +84,9 @@ fun DictionarySearchCard(
                 unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 cursorColor = GradientStart
             ),
-            shape = RoundedCornerShape(16.dp), // Changed from 12.dp to 16.dp to match SearchBar
+            shape = RoundedCornerShape(16.dp),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onSearch() })
         )
     }
 }
-

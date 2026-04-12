@@ -2,10 +2,13 @@ package com.example.lingora_fe.user.navigator
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +41,9 @@ import androidx.navigation.navArgument
 import com.example.lingora_fe.navigation.Route
 import com.example.lingora_fe.user.chatbot.presentation.ChatbotScreen
 import com.example.lingora_fe.user.components.FloatingActionButton
+import com.example.lingora_fe.user.conversation.presentation.ContextSelectionScreen
+import com.example.lingora_fe.user.conversation.presentation.ConversationChatScreen
+import com.example.lingora_fe.user.conversation.presentation.ConversationViewModel
 import com.example.lingora_fe.user.dictionary.presentation.DictionaryScreen
 import com.example.lingora_fe.user.forum.presentation.ForumScreen
 import com.example.lingora_fe.user.forum.presentation.*
@@ -133,7 +139,8 @@ fun UserNavigator(
         Route.StudySetList.route -> 2
         Route.DictionaryTab.route -> 3
         Route.ForumTab.route -> 4
-        Route.ProfileTab.route -> 5
+        Route.ClassroomTab.route -> 5
+        Route.ProfileTab.route -> 6
         else -> 0
     }
 
@@ -145,6 +152,7 @@ fun UserNavigator(
             Route.StudySetList.route,
             Route.DictionaryTab.route,
             Route.ForumTab.route,
+            Route.ClassroomTab.route,
             Route.ProfileTab.route -> true
 
             else -> false
@@ -161,6 +169,7 @@ fun UserNavigator(
                     route == Route.StudySetList.route -> true
             route == Route.DictionaryTab.route -> true
             route == Route.ForumTab.route -> true
+            route == Route.ClassroomTab.route -> true
             route == Route.ProfileTab.route -> true
             else -> false
         }
@@ -194,6 +203,7 @@ fun UserNavigator(
                             Route.StudySetList.route -> "Học liệu"
                     Route.DictionaryTab.route -> "Từ điển"
                     Route.ForumTab.route -> "Diễn đàn"
+                    Route.ClassroomTab.route -> "Lớp học"
                     Route.ProfileTab.route -> "Cá nhân"
                     else -> ""
                 }
@@ -236,6 +246,48 @@ fun UserNavigator(
                             }
                         }
                     }
+                    Route.ClassroomTab.route -> {
+                        {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Button(
+                                    onClick = { 
+                                        runCatching {
+                                            navController.getBackStackEntry(Route.ClassroomTab.route)
+                                                .savedStateHandle.set("showJoinDialog", true)
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF3B82F6),
+                                        contentColor = Color.White
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.height(38.dp)
+                                ) {
+                                    Text(
+                                        text = "Tham gia",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = { navController.navigate(Route.CreateClassroom.route) },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF10B981),
+                                        contentColor = Color.White
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.height(38.dp)
+                                ) {
+                                    Text(
+                                        text = "+ Tạo mới",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
+                    }
                     else -> {
                         { }
                     }
@@ -265,7 +317,8 @@ fun UserNavigator(
                             Route.StudySetList.route -> 2
                             Route.DictionaryTab.route -> 3
                             Route.ForumTab.route -> 4
-                            Route.ProfileTab.route -> 5
+                            Route.ClassroomTab.route -> 5
+                            Route.ProfileTab.route -> 6
                             else -> 0
                         }
 
@@ -317,6 +370,183 @@ fun UserNavigator(
             composable(Route.Chatbot.route) {
                 ChatbotScreen(
                     onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            // Chatbot Conversational UI
+            composable(Route.ContextSelection.route) {
+                ContextSelectionScreen(
+                    onBack = { navController.popBackStack() },
+                    onSessionStarted = { sessionId ->
+                        navController.navigate(Route.conversationChat(sessionId))
+                    },
+                    onSessionResumed = { sessionId ->
+                        navController.navigate(Route.conversationChat(sessionId))
+                    },
+                    onSessionViewed = { sessionId ->
+                        navController.navigate(Route.conversationChat(sessionId))
+                    }
+                )
+            }
+
+            composable(
+                route = Route.ConversationChat.route,
+                arguments = listOf(
+                    navArgument("sessionId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
+                // Share viewModel with ContextSelection screen
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(Route.ContextSelection.route)
+                }
+                val sharedViewModel: ConversationViewModel = hiltViewModel(parentEntry)
+                ConversationChatScreen(
+                    contextId = 0,
+                    sessionId = sessionId,
+                    onBack = { navController.popBackStack() },
+                    onSessionEnded = { endedSessionId ->
+                        navController.navigate(Route.sessionSummary(endedSessionId)) {
+                            popUpTo(Route.ContextSelection.route)
+                        }
+                    },
+                    viewModel = sharedViewModel
+                )
+            }
+
+            composable(
+                route = Route.SessionSummary.route,
+                arguments = listOf(
+                    navArgument("sessionId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
+                // Share viewModel with ContextSelection screen to read endedSession
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(Route.ContextSelection.route)
+                }
+                val sharedViewModel: ConversationViewModel = hiltViewModel(parentEntry)
+                com.example.lingora_fe.user.conversation.presentation.SessionSummaryScreen(
+                    sessionId = sessionId,
+                    viewModel = sharedViewModel,
+                    onRetry = { navController.popBackStack() },
+                    onNewContext = {
+                        navController.popBackStack(Route.ContextSelection.route, inclusive = false)
+                    }
+                )
+            }
+
+            // Classroom Tab
+            composable(Route.ClassroomTab.route) {
+                com.example.lingora_fe.user.classroom.presentation.ClassroomListScreen(
+                    navController = navController
+                )
+            }
+
+            composable(Route.CreateClassroom.route) {
+                com.example.lingora_fe.user.classroom.presentation.CreateClassroomScreen(
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.EditClassroom.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType }
+                )
+            ) {
+                com.example.lingora_fe.user.classroom.presentation.CreateClassroomScreen(
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.ClassroomDetail.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.ClassroomDetailScreen(
+                    classroomId = classroomId,
+                    navController = navController
+                )
+            }
+
+            // Lesson routes
+            composable(
+                route = Route.CreateLesson.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("lessonId") { 
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.CreateLessonScreen(
+                    classroomId = classroomId,
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.LessonDetail.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("lessonId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.LessonDetailScreen(
+                    navController = navController
+                )
+            }
+
+            // Quiz routes
+            composable(
+                route = Route.CreateQuiz.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("quizId") { 
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.CreateQuizScreen(
+                    classroomId = classroomId,
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.QuizDetail.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("quizId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                com.example.lingora_fe.user.classroom.presentation.QuizDetailScreen(
+                    navController = navController
+                )
+            }
+
+            composable(
+                route = Route.QuizSession.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("quizId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val classroomId = backStackEntry.arguments?.getString("classroomId") ?: ""
+                val quizId = backStackEntry.arguments?.getString("quizId") ?: ""
+                com.example.lingora_fe.user.classroom.presentation.QuizSessionScreen(
+                    navController = navController
                 )
             }
 

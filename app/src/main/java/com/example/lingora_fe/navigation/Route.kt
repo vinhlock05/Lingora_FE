@@ -42,6 +42,7 @@ sealed class Route(
     object PracticeTab : Route("practice")
     object DictionaryTab : Route("dictionary")
     object ForumTab : Route("forum")
+    object ClassroomTab : Route("classroom")
     object ProfileTab : Route("profile")
     
     // Notification
@@ -49,10 +50,23 @@ sealed class Route(
     
     // Chatbot
     object Chatbot : Route("chatbot")
-    
+    object ContextSelection : Route("chatbot/context_selection")
+    object ConversationChat : Route("chatbot/chat/{sessionId}")
+    object SessionSummary : Route("chatbot/summary/{sessionId}")
+
     // Vocabulary Navigation
     object CategoryDetail : Route("vocabulary/category/{categoryId}")
     
+    // Classroom Navigation
+    object ClassroomDetail : Route("classroom/detail/{classroomId}")
+    object CreateClassroom : Route("classroom/create")
+    object EditClassroom : Route("classroom/edit/{classroomId}")
+    object LessonDetail : Route("classroom/{classroomId}/lessons/{lessonId}?isTeacher={isTeacher}")
+    object CreateLesson : Route("classroom/{classroomId}/lessons/create?lessonId={lessonId}")
+    object QuizDetail : Route("classroom/{classroomId}/quizzes/{quizId}?isTeacher={isTeacher}")
+    object QuizSession : Route("classroom/{classroomId}/quizzes/{quizId}/session")
+    object CreateQuiz : Route("classroom/{classroomId}/quizzes/create?quizId={quizId}")
+
     // StudySet Navigation
     object StudySetList : Route("studyset/list")
     object StudySetDetail : Route("studyset/detail/{studySetId}")
@@ -129,6 +143,24 @@ sealed class Route(
         fun studySetEdit(studySetId: Int) = "studyset/edit/$studySetId"
         fun studySetFlashcard(studySetId: Int) = "studyset/$studySetId/flashcard"
         fun studySetQuiz(studySetId: Int) = "studyset/$studySetId/quiz"
+        // Classroom routes
+        fun classroomDetail(classroomId: String) = "classroom/detail/$classroomId"
+        fun createClassroomWithId(classroomId: String) = "classroom/edit/$classroomId"
+        fun lessonDetail(classroomId: String, lessonId: String, isTeacher: Boolean = false) = 
+            "classroom/$classroomId/lessons/$lessonId?isTeacher=$isTeacher"
+        fun createLesson(classroomId: String, lessonId: Int? = null) = 
+            "classroom/$classroomId/lessons/create" + (lessonId?.let { "?lessonId=$it" } ?: "")
+        fun quizDetail(classroomId: String, quizId: String, isTeacher: Boolean = false) = 
+            "classroom/$classroomId/quizzes/$quizId?isTeacher=$isTeacher"
+        fun quizSession(classroomId: String, quizId: String) = 
+            "classroom/$classroomId/quizzes/$quizId/session"
+        fun createQuiz(classroomId: String, quizId: Int? = null) = 
+            "classroom/$classroomId/quizzes/create" + (quizId?.let { "?quizId=$it" } ?: "")
+        
+        // Chatbot routes
+        fun conversationChat(sessionId: String) = "chatbot/chat/$sessionId"
+        fun sessionSummary(sessionId: String) = "chatbot/summary/$sessionId"
+
         // Forum routes
         fun postDetail(postId: Int) = "forum/post/$postId"
         fun editPost(postId: Int) = "forum/post/$postId/edit"

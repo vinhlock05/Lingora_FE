@@ -26,12 +26,11 @@ class NotificationSocketManager @Inject constructor(
     val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
     /**
-     * Connect to Socket.IO server with authentication token
+     * Connect — token truyền qua auth, BE verify bằng io.use()
+     * Không cần userId, BE tự lấy từ token.
      */
-    fun connect(accessToken: String, baseUrl: String = com.example.lingora_fe.util.Constant.BASE_URL, userId: Int? = null) {
-        if (socket?.connected() == true) {
-            return
-        }
+    fun connect(accessToken: String, baseUrl: String = com.example.lingora_fe.util.Constant.BASE_URL) {
+        if (socket?.connected() == true) return
 
         try {
             val options = IO.Options().apply {
@@ -44,75 +43,129 @@ class NotificationSocketManager @Inject constructor(
 
             val normalizedUrl = if (baseUrl.endsWith("/")) baseUrl.dropLast(1) else baseUrl
             socket = IO.socket(normalizedUrl, options)
-            setupListeners(userId)
+            setupListeners()
             socket?.connect()
         } catch (e: Exception) {
             _connectionState.value = ConnectionState.Error(e.message ?: "Connection failed")
         }
     }
 
-    /**
-     * Disconnect from Socket.IO server
-     */
     fun disconnect() {
         socket?.disconnect()
         socket = null
         _connectionState.value = ConnectionState.Disconnected
     }
 
-    /**
-     * Flow of new notifications from Socket.IO
-     */
+    fun isConnected(): Boolean = socket?.connected() == true
+
+    // ─── Notification ───────────────────────────────
+
     fun notificationFlow(): Flow<Notification> = callbackFlow {
         val listener = io.socket.emitter.Emitter.Listener { args ->
             if (args.isNotEmpty()) {
                 try {
-                    val jsonObject = args[0] as? JSONObject
-                    if (jsonObject != null) {
-                        val notificationDto = gson.fromJson(jsonObject.toString(), NotificationDto::class.java)
-                        val notification = notificationDto.toDomain()
-                        trySend(notification)
-                    }
-                } catch (e: Exception) {
-                    // Handle parsing error
-                }
-            }
-        }
-
-        socket?.on("notification", listener)
-
-        awaitClose {
-            socket?.off("notification", listener)
-        }
-    }
-
-    private fun setupListeners(userId: Int?) {
-        socket?.on(Socket.EVENT_CONNECT) {
-            _connectionState.value = ConnectionState.Connected
-            if (userId != null) {
-                try {
-                    socket?.emit("register", userId.toString())
+                    val jsonObject = args[0] as? JSONObject ?: return@Listener
+                    val dto = gson.fromJson(jsonObject.toString(), NotificationDto::class.java)
+                    trySend(dto.toDomain())
                 } catch (_: Exception) { }
             }
         }
+        socket?.on("notification", listener)
+        awaitClose { socket?.off("notification", listener) }
+    }
 
+    // ─── Classroom Chat ───────────────────────────────
+
+    /**
+     * Join classroom chat room.
+     * Gọi SAU khi đã load history qua REST.
+     * @param onJoined callback khi join thành công
+     * @param onError  callback khi có lỗi (không phải member, v.v.)
+     */
+    fun joinClassroom(
+        classroomId: Int,
+        onJoined: (() -> Unit)? = null,
+        onError: ((String) -> Unit)? = null
+    ) {
+        val payload = JSONObject().put("classroomId", classroomId)
+        socket?.emit("classroom:join", payload)
+
+        socket?.once("classroom:joined") { onJoined?.invoke() }
+        socket?.once("classroom:error") { args ->
+            val msg = (args.firstOrNull() as? JSONObject)?.optString("message") ?: "Error"
+            onError?.invoke(msg)
+        }
+    }
+
+    fun leaveClassroom(classroomId: Int) {
+        socket?.emit("classroom:leave", JSONObject().put("classroomId", classroomId))
+    }
+
+    fun sendClassroomMessage(
+        classroomId: Int,
+        content: String,
+        type: String = "TEXT",
+        attachmentUrl: String? = null,
+        repliedToId: Int? = null
+    ) {
+        val payload = JSONObject().apply {
+            put("classroomId", classroomId)
+            put("content", content)
+            put("type", type)
+            attachmentUrl?.let { put("attachmentUrl", it) }
+            repliedToId?.let { put("repliedToId", it) }
+        }
+        socket?.emit("classroom:message", payload)
+    }
+
+    /**
+     * Flow nhận tin nhắn mới trong room.
+     * Tự hủy listener khi flow bị cancel (e.g. khi rời màn hình).
+     */
+    fun classroomMessageFlow(): Flow<JSONObject> = callbackFlow {
+        val listener = io.socket.emitter.Emitter.Listener { args ->
+            try {
+                val data = args.firstOrNull() as? JSONObject ?: return@Listener
+                val message = data.optJSONObject("message") ?: return@Listener
+                trySend(message)
+            } catch (_: Exception) { }
+        }
+        socket?.on("classroom:message", listener)
+        awaitClose { socket?.off("classroom:message", listener) }
+    }
+
+    /**
+     * Flow nhận thông báo khi được duyệt vào lớp (PENDING -> ACTIVE).
+     */
+    fun classroomApprovalFlow(): Flow<JSONObject> = callbackFlow {
+        val listener = io.socket.emitter.Emitter.Listener { args ->
+            try {
+                val data = args.firstOrNull() as? JSONObject ?: return@Listener
+                trySend(data)
+            } catch (_: Exception) { }
+        }
+        socket?.on("classroom:approved", listener)
+        awaitClose { socket?.off("classroom:approved", listener) }
+    }
+
+    // ─────────────────────────────────────────────────
+
+    private fun setupListeners() {
+        socket?.on(Socket.EVENT_CONNECT) {
+            _connectionState.value = ConnectionState.Connected
+        }
         socket?.on(Socket.EVENT_DISCONNECT) {
             _connectionState.value = ConnectionState.Disconnected
         }
-
         socket?.on(Socket.EVENT_CONNECT_ERROR) { args ->
             val error = args.firstOrNull()
-            val errorMessage = when (error) {
+            val msg = when (error) {
                 is Exception -> error.message ?: "Connection error"
                 is String -> error
                 else -> "Connection error"
             }
-            _connectionState.value = ConnectionState.Error(errorMessage)
+            _connectionState.value = ConnectionState.Error(msg)
         }
-    }
-
-    fun isConnected(): Boolean {
-        return socket?.connected() == true
     }
 }
 
@@ -121,4 +174,3 @@ sealed class ConnectionState {
     object Connected : ConnectionState()
     data class Error(val message: String) : ConnectionState()
 }
-

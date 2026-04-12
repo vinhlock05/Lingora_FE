@@ -40,6 +40,7 @@ fun BottomNavigationBar(
         BottomNavItem.StudySet,
         BottomNavItem.Dictionary,
         BottomNavItem.Forum,
+        BottomNavItem.Classroom,
         BottomNavItem.Profile
     )
     
@@ -58,6 +59,7 @@ fun BottomNavigationBar(
                 BottomNavItem.StudySet -> Route.StudySetList.route
                 BottomNavItem.Dictionary -> Route.DictionaryTab.route
                 BottomNavItem.Forum -> Route.ForumTab.route
+                BottomNavItem.Classroom -> Route.ClassroomTab.route
                 BottomNavItem.Profile -> Route.ProfileTab.route
             }
             BottomNavItemComponent(

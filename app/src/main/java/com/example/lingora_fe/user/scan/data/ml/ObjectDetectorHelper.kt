@@ -1,10 +1,12 @@
 package com.example.lingora_fe.user.scan.data.ml
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
+import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
 import kotlinx.coroutines.tasks.await
 
 data class DetectedObject(
@@ -13,12 +15,18 @@ data class DetectedObject(
     val boundingBox: Rect?
 )
 
-class ObjectDetectorHelper {
+class ObjectDetectorHelper(private val context: Context) {
 
-    private val options = ObjectDetectorOptions.Builder()
-        .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+    private val localModel = LocalModel.Builder()
+        .setAssetFilePath("object_labeler.tflite")
+        .build()
+
+    private val options = CustomObjectDetectorOptions.Builder(localModel)
+        .setDetectorMode(CustomObjectDetectorOptions.SINGLE_IMAGE_MODE)
         .enableMultipleObjects()
         .enableClassification()
+        .setClassificationConfidenceThreshold(0.5f)
+        .setMaxPerObjectLabelCount(1)
         .build()
 
     private val detector = ObjectDetection.getClient(options)
@@ -37,7 +45,6 @@ class ObjectDetectorHelper {
                 )
             }
         }
-            .filter { it.confidence > 0.6f }
-            .distinctBy { it.label }
+            .filter { it.confidence > 0.5f }
     }
 }

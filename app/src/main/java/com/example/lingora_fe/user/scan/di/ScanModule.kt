@@ -1,5 +1,6 @@
 package com.example.lingora_fe.user.scan.di
 
+import android.content.Context
 import com.example.lingora_fe.user.scan.data.ml.ObjectDetectorHelper
 import com.example.lingora_fe.user.scan.data.repository.ScanRepositoryImpl
 import com.example.lingora_fe.user.scan.domain.repository.ScanRepository
@@ -7,6 +8,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 
 @Module
@@ -24,7 +26,7 @@ abstract class ScanRepositoryModule {
 object ScanMLModule {
 
     @Provides
-    fun provideDetector(): ObjectDetectorHelper {
-        return ObjectDetectorHelper()
+    fun provideDetector(@ApplicationContext context: Context): ObjectDetectorHelper {
+        return ObjectDetectorHelper(context)
     }
 }

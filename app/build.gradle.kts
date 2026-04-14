@@ -123,7 +123,8 @@ dependencies {
 
     // --- ML Kit (Nhận diện object) ---
     implementation("com.google.mlkit:object-detection:17.0.2")
-    implementation("com.google.mlkit:object-detection-custom:17.0.0")
+    implementation("com.google.mlkit:object-detection-custom:17.0.2")
+    implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.4")
 
     // --- ExoPlayer (Media3) ---
     implementation("androidx.media3:media3-exoplayer:1.2.1")

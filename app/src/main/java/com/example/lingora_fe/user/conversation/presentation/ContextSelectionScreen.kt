@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Brush
 import com.example.lingora_fe.core.ui.theme.GradientStart
@@ -46,8 +47,17 @@ fun ContextSelectionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableStateOf(0) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show async errors from context/session loading and clear afterward.
+    LaunchedEffect(uiState.errorMessage) {
+        val error = uiState.errorMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(error)
+        viewModel.dismissError()
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {

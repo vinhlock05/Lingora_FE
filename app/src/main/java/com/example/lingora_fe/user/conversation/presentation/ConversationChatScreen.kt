@@ -46,6 +46,7 @@ fun ConversationChatScreen(
     val uiState by viewModel.uiState.collectAsState()
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(sessionId) {
         if (sessionId != null) {
@@ -69,7 +70,15 @@ fun ConversationChatScreen(
         }
     }
 
+    // Surface async/network errors instead of silently failing.
+    LaunchedEffect(uiState.errorMessage) {
+        val error = uiState.errorMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(error)
+        viewModel.dismissError()
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             Column {
                 TopAppBar(

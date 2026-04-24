@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.example.lingora_fe.user.vocabulary.domain.model.Word
 import com.example.lingora_fe.user.vocabulary.domain.model.WordWithProgress
+import com.example.lingora_fe.user.ranking.presentation.XpRewardTracker
 import com.example.lingora_fe.user.vocabulary.domain.repository.ProgressRepository
 import com.example.lingora_fe.user.vocabulary.domain.repository.TopicRepository
 import com.example.lingora_fe.user.vocabulary.domain.repository.WordRepository
@@ -61,7 +62,8 @@ enum class GameType {
 class TopicDetailViewModel @Inject constructor(
     private val topicRepository: TopicRepository,
     private val wordRepository: WordRepository,
-    private val progressRepository: ProgressRepository
+    private val progressRepository: ProgressRepository,
+    private val xpRewardTracker: XpRewardTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TopicDetailUiState())
@@ -213,6 +215,10 @@ class TopicDetailViewModel @Inject constructor(
                 },
                 ifRight = {
                     onSuccess()
+                    // XP is awarded asynchronously on the backend (flashcard_learned /
+                    // word_mastered events). Poll `/rankings/me` so the reward popup
+                    // fires once the backend has credited the user.
+                    xpRewardTracker.observeAfterAction(sourceActionKey = "flashcard_learned")
                 }
             )
         }
@@ -238,6 +244,7 @@ class TopicDetailViewModel @Inject constructor(
                 },
                 ifRight = {
                     onSuccess()
+                    xpRewardTracker.observeAfterAction(sourceActionKey = "flashcard_reviewed")
                 }
             )
         }

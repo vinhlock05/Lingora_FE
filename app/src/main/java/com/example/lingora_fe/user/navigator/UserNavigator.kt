@@ -192,6 +192,11 @@ fun UserNavigator(
         return
     }
 
+    // Global XP reward popup. Listens to XpEventBus and renders a Dialog on
+    // top of whatever screen is currently mounted, so we don't need per-screen
+    // wiring for exam / flashcard / conversation reward feedback.
+    com.example.lingora_fe.user.ranking.presentation.components.XpRewardHost()
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -247,44 +252,24 @@ fun UserNavigator(
                         }
                     }
                     Route.ClassroomTab.route -> {
+                        // Only one primary action in the top bar to keep breathing room
+                        // for the "Lớp học" title. The secondary "Tham gia bằng mã"
+                        // action lives inside `ClassroomListScreen`'s header.
                         {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Button(
-                                    onClick = { 
-                                        runCatching {
-                                            navController.getBackStackEntry(Route.ClassroomTab.route)
-                                                .savedStateHandle.set("showJoinDialog", true)
-                                        }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF3B82F6),
-                                        contentColor = Color.White
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.height(38.dp)
-                                ) {
-                                    Text(
-                                        text = "Tham gia",
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = { navController.navigate(Route.CreateClassroom.route) },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF10B981),
-                                        contentColor = Color.White
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.height(38.dp)
-                                ) {
-                                    Text(
-                                        text = "+ Tạo mới",
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
+                            Button(
+                                onClick = { navController.navigate(Route.CreateClassroom.route) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = com.example.lingora_fe.core.ui.theme.GradientStart,
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(38.dp)
+                            ) {
+                                Text(
+                                    text = "+ Tạo mới",
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                         }
                     }
@@ -301,6 +286,7 @@ fun UserNavigator(
                         title = title,
                         notificationCount = notiState.unreadCount,
                         onNotificationClick = { navController.navigate(Route.Notification.route) },
+                        onRankingClick = { navController.navigate(Route.Ranking.route) },
                         extraActions = extraActions
                     )
                 }
@@ -355,6 +341,13 @@ fun UserNavigator(
                 top = if (isBottomVisible) topPadding else 0.dp
             )
         ) {
+            // Ranking
+            composable(Route.Ranking.route) {
+                com.example.lingora_fe.user.ranking.presentation.RankingScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
             // Notification
             composable(Route.Notification.route) {
                 val startRoute = navController.graph.startDestinationRoute ?: Route.VocabularyTab.route

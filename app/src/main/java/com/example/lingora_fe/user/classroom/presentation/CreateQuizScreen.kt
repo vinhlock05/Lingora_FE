@@ -11,11 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,15 +34,38 @@ fun CreateQuizScreen(
         }
     }
 
+    val brandFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = ClassroomColors.BrandPrimary,
+        focusedLabelColor = ClassroomColors.BrandPrimaryStrong,
+        cursorColor = ClassroomColors.BrandPrimary,
+        disabledBorderColor = ClassroomColors.NeutralBorder,
+        disabledLabelColor = ClassroomColors.TextMuted,
+        disabledTextColor = MainText
+    )
+
     Scaffold(
+        containerColor = ClassroomColors.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isEditMode) "Chỉnh sửa bài kiểm tra" else "Thêm bài kiểm tra mới") },
+                title = {
+                    Text(
+                        if (state.isEditMode) "Chỉnh sửa bài kiểm tra" else "Thêm bài kiểm tra mới",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MainText
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = MainText
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ClassroomColors.HeaderSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -60,7 +85,8 @@ fun CreateQuizScreen(
                 label = { Text("Tiêu đề bài kiểm tra *") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                isError = state.error != null && state.title.isBlank()
+                isError = state.error != null && state.title.isBlank(),
+                colors = brandFieldColors
             )
 
             // Description field
@@ -71,7 +97,8 @@ fun CreateQuizScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp),
-                maxLines = 3
+                maxLines = 3,
+                colors = brandFieldColors
             )
 
             // Time Limit field
@@ -82,7 +109,8 @@ fun CreateQuizScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                placeholder = { Text("Tùy chọn") }
+                placeholder = { Text("Tùy chọn") },
+                colors = brandFieldColors
             )
 
             // Max Attempts field
@@ -92,7 +120,8 @@ fun CreateQuizScreen(
                 label = { Text("Số lần thử tối đa") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = brandFieldColors
             )
 
             // Passing Score field
@@ -103,7 +132,8 @@ fun CreateQuizScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                placeholder = { Text("70") }
+                placeholder = { Text("70") },
+                colors = brandFieldColors
             )
 
             // Published toggle
@@ -112,10 +142,20 @@ fun CreateQuizScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Công khai bài kiểm tra")
+                Text(
+                    text = "Công khai bài kiểm tra",
+                    color = MainText,
+                    fontWeight = FontWeight.Medium
+                )
                 Switch(
                     checked = state.isPublished,
-                    onCheckedChange = { viewModel.onIsPublishedChange(it) }
+                    onCheckedChange = { viewModel.onIsPublishedChange(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = ClassroomColors.BrandPrimary,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = ClassroomColors.NeutralBorder
+                    )
                 )
             }
 
@@ -123,7 +163,7 @@ fun CreateQuizScreen(
             state.error?.let { errorMsg ->
                 Text(
                     text = errorMsg,
-                    color = MaterialTheme.colorScheme.error,
+                    color = ClassroomColors.Danger,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -136,7 +176,11 @@ fun CreateQuizScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = state.title.isNotBlank() && !state.isLoading
+                enabled = state.title.isNotBlank() && !state.isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
@@ -145,7 +189,10 @@ fun CreateQuizScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text(if (state.isEditMode) "Cập nhật bài kiểm tra" else "Tạo Bài Kiểm Tra")
+                    Text(
+                        if (state.isEditMode) "Cập nhật bài kiểm tra" else "Tạo Bài Kiểm Tra",
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }

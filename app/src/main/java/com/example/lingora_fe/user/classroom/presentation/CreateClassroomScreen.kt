@@ -31,7 +31,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.navigation.Route
+import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,14 +65,28 @@ fun CreateClassroomScreen(
     }
 
     Scaffold(
+        containerColor = ClassroomColors.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isEditMode) "Chỉnh sửa lớp học" else "Tạo lớp học mới") },
+                title = {
+                    Text(
+                        if (state.isEditMode) "Chỉnh sửa lớp học" else "Tạo lớp học mới",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MainText
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = MainText
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
         }
     ) { paddingValues ->
@@ -89,7 +105,7 @@ fun CreateClassroomScreen(
                     .fillMaxWidth()
                     .height(150.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFE8F5E9))
+                    .background(ClassroomColors.BrandSoftSurface)
                     .clickable { imagePickerLauncher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
@@ -122,14 +138,15 @@ fun CreateClassroomScreen(
                         Icon(
                             imageVector = Icons.Default.AddAPhoto,
                             contentDescription = "Add cover photo",
-                            tint = Color(0xFF5CB85C),
+                            tint = ClassroomColors.BrandPrimaryStrong,
                             modifier = Modifier.size(40.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "Thêm ảnh bìa (tùy chọn)",
-                            color = Color(0xFF5CB85C),
-                            style = MaterialTheme.typography.bodyMedium
+                            color = ClassroomColors.BrandPrimaryStrong,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -137,7 +154,13 @@ fun CreateClassroomScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Thông tin cơ bản", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("Thông tin cơ bản", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MainText)
+
+            val brandFieldColors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ClassroomColors.BrandPrimary,
+                focusedLabelColor = ClassroomColors.BrandPrimaryStrong,
+                cursorColor = ClassroomColors.BrandPrimary
+            )
 
             OutlinedTextField(
                 value = state.name,
@@ -145,7 +168,8 @@ fun CreateClassroomScreen(
                 label = { Text("Tên lớp học *") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                isError = state.error != null && state.name.isBlank()
+                isError = state.error != null && state.name.isBlank(),
+                colors = brandFieldColors
             )
 
             OutlinedTextField(
@@ -155,7 +179,8 @@ fun CreateClassroomScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
-                maxLines = 4
+                maxLines = 4,
+                colors = brandFieldColors
             )
 
             OutlinedTextField(
@@ -164,7 +189,8 @@ fun CreateClassroomScreen(
                 label = { Text("Số học viên tối đa") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = brandFieldColors
             )
 
             // Status Dropdown
@@ -186,7 +212,8 @@ fun CreateClassroomScreen(
                     readOnly = true,
                     label = { Text("Trạng thái") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = statusExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    colors = brandFieldColors
                 )
                 ExposedDropdownMenu(
                     expanded = statusExpanded,
@@ -217,17 +244,23 @@ fun CreateClassroomScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Công khai lớp học")
+                Text(text = "Công khai lớp học", color = MainText)
                 Switch(
                     checked = state.isPublic,
-                    onCheckedChange = { viewModel.onIsPublicChange(it) }
+                    onCheckedChange = { viewModel.onIsPublicChange(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = ClassroomColors.BrandPrimary,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = ClassroomColors.NeutralBorder
+                    )
                 )
             }
 
             state.error?.let { errorMsg ->
                 Text(
                     text = errorMsg,
-                    color = MaterialTheme.colorScheme.error,
+                    color = ClassroomColors.Danger,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -239,7 +272,10 @@ fun CreateClassroomScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isLoading,
                 shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5CB85C))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
@@ -248,7 +284,10 @@ fun CreateClassroomScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text(if (state.isEditMode) "Cập nhật Lớp học" else "Tạo Lớp Học")
+                    Text(
+                        if (state.isEditMode) "Cập nhật Lớp học" else "Tạo Lớp Học",
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }

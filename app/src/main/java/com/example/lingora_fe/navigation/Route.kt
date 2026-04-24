@@ -47,6 +47,9 @@ sealed class Route(
     
     // Notification
     object Notification : Route("notification")
+
+    // Ranking
+    object Ranking : Route("ranking")
     
     // Chatbot
     object Chatbot : Route("chatbot")

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.core.network.TokenManager
 import com.example.lingora_fe.user.exam.domain.repository.ExamRepository
 import com.example.lingora_fe.user.exam.domain.repository.AnswerPayload
+import com.example.lingora_fe.user.ranking.presentation.XpRewardTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +33,8 @@ data class AttemptDetailUiState(
 @HiltViewModel
 class ExamViewModel @Inject constructor(
     private val repository: ExamRepository,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val xpRewardTracker: XpRewardTracker
 ) : ViewModel() {
 
     private val _listState = MutableStateFlow(ExamListUiState())
@@ -284,6 +286,9 @@ class ExamViewModel @Inject constructor(
                 ifRight = { finalAttempt ->
                     _detailState.value = _detailState.value.copy(isSubmitting = false, attemptId = finalAttempt.id, message = "Đã nộp toàn bài")
                     _fullTestSubmitted.value = true // Signal to show dialog
+                    // Backend awards XP asynchronously through the exam_completed event.
+                    // Poll /rankings/me so the reward popup fires once XP is credited.
+                    xpRewardTracker.observeAfterAction(sourceActionKey = "exam_completed")
                 }
             )
         }

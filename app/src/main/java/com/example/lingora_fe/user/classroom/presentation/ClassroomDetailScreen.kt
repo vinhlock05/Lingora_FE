@@ -51,6 +51,7 @@ import com.example.lingora_fe.user.classroom.util.ClassroomMessageType
 import com.example.lingora_fe.core.ui.theme.GradientEnd
 import com.example.lingora_fe.core.ui.theme.GradientStart
 import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
 import com.example.lingora_fe.util.DateFormatHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,19 +84,36 @@ fun ClassroomDetailScreen(
     }
 
     Scaffold(
+        containerColor = ClassroomColors.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text(text = state.classroom?.name ?: "Lớp học", maxLines = 1) },
+                title = {
+                    Text(
+                        text = state.classroom?.name ?: "Lớp học",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MainText
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = MainText
+                        )
                     }
                 },
                 actions = {
                     if (isTeacher) {
                         Box {
                             IconButton(onClick = { menuExpanded = true }) {
-                                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Tùy chọn")
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Tùy chọn",
+                                    tint = MainText
+                                )
                             }
                             DropdownMenu(
                                 expanded = menuExpanded,
@@ -103,21 +121,21 @@ fun ClassroomDetailScreen(
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Chỉnh sửa") },
-                                    onClick = { 
+                                    onClick = {
                                         menuExpanded = false
                                         navController.navigate(com.example.lingora_fe.navigation.Route.createClassroomWithId(classroomId))
                                     }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Lưu trữ") },
-                                    onClick = { 
+                                    onClick = {
                                         menuExpanded = false
                                         viewModel.archiveClassroom()
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Xóa", color = Color.Red) },
-                                    onClick = { 
+                                    text = { Text("Xóa", color = ClassroomColors.Danger) },
+                                    onClick = {
                                         menuExpanded = false
                                         viewModel.deleteClassroom()
                                     }
@@ -125,7 +143,10 @@ fun ClassroomDetailScreen(
                             }
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
         },
         floatingActionButton = {
@@ -138,7 +159,7 @@ fun ClassroomDetailScreen(
                             navController.navigate(com.example.lingora_fe.navigation.Route.createQuiz(classroomId))
                         }
                     },
-                    containerColor = Color(0xFF5CB85C),
+                    containerColor = ClassroomColors.BrandPrimary,
                     contentColor = Color.White
                 ) {
                     Icon(Icons.Default.Add, contentDescription = fabLabel)
@@ -166,8 +187,13 @@ fun ClassroomDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = state.error ?: "Đã xảy ra lỗi", color = Color.Red)
-                    TextButton(onClick = { viewModel.loadDetail() }) {
+                    Text(text = state.error ?: "Đã xảy ra lỗi", color = ClassroomColors.Danger)
+                    TextButton(
+                        onClick = { viewModel.loadDetail() },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = ClassroomColors.BrandPrimaryStrong
+                        )
+                    ) {
                         Text("Thử lại")
                     }
                 }
@@ -184,7 +210,11 @@ fun ClassroomDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .background(Color(0xFF81C784)),
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(GradientStart, GradientEnd)
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 if (state.classroom?.coverImageUrl != null) {
@@ -198,18 +228,23 @@ fun ClassroomDetailScreen(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    Text("Ảnh bìa", color = Color.White)
+                    Text(
+                        text = "Ảnh bìa",
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
 
             TabRow(
                 selectedTabIndex = state.selectedTab,
                 containerColor = Color.White,
-                contentColor = Color(0xFF5CB85C),
+                contentColor = ClassroomColors.BrandPrimaryStrong,
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
                         Modifier.tabIndicatorOffset(tabPositions[state.selectedTab]),
-                        color = Color(0xFF5CB85C)
+                        color = ClassroomColors.BrandPrimary,
+                        height = 3.dp
                     )
                 }
             ) {
@@ -217,11 +252,14 @@ fun ClassroomDetailScreen(
                     Tab(
                         selected = state.selectedTab == index,
                         onClick = { viewModel.selectTab(index) },
-                        text = { 
+                        text = {
                             Text(
                                 title,
-                                color = if (state.selectedTab == index) Color(0xFF5CB85C) else Color.Gray,
-                                fontWeight = if (state.selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                                color = if (state.selectedTab == index)
+                                    ClassroomColors.BrandPrimaryStrong
+                                else
+                                    ClassroomColors.TextMuted,
+                                fontWeight = if (state.selectedTab == index) FontWeight.SemiBold else FontWeight.Normal
                             )
                         }
                     )
@@ -277,19 +315,26 @@ fun ClassroomDetailScreen(
                 confirmButton = {
                     TextButton(
                         onClick = { viewModel.confirmRemoveMember() },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                        colors = ButtonDefaults.textButtonColors(contentColor = ClassroomColors.Danger)
                     ) {
                         if (state.isRemovingMember) {
-                            run {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            }
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = ClassroomColors.Danger,
+                                strokeWidth = 2.dp
+                            )
                         } else {
                             Text("Loại bỏ")
                         }
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { viewModel.dismissRemoveMemberDialog() }) {
+                    TextButton(
+                        onClick = { viewModel.dismissRemoveMemberDialog() },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = ClassroomColors.TextSecondary
+                        )
+                    ) {
                         Text("Hủy")
                     }
                 }
@@ -311,7 +356,7 @@ private fun LessonsTabContent(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Chưa có bài học nào", color = Color.Gray)
+            Text("Chưa có bài học nào", color = ClassroomColors.TextMuted)
         }
         return
     }
@@ -348,7 +393,7 @@ private fun LessonCard(
                 navController.navigate(com.example.lingora_fe.navigation.Route.lessonDetail(classroomId, lesson.id.toString(), isTeacher))
             },
         colors = CardDefaults.cardColors(
-            containerColor = if (!lesson.isPublished) Color(0xFFF5F5F5) else Color.White
+            containerColor = if (!lesson.isPublished) ClassroomColors.MutedCardSurface else ClassroomColors.CardSurface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -362,14 +407,14 @@ private fun LessonCard(
                     Text(
                         text = lesson.title,
                         fontWeight = FontWeight.Bold,
-                        color = if (!lesson.isPublished) Color.Gray else Color.Black
+                        color = if (!lesson.isPublished) ClassroomColors.TextMuted else MainText
                     )
                     lesson.description?.let { desc ->
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = desc,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                            color = ClassroomColors.TextSecondary
                         )
                     }
                 }
@@ -379,19 +424,19 @@ private fun LessonCard(
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = "Tùy chọn",
-                                tint = Color.Gray
+                                tint = ClassroomColors.TextMuted
                             )
                         }
                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             DropdownMenuItem(
                                 text = { Text("Chỉnh sửa") },
-                                onClick = { 
+                                onClick = {
                                     expanded = false
                                     navController.navigate(com.example.lingora_fe.navigation.Route.createLesson(classroomId) + "?lessonId=${lesson.id}")
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Xóa", color = Color.Red) },
+                                text = { Text("Xóa", color = ClassroomColors.Danger) },
                                 onClick = { expanded = false; onDelete() }
                             )
                         }
@@ -400,18 +445,30 @@ private fun LessonCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = when (lesson.lessonType) {
-                        ClassroomLessonType.VIDEO -> "Video"
-                        ClassroomLessonType.STUDYSET -> "Bộ học"
-                        ClassroomLessonType.TEXT -> "Văn bản"
-                        ClassroomLessonType.MIXED -> "Tổng hợp"
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF5CB85C)
-                )
+                Surface(
+                    color = ClassroomColors.BrandSoftSurface,
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = when (lesson.lessonType) {
+                            ClassroomLessonType.VIDEO -> "Video"
+                            ClassroomLessonType.STUDYSET -> "Bộ học"
+                            ClassroomLessonType.TEXT -> "Văn bản"
+                            ClassroomLessonType.MIXED -> "Tổng hợp"
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ClassroomColors.BrandPrimaryStrong,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
                 if (!lesson.isPublished) {
-                    Text("Bản nháp", color = Color.Red, style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "Bản nháp",
+                        color = ClassroomColors.Danger,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
@@ -431,7 +488,7 @@ private fun QuizzesTabContent(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Chưa có bài kiểm tra nào", color = Color.Gray)
+            Text("Chưa có bài kiểm tra nào", color = ClassroomColors.TextMuted)
         }
         return
     }
@@ -467,7 +524,7 @@ private fun QuizCard(
             .clickable {
                 navController.navigate(com.example.lingora_fe.navigation.Route.quizDetail(classroomId, quiz.id.toString(), isTeacher))
             },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -477,10 +534,14 @@ private fun QuizCard(
                 verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = quiz.title, fontWeight = FontWeight.Bold)
+                    Text(text = quiz.title, fontWeight = FontWeight.Bold, color = MainText)
                     quiz.description?.let { desc ->
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = desc, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                        Text(
+                            text = desc,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = ClassroomColors.TextSecondary
+                        )
                     }
                 }
                 if (isTeacher) {
@@ -489,19 +550,19 @@ private fun QuizCard(
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = "Tùy chọn",
-                                tint = Color.Gray
+                                tint = ClassroomColors.TextMuted
                             )
                         }
                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             DropdownMenuItem(
                                 text = { Text("Chỉnh sửa") },
-                                onClick = { 
+                                onClick = {
                                     expanded = false
                                     navController.navigate(com.example.lingora_fe.navigation.Route.createQuiz(classroomId) + "?quizId=${quiz.id}")
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Xóa", color = Color.Red) },
+                                text = { Text("Xóa", color = ClassroomColors.Danger) },
                                 onClick = { expanded = false; onDelete() }
                             )
                         }
@@ -514,16 +575,21 @@ private fun QuizCard(
                     Text(
                         text = "⏱ ${it / 60} phút",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray
+                        color = ClassroomColors.TextMuted
                     )
                 }
                 Text(
                     text = "Điểm qua: ${(quiz.passingScore * 100).toInt()}%",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray
+                    color = ClassroomColors.TextMuted
                 )
                 if (!quiz.isPublished) {
-                    Text("Bản nháp", color = Color.Red, style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "Bản nháp",
+                        color = ClassroomColors.Danger,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
@@ -555,7 +621,11 @@ fun ChatTabContent(
 
     val canSend = (state.chatInput.isNotBlank() || state.pendingAttachmentUrl != null) && !state.isSendingMessage
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ClassroomColors.ScreenBackground)
+    ) {
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             if (state.chatMessages.isEmpty() && !state.isChatLoading) {
                 Column(
@@ -566,12 +636,12 @@ fun ChatTabContent(
                     Text(
                         text = "Chưa có thảo luận nào",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
+                        color = ClassroomColors.TextSecondary
                     )
                     Text(
                         text = "Hãy bắt đầu cuộc hội thoại!",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.LightGray
+                        color = ClassroomColors.TextMuted
                     )
                 }
             } else {
@@ -592,12 +662,19 @@ fun ChatTabContent(
                 ) {
                     if (state.isChatLoadingMore) {
                         item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color(0xFF5CB85C))
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp,
+                                    color = ClassroomColors.BrandPrimary
+                                )
                             }
                         }
                     }
-                    
+
                     items(state.chatMessages, key = { it.id ?: it.hashCode() }) { message ->
                         val isMe = message.sender.id == state.currentUserId
                         MessageBubble(
@@ -614,7 +691,7 @@ fun ChatTabContent(
             modifier = Modifier.fillMaxWidth().imePadding(),
             tonalElevation = 8.dp,
             shadowElevation = 8.dp,
-            color = Color.White
+            color = ClassroomColors.CardSurface
         ) {
             Column {
                 // Reply preview bar
@@ -622,14 +699,14 @@ fun ChatTabContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFE8F5E9))
+                            .background(ClassroomColors.ReplyBarSurface)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.Reply,
                             contentDescription = null,
-                            tint = Color(0xFF5CB85C),
+                            tint = ClassroomColors.BrandPrimaryStrong,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -638,7 +715,7 @@ fun ChatTabContent(
                                 text = state.replyingTo.sender.username ?: "Unknown",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF5CB85C)
+                                color = ClassroomColors.BrandPrimaryStrong
                             )
                             Text(
                                 text = when (state.replyingTo.type) {
@@ -647,13 +724,18 @@ fun ChatTabContent(
                                     else -> state.replyingTo.content
                                 },
                                 fontSize = 12.sp,
-                                color = Color.Gray,
+                                color = ClassroomColors.TextSecondary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
                         IconButton(onClick = onClearReply, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = "Hủy reply", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Hủy reply",
+                                tint = ClassroomColors.TextMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }
@@ -667,8 +749,12 @@ fun ChatTabContent(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color(0xFF5CB85C))
-                        Text("Đang tải ảnh...", fontSize = 13.sp, color = Color.Gray)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = ClassroomColors.BrandPrimary
+                        )
+                        Text("Đang tải ảnh...", fontSize = 13.sp, color = ClassroomColors.TextSecondary)
                     }
                 } else if (state.pendingAttachmentUrl != null) {
                     Row(
@@ -689,9 +775,19 @@ fun ChatTabContent(
                             contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Ảnh đính kèm", modifier = Modifier.weight(1f), fontSize = 13.sp, color = Color.Gray)
+                        Text(
+                            "Ảnh đính kèm",
+                            modifier = Modifier.weight(1f),
+                            fontSize = 13.sp,
+                            color = ClassroomColors.TextSecondary
+                        )
                         IconButton(onClick = onClearAttachment, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = "Xóa ảnh", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Xóa ảnh",
+                                tint = ClassroomColors.TextMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }
@@ -711,19 +807,25 @@ fun ChatTabContent(
                         Icon(
                             imageVector = Icons.Default.AttachFile,
                             contentDescription = "Đính kèm ảnh",
-                            tint = Color(0xFF5CB85C)
+                            tint = ClassroomColors.BrandPrimaryStrong
                         )
                     }
                     OutlinedTextField(
                         value = state.chatInput,
                         onValueChange = onInputChange,
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("Nhập tin nhắn...") },
+                        placeholder = {
+                            Text(
+                                "Nhập tin nhắn...",
+                                color = ClassroomColors.TextPlaceholder
+                            )
+                        },
                         maxLines = 4,
                         shape = RoundedCornerShape(24.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF5CB85C),
-                            unfocusedBorderColor = Color.LightGray
+                            focusedBorderColor = ClassroomColors.BrandPrimary,
+                            unfocusedBorderColor = ClassroomColors.NeutralBorder,
+                            cursorColor = ClassroomColors.BrandPrimary
                         )
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -733,7 +835,7 @@ fun ChatTabContent(
                         modifier = Modifier
                             .size(48.dp)
                             .background(
-                                if (canSend) Color(0xFF5CB85C) else Color.LightGray,
+                                if (canSend) ClassroomColors.BrandPrimary else ClassroomColors.NeutralBorder,
                                 CircleShape
                             )
                     ) {
@@ -847,12 +949,12 @@ fun MessageBubble(
             horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
         ) {
             Surface(
-                color = if (isMe) Color(0xFF10B981) else Color(0xFFF5F7FA),
+                color = if (isMe) ClassroomColors.MyBubble else ClassroomColors.OtherBubble,
                 shape = RoundedCornerShape(
                     topStart = 18.dp,
                     topEnd = 18.dp,
-                    bottomStart = if (isMe) 18.dp else 2.dp,
-                    bottomEnd = if (isMe) 2.dp else 18.dp
+                    bottomStart = if (isMe) 18.dp else 4.dp,
+                    bottomEnd = if (isMe) 4.dp else 18.dp
                 ),
                 modifier = Modifier.combinedClickable(
                     onClick = {},
@@ -868,14 +970,14 @@ fun MessageBubble(
                             text = message.sender.username ?: "Unknown",
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
-                            color = MainText
+                            color = ClassroomColors.BrandPrimaryStrong
                         )
                     }
 
                     // Replied-to quote block
                     if (message.repliedTo != null) {
                         Surface(
-                            color = if (isMe) Color(0xFF0E9A6D) else Color(0xFFE8E8E8),
+                            color = if (isMe) ClassroomColors.MyBubbleQuote else ClassroomColors.OtherBubbleQuote,
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -885,8 +987,8 @@ fun MessageBubble(
                                         .width(3.dp)
                                         .height(36.dp)
                                         .background(
-                                            if (isMe) Color.White.copy(alpha = 0.7f)
-                                            else Color(0xFF5CB85C),
+                                            if (isMe) Color.White.copy(alpha = 0.8f)
+                                            else ClassroomColors.BrandPrimary,
                                             RoundedCornerShape(2.dp)
                                         )
                                 )
@@ -896,7 +998,10 @@ fun MessageBubble(
                                         text = message.repliedTo.sender.username ?: "Unknown",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = if (isMe) Color.White.copy(alpha = 0.9f) else Color(0xFF5CB85C)
+                                        color = if (isMe)
+                                            Color.White.copy(alpha = 0.95f)
+                                        else
+                                            ClassroomColors.BrandPrimaryStrong
                                     )
                                     Text(
                                         text = when (message.repliedTo.type) {
@@ -905,7 +1010,10 @@ fun MessageBubble(
                                             else -> message.repliedTo.content
                                         },
                                         fontSize = 12.sp,
-                                        color = if (isMe) Color.White.copy(alpha = 0.7f) else Color.Gray,
+                                        color = if (isMe)
+                                            Color.White.copy(alpha = 0.75f)
+                                        else
+                                            ClassroomColors.TextSecondary,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -936,7 +1044,7 @@ fun MessageBubble(
                                     Row(
                                         modifier = Modifier
                                             .background(
-                                                if (isMe) Color(0xFF0E9A6D) else Color(0xFFE0E0E0),
+                                                if (isMe) ClassroomColors.MyBubbleQuote else ClassroomColors.OtherBubbleQuote,
                                                 RoundedCornerShape(8.dp)
                                             )
                                             .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -946,7 +1054,7 @@ fun MessageBubble(
                                         Icon(
                                             imageVector = Icons.Default.AttachFile,
                                             contentDescription = null,
-                                            tint = if (isMe) Color.White else Color(0xFF5CB85C),
+                                            tint = if (isMe) Color.White else ClassroomColors.BrandPrimaryStrong,
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Text(
@@ -964,7 +1072,6 @@ fun MessageBubble(
 
                         // 2. Render Text Content (if not empty or different from attachment URL)
                         if (message.content.isNotBlank() && (message.attachmentUrl == null || message.content != message.attachmentUrl)) {
-                            // If it's a file but content is not the filename, or it's an image/text message
                             Text(
                                 text = message.content,
                                 fontSize = 14.sp,
@@ -978,7 +1085,7 @@ fun MessageBubble(
             Text(
                 text = DateFormatHelper.formatDateAsChatTime(message.createdAt),
                 fontSize = 11.sp,
-                color = Color.Gray,
+                color = ClassroomColors.TextMuted,
                 modifier = Modifier.padding(
                     top = 4.dp,
                     start = if (isMe) 0.dp else 8.dp,
@@ -1012,13 +1119,19 @@ private fun MembersTabContent(
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ClassroomColors.ScreenBackground),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (teacher != null) {
             item {
-                Text("Giáo viên", fontWeight = FontWeight.Bold, color = Color(0xFF5CB85C))
+                Text(
+                    "Giáo viên",
+                    fontWeight = FontWeight.Bold,
+                    color = ClassroomColors.BrandPrimaryStrong
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 TeacherCard(user = teacher)
             }
@@ -1026,7 +1139,11 @@ private fun MembersTabContent(
 
         if (isTeacher && pendingMembers.isNotEmpty()) {
             item {
-                Text("Chờ duyệt (${pendingMembers.size})", fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(
+                    "Chờ duyệt (${pendingMembers.size})",
+                    fontWeight = FontWeight.Bold,
+                    color = ClassroomColors.TextSecondary
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
             items(pendingMembers, key = { "pending_${it.id}" }) { member ->
@@ -1038,11 +1155,20 @@ private fun MembersTabContent(
                     onKick = { onKick(member) }
                 )
             }
-            item { Divider(modifier = Modifier.padding(vertical = 8.dp)) }
+            item {
+                Divider(
+                    color = ClassroomColors.NeutralBorder,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
         }
 
         item {
-            Text("Học sinh (${activeMembers.size})", fontWeight = FontWeight.Bold, color = Color.Gray)
+            Text(
+                "Học sinh (${activeMembers.size})",
+                fontWeight = FontWeight.Bold,
+                color = ClassroomColors.TextSecondary
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -1062,7 +1188,7 @@ private fun MembersTabContent(
 private fun TeacherCard(user: com.example.lingora_fe.user.classroom.domain.model.ClassroomUser) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -1072,8 +1198,13 @@ private fun TeacherCard(user: com.example.lingora_fe.user.classroom.domain.model
             AvatarBox(avatarUrl = user.avatar, username = user.username)
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(user.username ?: "Unknown Teacher", fontWeight = FontWeight.Bold)
-                Text("Giáo viên chính", style = MaterialTheme.typography.labelMedium, color = Color(0xFF5CB85C))
+                Text(user.username ?: "Unknown Teacher", fontWeight = FontWeight.Bold, color = MainText)
+                Text(
+                    "Giáo viên chính",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ClassroomColors.BrandPrimaryStrong,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -1089,7 +1220,9 @@ private fun MemberCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = if (isPending) Color(0xFFFFF9C4) else Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isPending) ClassroomColors.PendingSurface else ClassroomColors.CardSurface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -1100,22 +1233,39 @@ private fun MemberCard(
         ) {
             val username = member.user.username ?: "Unknown User"
             Column(modifier = Modifier.weight(1f)) {
-                Text(username, fontWeight = FontWeight.Bold)
+                Text(username, fontWeight = FontWeight.Bold, color = MainText)
                 if (member.role.value == "ASSISTANT" || member.role.value == "TEACHER") {
-                    Text("Giáo viên", style = MaterialTheme.typography.labelMedium, color = Color(0xFF5CB85C))
+                    Text(
+                        "Giáo viên",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ClassroomColors.BrandPrimaryStrong,
+                        fontWeight = FontWeight.Medium
+                    )
                 } else {
-                    Text(if (isPending) "Học sinh (Chờ duyệt)" else "Học sinh", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                    Text(
+                        if (isPending) "Học sinh (Chờ duyệt)" else "Học sinh",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isPending) ClassroomColors.PendingAccent else ClassroomColors.TextMuted
+                    )
                 }
             }
 
             if (isTeacher) {
                 if (isPending) {
                     IconButton(onClick = onApprove) {
-                        Icon(imageVector = Icons.Default.Check, contentDescription = "Duyệt", tint = Color(0xFF5CB85C))
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Duyệt",
+                            tint = ClassroomColors.BrandPrimaryStrong
+                        )
                     }
                 }
                 IconButton(onClick = onKick) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Đuổi/Xóa", tint = Color.Red)
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Đuổi/Xóa",
+                        tint = ClassroomColors.Danger
+                    )
                 }
             }
         }

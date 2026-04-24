@@ -24,7 +24,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
+import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
 import com.example.lingora_fe.user.classroom.util.QuizType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,12 +64,23 @@ fun QuizDetailScreen(
     }
 
     Scaffold(
+        containerColor = ClassroomColors.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Chi tiết bài kiểm tra") },
+                title = {
+                    Text(
+                        "Chi tiết bài kiểm tra",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MainText
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = MainText
+                        )
                     }
                 },
                 actions = {
@@ -75,18 +88,24 @@ fun QuizDetailScreen(
                         IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Import từ StudySet"
+                                contentDescription = "Import từ StudySet",
+                                tint = ClassroomColors.BrandPrimaryStrong
                             )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (state.isTeacher) {
                 FloatingActionButton(
-                    onClick = { viewModel.showAddQuestionDialog() }
+                    onClick = { viewModel.showAddQuestionDialog() },
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = "Thêm câu hỏi")
                 }
@@ -101,7 +120,7 @@ fun QuizDetailScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
                 }
             }
 
@@ -119,9 +138,15 @@ fun QuizDetailScreen(
                         Text(
                             text = state.error ?: "Đã xảy ra lỗi",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
+                            color = ClassroomColors.Danger
                         )
-                        Button(onClick = { viewModel.refresh() }) {
+                        Button(
+                            onClick = { viewModel.refresh() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ClassroomColors.BrandPrimary,
+                                contentColor = Color.White
+                            )
+                        ) {
                             Text("Thử lại")
                         }
                     }
@@ -139,7 +164,8 @@ fun QuizDetailScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -147,14 +173,16 @@ fun QuizDetailScreen(
                         ) {
                             Text(
                                 text = quiz.title,
-                                style = MaterialTheme.typography.headlineSmall
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MainText
                             )
 
                             if (!quiz.description.isNullOrEmpty()) {
                                 Text(
                                     text = quiz.description ?: "",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = ClassroomColors.TextSecondary
                                 )
                             }
 
@@ -163,22 +191,40 @@ fun QuizDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                val brandAssistChipColors = AssistChipDefaults.assistChipColors(
+                                    containerColor = ClassroomColors.BrandSoftSurface,
+                                    labelColor = ClassroomColors.BrandPrimaryStrong
+                                )
+                                val brandAssistChipBorder = AssistChipDefaults.assistChipBorder(
+                                    enabled = true,
+                                    borderColor = ClassroomColors.BrandPrimary
+                                )
+
                                 if (quiz.timeLimitSeconds != null) {
                                     AssistChip(
                                         onClick = {},
-                                        label = { Text("${quiz.timeLimitSeconds} giây") }
+                                        label = { Text("${quiz.timeLimitSeconds} giây") },
+                                        colors = brandAssistChipColors,
+                                        border = brandAssistChipBorder
                                     )
                                 }
 
                                 AssistChip(
                                     onClick = {},
-                                    label = { Text("${quiz.passingScore * 100}% để đạt") }
+                                    label = { Text("${quiz.passingScore * 100}% để đạt") },
+                                    colors = brandAssistChipColors,
+                                    border = brandAssistChipBorder
                                 )
 
                                 if (quiz.isPublished) {
                                     AssistChip(
                                         onClick = {},
-                                        label = { Text("Công khai") }
+                                        label = { Text("Công khai") },
+                                        colors = AssistChipDefaults.assistChipColors(
+                                            containerColor = ClassroomColors.PublicChipBackground,
+                                            labelColor = ClassroomColors.PublicChipText
+                                        ),
+                                        border = brandAssistChipBorder
                                     )
                                 }
                             }
@@ -190,6 +236,8 @@ fun QuizDetailScreen(
                         Text(
                             text = "Câu hỏi (${quiz.questions.size})",
                             style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MainText,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
 
@@ -203,7 +251,7 @@ fun QuizDetailScreen(
                                 Text(
                                     text = "Chưa có câu hỏi nào. Nhấn + để thêm.",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = ClassroomColors.TextMuted
                                 )
                             }
                         } else {
@@ -287,7 +335,8 @@ fun QuestionItem(
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
     ) {
         Column(
             modifier = Modifier
@@ -307,6 +356,8 @@ fun QuestionItem(
                     Text(
                         text = question.question,
                         style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MainText,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -314,7 +365,7 @@ fun QuestionItem(
                     Text(
                         text = "Loại: ${question.type.value}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = ClassroomColors.TextMuted
                     )
                 }
 
@@ -328,7 +379,8 @@ fun QuestionItem(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Chỉnh sửa câu hỏi",
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
+                            tint = ClassroomColors.BrandPrimaryStrong
                         )
                     }
 
@@ -340,7 +392,7 @@ fun QuestionItem(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Xóa câu hỏi",
                             modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = ClassroomColors.Danger
                         )
                     }
                 }
@@ -350,7 +402,7 @@ fun QuestionItem(
                 Text(
                     text = "Tùy chọn: ${question.options.take(2).joinToString(", ")}...",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = ClassroomColors.TextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -360,7 +412,8 @@ fun QuestionItem(
                 Text(
                     text = "Câu trả lời đúng: ${question.correctAnswer}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = ClassroomColors.BrandPrimaryStrong,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -381,12 +434,21 @@ fun AddQuestionDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val brandFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = ClassroomColors.BrandPrimary,
+        focusedLabelColor = ClassroomColors.BrandPrimaryStrong,
+        cursorColor = ClassroomColors.BrandPrimary,
+        disabledBorderColor = ClassroomColors.NeutralBorder,
+        disabledLabelColor = ClassroomColors.TextMuted,
+        disabledTextColor = MainText
+    )
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 if (state.editingQuestion != null) "Chỉnh sửa Câu Hỏi"
-                else "Thêm Câu Hỏi Mới"
+                else "Thêm Câu Hỏi Mới",
+                fontWeight = FontWeight.SemiBold
             )
         },
         text = {
@@ -402,7 +464,8 @@ fun AddQuestionDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .noRippleClickable { onExpandedQuestionTypeChange(true) },
-                        enabled = false
+                        enabled = false,
+                        colors = brandFieldColors
                     )
 
                     DropdownMenu(
@@ -429,7 +492,8 @@ fun AddQuestionDialog(
                     label = { Text("Câu hỏi *") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
-                    maxLines = 4
+                    maxLines = 4,
+                    colors = brandFieldColors
                 )
 
                 // Correct answer
@@ -438,7 +502,8 @@ fun AddQuestionDialog(
                     onValueChange = onCorrectAnswerChange,
                     label = { Text("Câu trả lời đúng") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = brandFieldColors
                 )
 
                 // Explanation
@@ -448,17 +513,26 @@ fun AddQuestionDialog(
                     label = { Text("Giải thích (tùy chọn)") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
-                    maxLines = 3
+                    maxLines = 3,
+                    colors = brandFieldColors
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = onSave,
-                enabled = state.questionText.isNotBlank() && !state.isSavingQuestion
+                enabled = state.questionText.isNotBlank() && !state.isSavingQuestion,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isSavingQuestion) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
                 } else {
                     Text("Lưu")
                 }
@@ -467,7 +541,10 @@ fun AddQuestionDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                enabled = !state.isSavingQuestion
+                enabled = !state.isSavingQuestion,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ClassroomColors.TextSecondary
+                )
             ) {
                 Text("Hủy")
             }
@@ -484,7 +561,7 @@ fun ImportStudySetDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import từ StudySet") },
+        title = { Text("Import từ StudySet", fontWeight = FontWeight.SemiBold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -498,7 +575,7 @@ fun ImportStudySetDialog(
                                 .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
                         }
                     }
 
@@ -506,7 +583,7 @@ fun ImportStudySetDialog(
                         Text(
                             "Không có StudySet nào",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = ClassroomColors.TextMuted,
                             modifier = Modifier.padding(16.dp)
                         )
                     }
@@ -534,11 +611,16 @@ fun ImportStudySetDialog(
                                 ) {
                                     RadioButton(
                                         selected = state.selectedStudySetId == option.id,
-                                        onClick = { onStudySetSelected(option.id) }
+                                        onClick = { onStudySetSelected(option.id) },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = ClassroomColors.BrandPrimary,
+                                            unselectedColor = ClassroomColors.TextMuted
+                                        )
                                     )
                                     Text(
                                         text = option.title,
                                         style = MaterialTheme.typography.bodyMedium,
+                                        color = MainText,
                                         modifier = Modifier.weight(1f),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -555,12 +637,17 @@ fun ImportStudySetDialog(
                 onClick = onImport,
                 enabled = state.selectedStudySetId != null &&
                          !state.isImporting &&
-                         !state.isLoadingStudySets
+                         !state.isLoadingStudySets,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isImporting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = Color.White,
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Text("Import")
@@ -570,7 +657,10 @@ fun ImportStudySetDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                enabled = !state.isImporting
+                enabled = !state.isImporting,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ClassroomColors.TextSecondary
+                )
             ) {
                 Text("Hủy")
             }
@@ -600,14 +690,14 @@ fun QuizOverviewContent(
         Surface(
             modifier = Modifier.size(100.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer
+            color = ClassroomColors.BrandSoftSurface
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = null,
                     modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = ClassroomColors.BrandPrimaryStrong
                 )
             }
         }
@@ -617,12 +707,12 @@ fun QuizOverviewContent(
                 text = if (isLimitReached) "Hết lượt làm bài" else "Sẵn sàng bắt đầu?",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isLimitReached) MaterialTheme.colorScheme.error else Color.Unspecified
+                color = if (isLimitReached) ClassroomColors.Danger else MainText
             )
             Text(
                 text = "Bài kiểm tra này có ${quiz.questions.size} câu hỏi",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.Gray
+                color = ClassroomColors.TextSecondary
             )
         }
 
@@ -646,7 +736,7 @@ fun QuizOverviewContent(
             Text(
                 text = quiz.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.DarkGray,
+                color = ClassroomColors.TextSecondary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
@@ -654,14 +744,15 @@ fun QuizOverviewContent(
         if (isLimitReached) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
+                    containerColor = ClassroomColors.DangerSoft
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
                     text = "Bạn đã đạt giới hạn số lần làm bài cho bài kiểm tra này.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    color = ClassroomColors.Danger,
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(16.dp)
                 )
             }
@@ -675,7 +766,11 @@ fun QuizOverviewContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ClassroomColors.BrandPrimary,
+                contentColor = Color.White
+            )
         ) {
             Text(
                 text = if (isTeacher) "Xem trước" else "Bắt đầu làm bài",
@@ -692,15 +787,24 @@ fun QuizOverviewContent(
 fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FA))
+        colors = CardDefaults.cardColors(containerColor = ClassroomColors.BrandSoftSurface)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = ClassroomColors.TextSecondary
+            )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = ClassroomColors.BrandPrimaryStrong
+            )
         }
     }
 }

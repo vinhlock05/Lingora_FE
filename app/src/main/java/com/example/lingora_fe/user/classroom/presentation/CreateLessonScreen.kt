@@ -12,10 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.lingora_fe.core.ui.theme.MainText
+import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
 import com.example.lingora_fe.user.classroom.util.ClassroomLessonType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,14 +38,28 @@ fun CreateLessonScreen(
     }
 
     Scaffold(
+        containerColor = ClassroomColors.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isEditMode) "Chỉnh sửa bài học" else "Thêm bài học mới") },
+                title = {
+                    Text(
+                        if (state.isEditMode) "Chỉnh sửa bài học" else "Thêm bài học mới",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MainText
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = MainText
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
         }
     ) { paddingValues ->
@@ -55,6 +72,15 @@ fun CreateLessonScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            val brandFieldColors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ClassroomColors.BrandPrimary,
+                focusedLabelColor = ClassroomColors.BrandPrimaryStrong,
+                cursorColor = ClassroomColors.BrandPrimary,
+                disabledBorderColor = ClassroomColors.NeutralBorder,
+                disabledLabelColor = ClassroomColors.TextMuted,
+                disabledTextColor = MainText
+            )
+
             // Title field (required)
             OutlinedTextField(
                 value = state.title,
@@ -62,7 +88,8 @@ fun CreateLessonScreen(
                 label = { Text("Tiêu đề bài học *") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                isError = state.error != null && state.title.isBlank()
+                isError = state.error != null && state.title.isBlank(),
+                colors = brandFieldColors
             )
 
             // Description field
@@ -73,7 +100,8 @@ fun CreateLessonScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp),
-                maxLines = 3
+                maxLines = 3,
+                colors = brandFieldColors
             )
 
             // Lesson Type Dropdown
@@ -90,9 +118,11 @@ fun CreateLessonScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = null,
-                            modifier = Modifier.rotate(270f)
+                            modifier = Modifier.rotate(270f),
+                            tint = ClassroomColors.TextMuted
                         )
-                    }
+                    },
+                    colors = brandFieldColors
                 )
 
                 DropdownMenu(
@@ -120,7 +150,8 @@ fun CreateLessonScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
-                maxLines = 5
+                maxLines = 5,
+                colors = brandFieldColors
             )
 
             // Sort Order field
@@ -130,7 +161,8 @@ fun CreateLessonScreen(
                 label = { Text("Thứ tự sắp xếp") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = brandFieldColors
             )
 
             // Published toggle
@@ -139,10 +171,16 @@ fun CreateLessonScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Công khai bài học")
+                Text(text = "Công khai bài học", color = MainText)
                 Switch(
                     checked = state.isPublished,
-                    onCheckedChange = { viewModel.onIsPublishedChange(it) }
+                    onCheckedChange = { viewModel.onIsPublishedChange(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = ClassroomColors.BrandPrimary,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = ClassroomColors.NeutralBorder
+                    )
                 )
             }
 
@@ -150,7 +188,7 @@ fun CreateLessonScreen(
             state.error?.let { errorMsg ->
                 Text(
                     text = errorMsg,
-                    color = MaterialTheme.colorScheme.error,
+                    color = ClassroomColors.Danger,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -163,7 +201,11 @@ fun CreateLessonScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = state.title.isNotBlank() && !state.isLoading
+                enabled = state.title.isNotBlank() && !state.isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
@@ -172,7 +214,10 @@ fun CreateLessonScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text(if (state.isEditMode) "Cập nhật bài học" else "Tạo Bài Học")
+                    Text(
+                        if (state.isEditMode) "Cập nhật bài học" else "Tạo Bài Học",
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }

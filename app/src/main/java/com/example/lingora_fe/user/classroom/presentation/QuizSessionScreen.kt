@@ -4,12 +4,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Timer
@@ -18,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
+import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -36,7 +34,7 @@ fun QuizSessionScreen(
     viewModel: QuizSessionViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    
+
     // Handle back press to warn about leaving
     var showExitWarning by remember { mutableStateOf(false) }
     BackHandler(enabled = !state.isFinished) {
@@ -44,6 +42,7 @@ fun QuizSessionScreen(
     }
 
     Scaffold(
+        containerColor = ClassroomColors.ScreenBackground,
         topBar = {
             if (!state.isFinished) {
                 TopAppBar(
@@ -51,30 +50,39 @@ fun QuizSessionScreen(
                         Column {
                             Text(
                                 "Câu hỏi ${state.currentQuestionIndex + 1} / ${state.totalQuestions}",
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MainText
                             )
                             LinearProgressIndicator(
-                                progress = if (state.totalQuestions > 0) 
-                                    (state.currentQuestionIndex + 1).toFloat() / state.totalQuestions 
+                                progress = if (state.totalQuestions > 0)
+                                    (state.currentQuestionIndex + 1).toFloat() / state.totalQuestions
                                     else 0f,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 4.dp, end = 16.dp)
                                     .height(4.dp)
                                     .clip(RoundedCornerShape(2.dp)),
-                                color = Color(0xFF5CB85C),
-                                trackColor = Color(0xFFF0F0F0)
+                                color = ClassroomColors.BrandPrimary,
+                                trackColor = ClassroomColors.NeutralBorder
                             )
                         }
                     },
                     navigationIcon = {
                         IconButton(onClick = { showExitWarning = true }) {
-                            Icon(Icons.Default.Close, contentDescription = "Thoát")
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Thoát",
+                                tint = MainText
+                            )
                         }
                     },
                     actions = {
                         TimerView(seconds = state.timeLeftSeconds)
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = ClassroomColors.HeaderSurface
+                    )
                 )
             }
         }
@@ -82,7 +90,10 @@ fun QuizSessionScreen(
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             when {
                 state.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = ClassroomColors.BrandPrimary
+                    )
                 }
                 state.isFinished -> {
                     QuizResultView(
@@ -114,15 +125,30 @@ fun QuizSessionScreen(
     if (showExitWarning) {
         AlertDialog(
             onDismissRequest = { showExitWarning = false },
-            title = { Text("Bạn muốn thoát?") },
-            text = { Text("Tiến trình làm bài của bạn sẽ không được lưu. Bạn có chắc chắn muốn thoát?") },
+            title = { Text("Bạn muốn thoát?", fontWeight = FontWeight.SemiBold) },
+            text = {
+                Text(
+                    "Tiến trình làm bài của bạn sẽ không được lưu. Bạn có chắc chắn muốn thoát?",
+                    color = ClassroomColors.TextSecondary
+                )
+            },
             confirmButton = {
-                TextButton(onClick = { navController.popBackStack() }) { 
-                    Text("Thoát", color = Color.Red) 
+                TextButton(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = ClassroomColors.Danger
+                    )
+                ) {
+                    Text("Thoát")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showExitWarning = false }) { Text("Tiếp tục làm bài") }
+                TextButton(
+                    onClick = { showExitWarning = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = ClassroomColors.BrandPrimaryStrong
+                    )
+                ) { Text("Tiếp tục làm bài") }
             }
         )
     }
@@ -133,12 +159,12 @@ fun TimerView(seconds: Int) {
     val minutes = seconds / 60
     val secs = seconds % 60
     val isUrgent = seconds < 60
-    
+
     Row(
         modifier = Modifier
             .padding(end = 16.dp)
             .background(
-                if (isUrgent) Color(0xFFFFEBEE) else Color(0xFFF5F7FA),
+                if (isUrgent) ClassroomColors.DangerSoft else ClassroomColors.BrandSoftSurface,
                 RoundedCornerShape(16.dp)
             )
             .padding(horizontal = 12.dp, vertical = 6.dp),
@@ -149,13 +175,13 @@ fun TimerView(seconds: Int) {
             Icons.Default.Timer,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = if (isUrgent) Color.Red else Color.Gray
+            tint = if (isUrgent) ClassroomColors.Danger else ClassroomColors.BrandPrimaryStrong
         )
         Text(
             text = String.format("%02d:%02d", minutes, secs),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = if (isUrgent) Color.Red else Color.Black
+            color = if (isUrgent) ClassroomColors.Danger else ClassroomColors.BrandPrimaryStrong
         )
     }
 }
@@ -182,7 +208,7 @@ fun QuestionContent(
                 .fillMaxWidth()
                 .weight(1f),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
@@ -194,11 +220,12 @@ fun QuestionContent(
                     text = question.question,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
+                    color = MainText,
                     lineHeight = 32.sp
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     question.options.forEach { option ->
                         val isSelected = selectedChoice == option
@@ -211,9 +238,9 @@ fun QuestionContent(
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -221,14 +248,17 @@ fun QuestionContent(
             if (!isFirst) {
                 TextButton(
                     onClick = onPrevious,
-                    modifier = Modifier.height(56.dp)
+                    modifier = Modifier.height(56.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = ClassroomColors.BrandPrimaryStrong
+                    )
                 ) {
-                    Text("Quay lại", fontSize = 16.sp)
+                    Text("Quay lại", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             } else {
                 Spacer(modifier = Modifier.width(80.dp))
             }
-            
+
             if (isLast) {
                 Button(
                     onClick = onFinish,
@@ -236,7 +266,10 @@ fun QuestionContent(
                         .fillMaxWidth(0.7f)
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5CB85C))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ClassroomColors.BrandPrimary,
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Nộp bài", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
@@ -247,7 +280,12 @@ fun QuestionContent(
                         .fillMaxWidth(0.7f)
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5CB85C)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ClassroomColors.BrandPrimary,
+                        contentColor = Color.White,
+                        disabledContainerColor = ClassroomColors.NeutralBorder,
+                        disabledContentColor = ClassroomColors.TextMuted
+                    ),
                     enabled = selectedChoice != null
                 ) {
                     Text("Câu tiếp theo", fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -265,11 +303,11 @@ fun ChoiceCard(text: String, isSelected: Boolean, onSelect: () -> Unit) {
             .fillMaxWidth()
             .border(
                 width = 2.dp,
-                color = if (isSelected) Color(0xFF5CB85C) else Color(0xFFF0F0F0),
+                color = if (isSelected) ClassroomColors.BrandPrimary else ClassroomColors.NeutralBorder,
                 shape = RoundedCornerShape(16.dp)
             ),
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) Color(0xFFE8F5E9) else Color.Transparent
+        color = if (isSelected) ClassroomColors.BrandSoftSurface else Color.Transparent
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -279,14 +317,15 @@ fun ChoiceCard(text: String, isSelected: Boolean, onSelect: () -> Unit) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) Color(0xFF2E7D32) else MainText,
+                color = if (isSelected) ClassroomColors.BrandPrimaryStrong else MainText,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                 modifier = Modifier.weight(1f)
             )
             if (isSelected) {
                 Icon(
                     Icons.Default.Check,
                     contentDescription = null,
-                    tint = Color(0xFF5CB85C),
+                    tint = ClassroomColors.BrandPrimary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -306,60 +345,68 @@ fun QuizResultView(score: Int, total: Int, isPassing: Boolean, onBack: () -> Uni
         Surface(
             modifier = Modifier.size(120.dp),
             shape = CircleShape,
-            color = if (isPassing) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+            color = if (isPassing) ClassroomColors.BrandSoftSurface else ClassroomColors.DangerSoft
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = if (isPassing) Icons.Default.Check else Icons.Default.Close,
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
-                    tint = if (isPassing) Color(0xFF5CB85C) else Color.Red
+                    tint = if (isPassing) ClassroomColors.BrandPrimary else ClassroomColors.Danger
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Text(
             text = if (isPassing) "Chúc mừng!" else "Chưa đạt",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = if (isPassing) Color(0xFF2E7D32) else Color.Red
+            color = if (isPassing) ClassroomColors.BrandPrimaryStrong else ClassroomColors.Danger
         )
-        
+
         Text(
             text = if (isPassing) "Bạn đã vượt qua bài kiểm tra này" else "Hãy ôn tập lại và thử lại nhé",
             style = MaterialTheme.typography.bodyLarge,
-            color = Color.Gray,
+            color = ClassroomColors.TextSecondary,
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FA))
+            colors = CardDefaults.cardColors(containerColor = ClassroomColors.BrandSoftSurface)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("ĐIỂM CỦA BẠN", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                Text(
+                    "ĐIỂM CỦA BẠN",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ClassroomColors.TextSecondary
+                )
                 Text(
                     text = "$score / $total",
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color.Black
+                    color = ClassroomColors.BrandPrimaryStrong
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(48.dp))
-        
+
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ClassroomColors.BrandPrimary,
+                contentColor = Color.White
+            )
         ) {
             Text("Quay lại lớp học", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }

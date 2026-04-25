@@ -3,6 +3,7 @@ package com.example.lingora_fe.user.conversation.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.user.conversation.domain.repository.ConversationRepository
+import com.example.lingora_fe.user.ranking.presentation.XpRewardTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
-    private val repository: ConversationRepository
+    private val repository: ConversationRepository,
+    private val xpRewardTracker: XpRewardTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConversationUiState())
@@ -184,6 +186,8 @@ class ConversationViewModel @Inject constructor(
                 ifRight = { session ->
                     _uiState.update { it.copy(isEndingSession = false, endedSession = session) }
                     onSuccess(sessionId)
+                    // Backend awards conversation XP asynchronously on CONVERSATION_ENDED.
+                    xpRewardTracker.observeAfterAction(sourceActionKey = "conversation_completed")
                 }
             )
         }

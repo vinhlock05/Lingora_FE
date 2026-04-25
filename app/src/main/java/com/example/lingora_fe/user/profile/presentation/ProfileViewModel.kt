@@ -31,15 +31,30 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun loadUserProfile() {
+        // No-op if a request is already in flight. Guards against the
+        // double-fire that happens when `init` (VM creation) and
+        // `ON_RESUME` (initial composition) both trigger a load.
+        val current = _profileState.value
+        if (current.isLoading || current.isRefreshing) return
+
         viewModelScope.launch {
-            _profileState.value = _profileState.value.copy(isLoading = true, error = null)
-            
+            val hasCachedUser = current.user != null
+            // Only show the full-screen spinner on the *first* load. For
+            // every subsequent refresh (on-resume, post-update, etc.) we
+            // keep the cached UI visible and flip `isRefreshing` instead.
+            _profileState.value = current.copy(
+                isLoading = !hasCachedUser,
+                isRefreshing = hasCachedUser,
+                error = null
+            )
+
             val token = tokenManager.getAccessToken()
             if (token != null) {
                 authRepository.getProfile(token)
                     .onRight { user ->
                         _profileState.value = _profileState.value.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             user = user,
                             error = null
                         )
@@ -47,12 +62,14 @@ class ProfileViewModel @Inject constructor(
                     .onLeft { failure ->
                         _profileState.value = _profileState.value.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             error = failure.message
                         )
                     }
             } else {
                 _profileState.value = _profileState.value.copy(
                     isLoading = false,
+                    isRefreshing = false,
                     error = "No authentication token found"
                 )
             }
@@ -130,14 +147,17 @@ class ProfileViewModel @Inject constructor(
      */
     fun updateProficiency(newProficiency: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            _profileState.value = _profileState.value.copy(isLoading = true, error = null)
+            // Use isRefreshing instead of isLoading so the main profile
+            // content stays visible — only the dialog's confirm button
+            // shows a spinner while the update is in flight.
+            _profileState.value = _profileState.value.copy(isRefreshing = true, error = null)
             
             val token = tokenManager.getAccessToken()
             val userId = tokenManager.getUserId()
 
             if (token == null || userId == null) {
                 _profileState.value = _profileState.value.copy(
-                    isLoading = false,
+                    isRefreshing = false,
                     error = "Không tìm thấy thông tin đăng nhập"
                 )
                 return@launch
@@ -146,14 +166,22 @@ class ProfileViewModel @Inject constructor(
             userManagementRepository.updateUser(token, userId, updateData)
                 .onRight { updatedUser ->
                     Log.d("ProfileViewModel", "Proficiency updated successfully: $newProficiency")
-                    // Reload profile to get updated data
-                    loadUserProfile()
+                    // Optimistically patch the cached user so the UI updates
+                    // instantly, then refresh in the background to reconcile.
+                    val current = _profileState.value
+                    val patched = current.user?.copy(proficiency = newProficiency)
+                    _profileState.value = current.copy(
+                        isRefreshing = false,
+                        user = patched ?: current.user,
+                        error = null
+                    )
                     onSuccess()
+                    loadUserProfile()
                 }
                 .onLeft { failure ->
                     Log.e("ProfileViewModel", "Failed to update proficiency: ${failure.message}")
                     _profileState.value = _profileState.value.copy(
-                        isLoading = false,
+                        isRefreshing = false,
                         error = failure.message ?: "Có lỗi xảy ra khi cập nhật trình độ"
                     )
                 }

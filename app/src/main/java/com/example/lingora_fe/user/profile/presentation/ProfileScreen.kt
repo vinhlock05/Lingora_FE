@@ -93,13 +93,21 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-        if (profileState.isLoading) {
+        // Full-screen loader is reserved for the very first load (no cached
+        // user yet). Once we have data, subsequent refreshes (on-resume,
+        // proficiency update, etc.) keep the content on-screen and use a
+        // subtle top progress bar instead — no more full-screen flash.
+        if (profileState.isLoading && profileState.user == null) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = GradientStart)
             }
+        } else if (profileState.user == null) {
+            // Safety fallback: no user and not loading → treat as error state
+            // (e.g. token missing). Shows only an empty background.
+            Box(modifier = Modifier.fillMaxSize())
         } else {
             Column(
                 modifier = Modifier
@@ -245,6 +253,13 @@ fun ProfileScreen(
                         }
                     }
                 }
+                // Ranking Summary Card
+                com.example.lingora_fe.user.ranking.presentation.components.RankingSummaryCard(
+                    onClick = {
+                        navController?.navigate(Route.Ranking.route)
+                    }
+                )
+
                 // Streak Card
                 Card(
                     modifier = Modifier
@@ -930,18 +945,19 @@ fun ProfileScreen(
                             }
                         }
                     },
-                    enabled = selectedProficiency != null && 
+                    enabled = selectedProficiency != null &&
                               selectedProficiency != profileState.user?.proficiency &&
-                              !profileState.isLoading,
+                              !profileState.isRefreshing,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GradientStart
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    if (profileState.isLoading) {
+                    if (profileState.isRefreshing) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = Color.White
+                            color = Color.White,
+                            strokeWidth = 2.dp
                         )
                     } else {
                         Text(

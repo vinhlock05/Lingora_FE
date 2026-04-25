@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +40,7 @@ fun UserTopBar(
     title: String,
     notificationCount: Int = 0,
     onNotificationClick: (() -> Unit) = {},
+    onRankingClick: (() -> Unit) = {},
     extraActions: @Composable RowScope.() -> Unit = {}
 ) {
     Column(modifier = modifier) {
@@ -60,6 +63,21 @@ fun UserTopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 extraActions()
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .border(width = 1.31862.dp, color = Color(0x1A000000), shape = RoundedCornerShape(size = 8.dp))
+                        .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 8.dp))
+                        .clickable(onClick = onRankingClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.EmojiEvents,
+                        contentDescription = "Bảng xếp hạng",
+                        tint = Color(0xFFF59E0B),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(40.dp)

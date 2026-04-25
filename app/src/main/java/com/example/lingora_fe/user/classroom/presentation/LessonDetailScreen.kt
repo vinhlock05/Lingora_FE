@@ -18,13 +18,17 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomFlashcard
+import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,12 +50,23 @@ fun LessonDetailScreen(
     }
 
     Scaffold(
+        containerColor = ClassroomColors.ScreenBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Chi tiết bài học") },
+                title = {
+                    Text(
+                        "Chi tiết bài học",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MainText
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = MainText
+                        )
                     }
                 },
                 actions = {
@@ -59,18 +74,24 @@ fun LessonDetailScreen(
                         IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Import từ StudySet"
+                                contentDescription = "Import từ StudySet",
+                                tint = ClassroomColors.BrandPrimaryStrong
                             )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (state.isTeacher) {
                 FloatingActionButton(
-                    onClick = { viewModel.showAddFlashcardDialog() }
+                    onClick = { viewModel.showAddFlashcardDialog() },
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = "Thêm flashcard")
                 }
@@ -85,7 +106,7 @@ fun LessonDetailScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
                 }
             }
 
@@ -103,9 +124,15 @@ fun LessonDetailScreen(
                         Text(
                             text = state.error ?: "Đã xảy ra lỗi",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
+                            color = ClassroomColors.Danger
                         )
-                        Button(onClick = { viewModel.refresh() }) {
+                        Button(
+                            onClick = { viewModel.refresh() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ClassroomColors.BrandPrimary,
+                                contentColor = Color.White
+                            )
+                        ) {
                             Text("Thử lại")
                         }
                     }
@@ -123,7 +150,8 @@ fun LessonDetailScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -131,14 +159,16 @@ fun LessonDetailScreen(
                         ) {
                             Text(
                                 text = lesson.title,
-                                style = MaterialTheme.typography.headlineSmall
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MainText
                             )
 
                             if (!lesson.description.isNullOrEmpty()) {
                                 Text(
                                     text = lesson.description ?: "",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = ClassroomColors.TextSecondary
                                 )
                             }
 
@@ -148,26 +178,48 @@ fun LessonDetailScreen(
                             ) {
                                 AssistChip(
                                     onClick = {},
-                                    label = { Text(lesson.lessonType.displayName) }
+                                    label = { Text(lesson.lessonType.displayName) },
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        containerColor = ClassroomColors.BrandSoftSurface,
+                                        labelColor = ClassroomColors.BrandPrimaryStrong
+                                    ),
+                                    border = AssistChipDefaults.assistChipBorder(
+                                        enabled = true,
+                                        borderColor = ClassroomColors.BrandPrimary
+                                    )
                                 )
 
                                 if (lesson.isPublished) {
                                     AssistChip(
                                         onClick = {},
-                                        label = { Text("Công khai") }
+                                        label = { Text("Công khai") },
+                                        colors = AssistChipDefaults.assistChipColors(
+                                            containerColor = ClassroomColors.PublicChipBackground,
+                                            labelColor = ClassroomColors.PublicChipText
+                                        ),
+                                        border = AssistChipDefaults.assistChipBorder(
+                                            enabled = true,
+                                            borderColor = ClassroomColors.BrandPrimary
+                                        )
                                     )
                                 }
                             }
 
                             if (!lesson.content.isNullOrEmpty()) {
-                                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                                Divider(
+                                    color = ClassroomColors.NeutralBorder,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
                                 Text(
                                     text = "Nội dung:",
-                                    style = MaterialTheme.typography.labelMedium
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = ClassroomColors.TextSecondary,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = lesson.content ?: "",
                                     style = MaterialTheme.typography.bodySmall,
+                                    color = ClassroomColors.TextSecondary,
                                     maxLines = 3,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -180,6 +232,8 @@ fun LessonDetailScreen(
                         Text(
                             text = "Flashcards (${lesson.flashcards.size})",
                             style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MainText,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
 
@@ -193,7 +247,7 @@ fun LessonDetailScreen(
                                 Text(
                                     text = "Chưa có flashcard nào. Nhấn + để thêm.",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = ClassroomColors.TextMuted
                                 )
                             }
                         } else {
@@ -272,7 +326,8 @@ fun FlashcardItem(
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
     ) {
         Column(
             modifier = Modifier
@@ -288,6 +343,8 @@ fun FlashcardItem(
                 Text(
                     text = flashcard.frontText,
                     style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MainText,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -303,7 +360,8 @@ fun FlashcardItem(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Chỉnh sửa flashcard",
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
+                            tint = ClassroomColors.BrandPrimaryStrong
                         )
                     }
 
@@ -315,7 +373,7 @@ fun FlashcardItem(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Xóa flashcard",
                             modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = ClassroomColors.Danger
                         )
                     }
                 }
@@ -324,7 +382,7 @@ fun FlashcardItem(
             Text(
                 text = flashcard.backText,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = ClassroomColors.TextSecondary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -333,7 +391,8 @@ fun FlashcardItem(
                 Text(
                     text = "Ví dụ: ${flashcard.example}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = ClassroomColors.BrandPrimaryStrong,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -351,12 +410,18 @@ fun AddFlashcardDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val brandFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = ClassroomColors.BrandPrimary,
+        focusedLabelColor = ClassroomColors.BrandPrimaryStrong,
+        cursorColor = ClassroomColors.BrandPrimary
+    )
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 if (state.editingFlashcard != null) "Chỉnh sửa Flashcard"
-                else "Thêm Flashcard Mới"
+                else "Thêm Flashcard Mới",
+                fontWeight = FontWeight.SemiBold
             )
         },
         text = {
@@ -368,7 +433,8 @@ fun AddFlashcardDialog(
                     onValueChange = onFrontChange,
                     label = { Text("Mặt trước *") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = brandFieldColors
                 )
 
                 OutlinedTextField(
@@ -376,7 +442,8 @@ fun AddFlashcardDialog(
                     onValueChange = onBackChange,
                     label = { Text("Mặt sau *") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = brandFieldColors
                 )
 
                 OutlinedTextField(
@@ -384,7 +451,8 @@ fun AddFlashcardDialog(
                     onValueChange = onExampleChange,
                     label = { Text("Ví dụ (tùy chọn)") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = brandFieldColors
                 )
             }
         },
@@ -393,10 +461,18 @@ fun AddFlashcardDialog(
                 onClick = onSave,
                 enabled = state.flashcardFront.isNotBlank() &&
                          state.flashcardBack.isNotBlank() &&
-                         !state.isSavingFlashcard
+                         !state.isSavingFlashcard,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isSavingFlashcard) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
                 } else {
                     Text("Lưu")
                 }
@@ -405,7 +481,10 @@ fun AddFlashcardDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                enabled = !state.isSavingFlashcard
+                enabled = !state.isSavingFlashcard,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ClassroomColors.TextSecondary
+                )
             ) {
                 Text("Hủy")
             }
@@ -422,7 +501,7 @@ fun ImportStudySetDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import từ StudySet") },
+        title = { Text("Import từ StudySet", fontWeight = FontWeight.SemiBold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -436,7 +515,7 @@ fun ImportStudySetDialog(
                                 .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
                         }
                     }
 
@@ -444,7 +523,7 @@ fun ImportStudySetDialog(
                         Text(
                             "Không có StudySet nào",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = ClassroomColors.TextMuted,
                             modifier = Modifier.padding(16.dp)
                         )
                     }
@@ -472,11 +551,16 @@ fun ImportStudySetDialog(
                                 ) {
                                     RadioButton(
                                         selected = state.selectedStudySetId == option.id,
-                                        onClick = { onStudySetSelected(option.id) }
+                                        onClick = { onStudySetSelected(option.id) },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = ClassroomColors.BrandPrimary,
+                                            unselectedColor = ClassroomColors.TextMuted
+                                        )
                                     )
                                     Text(
                                         text = option.title,
                                         style = MaterialTheme.typography.bodyMedium,
+                                        color = MainText,
                                         modifier = Modifier.weight(1f),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -493,12 +577,17 @@ fun ImportStudySetDialog(
                 onClick = onImport,
                 enabled = state.selectedStudySetId != null &&
                          !state.isImporting &&
-                         !state.isLoadingStudySets
+                         !state.isLoadingStudySets,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.BrandPrimary,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isImporting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = Color.White,
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Text("Import")
@@ -508,7 +597,10 @@ fun ImportStudySetDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                enabled = !state.isImporting
+                enabled = !state.isImporting,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ClassroomColors.TextSecondary
+                )
             ) {
                 Text("Hủy")
             }
@@ -540,7 +632,8 @@ fun LessonStudyPager(flashcards: List<ClassroomFlashcard>) {
             text = "${pagerState.currentPage + 1} / ${flashcards.size}",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.padding(bottom = 32.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = ClassroomColors.TextSecondary,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -570,13 +663,14 @@ fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
             Card(
                 modifier = Modifier.fillMaxSize(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
             ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = flashcard.frontText,
                         style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        color = ClassroomColors.BrandPrimaryStrong,
                         modifier = Modifier.padding(16.dp)
                     )
                 }
@@ -588,7 +682,7 @@ fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
                     .fillMaxSize()
                     .graphicsLayer { rotationY = 180f },
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                colors = CardDefaults.cardColors(containerColor = ClassroomColors.BrandSoftSurface)
             ) {
                 Column(
                     modifier = Modifier
@@ -600,19 +694,21 @@ fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
                     Text(
                         text = flashcard.backText,
                         style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        fontWeight = FontWeight.SemiBold,
+                        color = ClassroomColors.BrandPrimaryStrong
                     )
                     if (!flashcard.example.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "Ví dụ:",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            color = ClassroomColors.BrandPrimaryStrong,
+                            fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = flashcard.example,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = ClassroomColors.TextSecondary
                         )
                     }
                 }

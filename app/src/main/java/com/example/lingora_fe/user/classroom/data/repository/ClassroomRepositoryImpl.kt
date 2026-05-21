@@ -532,4 +532,59 @@ class ClassroomRepositoryImpl @Inject constructor(
             dto.toDomain()
         }.mapLeft { it.toAppFailure() }
     }
+
+    // ── Lesson Attachments ──────────────────────────────────────────────────
+
+    override suspend fun addAttachment(
+        classroomId: Int,
+        lessonId: Int,
+        role: String,
+        fileUrl: String,
+        fileType: String,
+        fileName: String,
+        mimeType: String?,
+        fileSizeBytes: Long?,
+        durationSeconds: Int?,
+        title: String?,
+        sortOrder: Int?
+    ): Either<AppFailure, com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment> {
+        return Either.catch {
+            val request = com.example.lingora_fe.user.classroom.data.remote.dto.AddAttachmentRequest(
+                role = role,
+                fileUrl = fileUrl,
+                fileType = fileType,
+                fileName = fileName,
+                mimeType = mimeType,
+                fileSizeBytes = fileSizeBytes,
+                durationSeconds = durationSeconds,
+                title = title,
+                sortOrder = sortOrder
+            )
+            val response = apiService.addAttachment(classroomId, lessonId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun getAttachments(
+        classroomId: Int,
+        lessonId: Int
+    ): Either<AppFailure, List<com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment>> {
+        return Either.catch {
+            val response = apiService.getAttachments(classroomId, lessonId)
+            val dtos = response.metaData ?: throw Exception(response.message)
+            dtos.map { it.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun deleteAttachment(
+        classroomId: Int,
+        lessonId: Int,
+        attachmentId: Int
+    ): Either<AppFailure, Unit> {
+        return Either.catch {
+            apiService.deleteAttachment(classroomId, lessonId, attachmentId)
+            Unit
+        }.mapLeft { it.toAppFailure() }
+    }
 }

@@ -67,3 +67,27 @@ enum class QuizType(val value: String) {
             entries.find { it.value == value } ?: MULTIPLE_CHOICE
     }
 }
+
+enum class LessonAttachmentRole(val value: String) {
+    INLINE("INLINE"),   // Video/Audio/Image phát trực tiếp trong app
+    DOWNLOAD("DOWNLOAD"); // File tải về máy
+
+    companion object {
+        fun fromValue(value: String): LessonAttachmentRole =
+            entries.find { it.value == value } ?: DOWNLOAD
+    }
+}
+
+enum class LessonAttachmentType(val value: String, val displayName: String) {
+    VIDEO("VIDEO", "Video"),
+    PDF("PDF", "PDF"),
+    DOCUMENT("DOCUMENT", "Tài liệu"),
+    IMAGE("IMAGE", "Ảnh"),
+    AUDIO("AUDIO", "Audio"),
+    OTHER("OTHER", "Khác");
+
+    companion object {
+        fun fromValue(value: String): LessonAttachmentType =
+            entries.find { it.value == value } ?: OTHER
+    }
+}

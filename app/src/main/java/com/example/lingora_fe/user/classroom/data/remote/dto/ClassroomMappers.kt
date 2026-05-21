@@ -3,6 +3,7 @@ package com.example.lingora_fe.user.classroom.data.remote.dto
 import com.example.lingora_fe.user.classroom.domain.model.Classroom
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomFlashcard
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomLesson
+import com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomListResult
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomMember
@@ -16,6 +17,8 @@ import com.example.lingora_fe.user.classroom.util.ClassroomMemberRole
 import com.example.lingora_fe.user.classroom.util.ClassroomMemberStatus
 import com.example.lingora_fe.user.classroom.util.ClassroomMessageType
 import com.example.lingora_fe.user.classroom.util.ClassroomStatus
+import com.example.lingora_fe.user.classroom.util.LessonAttachmentRole
+import com.example.lingora_fe.user.classroom.util.LessonAttachmentType
 import com.example.lingora_fe.user.classroom.util.QuizType
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -139,8 +142,23 @@ fun ClassroomLessonDto.toDetailDomain(): ClassroomLessonDetail = ClassroomLesson
     isPublished = isPublished ?: false,
     scheduledAt = parseDate(scheduledAt),
     flashcards = flashcards?.map { it.toDomain() } ?: emptyList(),
+    attachments = attachments?.map { it.toDomain() } ?: emptyList(),
     createdAt = parseDate(createdAt),
     updatedAt = parseDate(updatedAt)
+)
+
+fun ClassroomLessonAttachmentDto.toDomain(): ClassroomLessonAttachment = ClassroomLessonAttachment(
+    id = id,
+    role = LessonAttachmentRole.fromValue(role),
+    fileUrl = fileUrl,
+    fileType = LessonAttachmentType.fromValue(fileType),
+    fileName = fileName,
+    mimeType = mimeType,
+    fileSizeBytes = fileSizeBytes,
+    durationSeconds = durationSeconds,
+    title = title,
+    sortOrder = sortOrder,
+    createdAt = parseDate(createdAt)
 )
 
 fun ClassroomQuizDto.toDetailDomain(): ClassroomQuizDetail = ClassroomQuizDetail(

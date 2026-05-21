@@ -1,11 +1,16 @@
 package com.example.lingora_fe.user.classroom.presentation
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingora_fe.core.network.UploadRepository
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomFlashcard
 import com.example.lingora_fe.user.classroom.domain.repository.ClassroomRepository
+import com.example.lingora_fe.user.classroom.util.LessonAttachmentType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,8 +20,10 @@ import javax.inject.Inject
 @HiltViewModel
 class LessonDetailViewModel @Inject constructor(
     private val repository: ClassroomRepository,
+    private val uploadRepository: UploadRepository,
     private val studySetRepository: com.example.lingora_fe.user.studyset.domain.repository.StudySetRepository,
     private val tokenManager: com.example.lingora_fe.core.network.TokenManager,
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -281,6 +288,166 @@ class LessonDetailViewModel @Inject constructor(
                         selectedStudySetId = null,
                         lesson = lesson
                     )
+                }
+            )
+        }
+    }
+
+    // ─── Attachment ──────────────────────────────────────────────────────────
+
+    fun showAddAttachmentDialog() {
+        _state.value = _state.value.copy(
+            showAddAttachmentDialog = true,
+            attachmentFileUrl = "",
+            attachmentFileName = "",
+            attachmentTitle = "",
+            attachmentMimeType = "",
+            attachmentFileSizeBytes = null,
+            attachmentDurationSeconds = null,
+            attachmentFileType = com.example.lingora_fe.user.classroom.util.LessonAttachmentType.OTHER,
+            attachmentRole = com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.DOWNLOAD
+        )
+    }
+
+    /**
+     * Gọi khi user đã chọn file từ file picker.
+     * Upload lên server, rồi tự động điền các field.
+     */
+    fun onFilePicked(uri: Uri) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isUploadingAttachment = true)
+            uploadRepository.uploadFromUri(context, uri).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isUploadingAttachment = false,
+                        error = error.message ?: "Upload thất bại"
+                    )
+                },
+                ifRight = { result ->
+                    // Xác định fileType từ mimeType
+                    val fileType = when {
+                        result.mimeType.startsWith("video/") -> LessonAttachmentType.VIDEO
+                        result.mimeType.startsWith("audio/") -> LessonAttachmentType.AUDIO
+                        result.mimeType == "application/pdf" -> LessonAttachmentType.PDF
+                        result.mimeType.startsWith("image/") -> LessonAttachmentType.IMAGE
+                        result.mimeType.contains("word") ||
+                        result.mimeType.contains("document") ||
+                        result.mimeType.contains("sheet") ||
+                        result.mimeType.contains("presentation") -> LessonAttachmentType.DOCUMENT
+                        else -> LessonAttachmentType.OTHER
+                    }
+                    val role = when (fileType) {
+                        LessonAttachmentType.VIDEO,
+                        LessonAttachmentType.AUDIO,
+                        LessonAttachmentType.IMAGE ->
+                            com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.INLINE
+                        else ->
+                            com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.DOWNLOAD
+                    }
+
+                    _state.value = _state.value.copy(
+                        isUploadingAttachment = false,
+                        attachmentFileUrl = result.url,
+                        attachmentFileName = result.fileName,
+                        attachmentMimeType = result.mimeType,
+                        attachmentFileSizeBytes = result.fileSizeBytes,
+                        attachmentFileType = fileType,
+                        attachmentRole = role
+                    )
+                }
+            )
+        }
+    }
+
+    fun hideAddAttachmentDialog() {
+        _state.value = _state.value.copy(showAddAttachmentDialog = false)
+    }
+
+    fun onAttachmentFileUrlChange(value: String) { _state.value = _state.value.copy(attachmentFileUrl = value) }
+    fun onAttachmentFileNameChange(value: String) { _state.value = _state.value.copy(attachmentFileName = value) }
+    fun onAttachmentTitleChange(value: String) { _state.value = _state.value.copy(attachmentTitle = value) }
+    fun onAttachmentMimeTypeChange(value: String) { _state.value = _state.value.copy(attachmentMimeType = value) }
+    fun onAttachmentFileSizeChange(value: Long?) { _state.value = _state.value.copy(attachmentFileSizeBytes = value) }
+    fun onAttachmentDurationChange(value: Int?) { _state.value = _state.value.copy(attachmentDurationSeconds = value) }
+    fun onAttachmentFileTypeChange(value: com.example.lingora_fe.user.classroom.util.LessonAttachmentType) {
+        _state.value = _state.value.copy(
+            attachmentFileType = value,
+            // Video/Audio/Image → INLINE; PDF/Document/Other → DOWNLOAD
+            attachmentRole = when (value) {
+                com.example.lingora_fe.user.classroom.util.LessonAttachmentType.VIDEO,
+                com.example.lingora_fe.user.classroom.util.LessonAttachmentType.AUDIO,
+                com.example.lingora_fe.user.classroom.util.LessonAttachmentType.IMAGE ->
+                    com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.INLINE
+                else ->
+                    com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.DOWNLOAD
+            }
+        )
+    }
+    fun onAttachmentRoleChange(value: com.example.lingora_fe.user.classroom.util.LessonAttachmentRole) {
+        _state.value = _state.value.copy(attachmentRole = value)
+    }
+
+    fun saveAttachment() {
+        val current = _state.value
+        if (current.attachmentFileUrl.isBlank() || current.attachmentFileName.isBlank()) return
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isUploadingAttachment = true)
+            repository.addAttachment(
+                classroomId = classroomId,
+                lessonId = lessonId,
+                role = current.attachmentRole.value,
+                fileUrl = current.attachmentFileUrl.trim(),
+                fileType = current.attachmentFileType.value,
+                fileName = current.attachmentFileName.trim(),
+                mimeType = current.attachmentMimeType.trim().takeIf { it.isNotEmpty() },
+                fileSizeBytes = current.attachmentFileSizeBytes,
+                durationSeconds = current.attachmentDurationSeconds,
+                title = current.attachmentTitle.trim().takeIf { it.isNotEmpty() }
+            ).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isUploadingAttachment = false,
+                        error = error.message ?: "Không thể thêm attachment"
+                    )
+                },
+                ifRight = {
+                    _state.value = _state.value.copy(
+                        isUploadingAttachment = false,
+                        showAddAttachmentDialog = false
+                    )
+                    loadLessonDetail()
+                }
+            )
+        }
+    }
+
+    fun confirmDeleteAttachment(attachment: com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment) {
+        _state.value = _state.value.copy(attachmentToDelete = attachment)
+    }
+
+    fun cancelDeleteAttachment() {
+        _state.value = _state.value.copy(attachmentToDelete = null)
+    }
+
+    fun deleteAttachment() {
+        val attachment = _state.value.attachmentToDelete ?: return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isDeletingAttachment = true, attachmentToDelete = null)
+            repository.deleteAttachment(
+                classroomId = classroomId,
+                lessonId = lessonId,
+                attachmentId = attachment.id
+            ).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isDeletingAttachment = false,
+                        error = error.message ?: "Không thể xóa attachment"
+                    )
+                },
+                ifRight = {
+                    _state.value = _state.value.copy(isDeletingAttachment = false)
+                    loadLessonDetail()
                 }
             )
         }

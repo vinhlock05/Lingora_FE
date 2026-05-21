@@ -7,6 +7,7 @@ import com.example.lingora_fe.core.network.PersistentCookieJar
 import com.example.lingora_fe.core.network.SelectiveNullsAdapterFactory
 import com.example.lingora_fe.core.network.TokenAuthenticator
 import com.example.lingora_fe.core.network.TokenManager
+import com.example.lingora_fe.core.network.UploadApiService
 import com.example.lingora_fe.di.qualifier.AuthApiClient
 import com.example.lingora_fe.di.qualifier.RefreshTokenClient
 import com.example.lingora_fe.util.Constant
@@ -109,8 +110,8 @@ object AppModule {
             .addInterceptor(authInterceptor)  // Tự động thêm Authorization header
             .authenticator(tokenAuthenticator)  // Tự động refresh token khi 401
             .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)   // tăng cho download/upload
+            .writeTimeout(120, TimeUnit.SECONDS)  // tăng cho multipart upload
             .build()
     }
 
@@ -127,4 +128,9 @@ object AppModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
+
+    @Provides
+    @Singleton
+    fun provideUploadApiService(retrofit: Retrofit): UploadApiService =
+        retrofit.create(UploadApiService::class.java)
 }

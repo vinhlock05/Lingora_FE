@@ -212,4 +212,31 @@ interface ClassroomRepository {
     // ── Join by Code ──────────────────────────────────────────────────────────
 
     suspend fun joinClassroomByCode(code: String): Either<AppFailure, Classroom>
+
+    // ── Lesson Attachments ────────────────────────────────────────────────────
+
+    suspend fun addAttachment(
+        classroomId: Int,
+        lessonId: Int,
+        role: String,
+        fileUrl: String,
+        fileType: String,
+        fileName: String,
+        mimeType: String? = null,
+        fileSizeBytes: Long? = null,
+        durationSeconds: Int? = null,
+        title: String? = null,
+        sortOrder: Int? = null
+    ): Either<AppFailure, com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment>
+
+    suspend fun getAttachments(
+        classroomId: Int,
+        lessonId: Int
+    ): Either<AppFailure, List<com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment>>
+
+    suspend fun deleteAttachment(
+        classroomId: Int,
+        lessonId: Int,
+        attachmentId: Int
+    ): Either<AppFailure, Unit>
 }

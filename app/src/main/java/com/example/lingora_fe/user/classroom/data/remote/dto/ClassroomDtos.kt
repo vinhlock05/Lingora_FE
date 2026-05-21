@@ -93,6 +93,7 @@ data class ClassroomLessonDto(
     @SerializedName("isPublished") val isPublished: Boolean? = null,
     @SerializedName("scheduledAt") val scheduledAt: String? = null,
     @SerializedName("flashcards") val flashcards: List<ClassroomFlashcardDto>? = null,
+    @SerializedName("attachments") val attachments: List<ClassroomLessonAttachmentDto>? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName("updatedAt") val updatedAt: String? = null
 )
@@ -215,4 +216,44 @@ data class ClassroomMessageDto(
 
 data class JoinClassroomRequest(
     @SerializedName("code") val code: String
+)
+
+// ─── Lesson Attachment ────────────────────────────────────────────────────────
+
+data class ClassroomLessonAttachmentDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("role") val role: String,
+    @SerializedName("fileUrl") val fileUrl: String,
+    @SerializedName("fileType") val fileType: String,
+    @SerializedName("fileName") val fileName: String,
+    @SerializedName("mimeType") val mimeType: String? = null,
+    @SerializedName("fileSizeBytes") val fileSizeBytes: Long? = null,
+    @SerializedName("durationSeconds") val durationSeconds: Int? = null,
+    @SerializedName("title") val title: String? = null,
+    @SerializedName("sortOrder") val sortOrder: Int = 0,
+    @SerializedName("createdAt") val createdAt: String? = null
+)
+
+data class AddAttachmentRequest(
+    @SerializedName("role") val role: String,
+    @SerializedName("fileUrl") val fileUrl: String,
+    @SerializedName("fileType") val fileType: String,
+    @SerializedName("fileName") val fileName: String,
+    @SerializedName("mimeType") val mimeType: String? = null,
+    @SerializedName("fileSizeBytes") val fileSizeBytes: Long? = null,
+    @SerializedName("durationSeconds") val durationSeconds: Int? = null,
+    @SerializedName("title") val title: String? = null,
+    @SerializedName("sortOrder") val sortOrder: Int? = null
+)
+
+data class UpdateAttachmentRequest(
+    @SerializedName("role") val role: String? = null,
+    @SerializedName("fileUrl") val fileUrl: String? = null,
+    @SerializedName("fileType") val fileType: String? = null,
+    @SerializedName("fileName") val fileName: String? = null,
+    @SerializedName("mimeType") val mimeType: String? = null,
+    @SerializedName("fileSizeBytes") val fileSizeBytes: Long? = null,
+    @SerializedName("durationSeconds") val durationSeconds: Int? = null,
+    @SerializedName("title") val title: String? = null,
+    @SerializedName("sortOrder") val sortOrder: Int? = null
 )

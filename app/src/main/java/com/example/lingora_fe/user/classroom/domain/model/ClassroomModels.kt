@@ -5,6 +5,8 @@ import com.example.lingora_fe.user.classroom.util.ClassroomMemberRole
 import com.example.lingora_fe.user.classroom.util.ClassroomMemberStatus
 import com.example.lingora_fe.user.classroom.util.ClassroomMessageType
 import com.example.lingora_fe.user.classroom.util.ClassroomStatus
+import com.example.lingora_fe.user.classroom.util.LessonAttachmentRole
+import com.example.lingora_fe.user.classroom.util.LessonAttachmentType
 import com.example.lingora_fe.user.classroom.util.QuizType
 import java.util.Date
 
@@ -112,8 +114,23 @@ data class ClassroomLessonDetail(
     val isPublished: Boolean,
     val scheduledAt: Date?,
     val flashcards: List<ClassroomFlashcard>,
+    val attachments: List<ClassroomLessonAttachment>,
     val createdAt: Date?,
     val updatedAt: Date?
+)
+
+data class ClassroomLessonAttachment(
+    val id: Int,
+    val role: LessonAttachmentRole,
+    val fileUrl: String,
+    val fileType: LessonAttachmentType,
+    val fileName: String,
+    val mimeType: String?,
+    val fileSizeBytes: Long?,
+    val durationSeconds: Int?,
+    val title: String?,
+    val sortOrder: Int,
+    val createdAt: Date?
 )
 
 data class ClassroomQuizDetail(

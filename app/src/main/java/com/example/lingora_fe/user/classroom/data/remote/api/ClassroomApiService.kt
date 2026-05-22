@@ -1,8 +1,10 @@
 package com.example.lingora_fe.user.classroom.data.remote.api
 
 import com.example.lingora_fe.core.network.ApiResponse
+import com.example.lingora_fe.user.classroom.data.remote.dto.AddAttachmentRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomFlashcardDto
+import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomLessonAttachmentDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomLessonDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomListMetaData
 import com.example.lingora_fe.user.classroom.data.remote.dto.ClassroomMemberDto
@@ -16,6 +18,7 @@ import com.example.lingora_fe.user.classroom.data.remote.dto.CreateQuizQuestionR
 import com.example.lingora_fe.user.classroom.data.remote.dto.CreateQuizRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.ImportStudySetRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.JoinClassroomRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateAttachmentRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateClassroomRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateFlashcardRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateLessonRequest
@@ -237,4 +240,34 @@ interface ClassroomApiService {
     suspend fun joinClassroomByCode(
         @Body request: JoinClassroomRequest
     ): ApiResponse<ClassroomDto>
+
+    // ── Lesson Attachments ────────────────────────────────────────────────────
+
+    @POST("classrooms/{id}/lessons/{lessonId}/attachments")
+    suspend fun addAttachment(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Body request: AddAttachmentRequest
+    ): ApiResponse<ClassroomLessonAttachmentDto>
+
+    @GET("classrooms/{id}/lessons/{lessonId}/attachments")
+    suspend fun getAttachments(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int
+    ): ApiResponse<List<ClassroomLessonAttachmentDto>>
+
+    @PATCH("classrooms/{id}/lessons/{lessonId}/attachments/{attachmentId}")
+    suspend fun updateAttachment(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Path("attachmentId") attachmentId: Int,
+        @Body request: UpdateAttachmentRequest
+    ): ApiResponse<ClassroomLessonAttachmentDto>
+
+    @DELETE("classrooms/{id}/lessons/{lessonId}/attachments/{attachmentId}")
+    suspend fun deleteAttachment(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Path("attachmentId") attachmentId: Int
+    ): ApiResponse<Any>
 }

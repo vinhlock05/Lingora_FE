@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 
 object FileUploadHelper {
     private const val TAG = "FileUploadHelper"
-    private const val SIGNED_URL_ENDPOINT = "uploads/signed-url"
+    private const val SIGNED_URL_ENDPOINT = "upload/signed-url"
     private const val CLOUDINARY_API_BASE = "https://api.cloudinary.com/v1_1"
 
     private val cloudinaryClient = OkHttpClient.Builder()

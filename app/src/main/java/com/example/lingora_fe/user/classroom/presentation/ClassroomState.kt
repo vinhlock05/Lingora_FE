@@ -95,6 +95,7 @@ data class LessonDetailState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val lesson: ClassroomLessonDetail? = null,
+    // Flashcard
     val showAddFlashcardDialog: Boolean = false,
     val editingFlashcard: ClassroomFlashcard? = null,
     val flashcardFront: String = "",
@@ -107,7 +108,21 @@ data class LessonDetailState(
     val studySetOptions: List<StudySetOption> = emptyList(),
     val isLoadingStudySets: Boolean = false,
     val isImporting: Boolean = false,
-    val selectedStudySetId: Int? = null
+    val selectedStudySetId: Int? = null,
+    // Attachments
+    val showAddAttachmentDialog: Boolean = false,
+    val isUploadingAttachment: Boolean = false,
+    val isDeletingAttachment: Boolean = false,
+    val attachmentToDelete: com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment? = null,
+    // Add attachment form
+    val attachmentFileUrl: String = "",
+    val attachmentFileName: String = "",
+    val attachmentFileType: com.example.lingora_fe.user.classroom.util.LessonAttachmentType = com.example.lingora_fe.user.classroom.util.LessonAttachmentType.OTHER,
+    val attachmentRole: com.example.lingora_fe.user.classroom.util.LessonAttachmentRole = com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.DOWNLOAD,
+    val attachmentTitle: String = "",
+    val attachmentMimeType: String = "",
+    val attachmentFileSizeBytes: Long? = null,
+    val attachmentDurationSeconds: Int? = null
 )
 
 data class StudySetOption(

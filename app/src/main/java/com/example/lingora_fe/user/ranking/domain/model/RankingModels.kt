@@ -35,7 +35,7 @@ enum class XpActionType(val value: String, val labelVi: String) {
 
     companion object {
         fun fromValue(value: String?): XpActionType =
-            values().firstOrNull { it.value == value } ?: UNKNOWN
+            values().firstOrNull { it.value.equals(value, ignoreCase = true) } ?: UNKNOWN
     }
 }
 

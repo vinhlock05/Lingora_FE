@@ -110,8 +110,7 @@ class QuizSessionViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             
-            // Map keys from Int to String for the API
-            val answers = _state.value.userChoices.mapKeys { it.key.toString() }
+            val answers = buildSubmitAnswers()
             
             repository.submitQuizAttempt(classroomId, quizId, answers).fold(
                 ifLeft = { error ->
@@ -124,7 +123,10 @@ class QuizSessionViewModel @Inject constructor(
                     _state.value = _state.value.copy(
                         isLoading = false,
                         isFinished = true,
-                        score = result.attempt.correctCount ?: 0,
+                        score = result.attempt.correctCount ?: inferCorrectCountFromScore(
+                            scoreRatio = result.attempt.score,
+                            totalQuestions = _state.value.totalQuestions
+                        ),
                         isPassing = result.isPassing
                     )
                     timerJob?.cancel()
@@ -136,5 +138,23 @@ class QuizSessionViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+    }
+
+    private fun buildSubmitAnswers(): Map<String, String> {
+        val quizQuestions = _state.value.quiz?.questions.orEmpty()
+        return _state.value.userChoices.mapValues { (questionId, selectedValue) ->
+            val question = quizQuestions.find { it.id == questionId } ?: return@mapValues selectedValue
+            if (question.correctAnswer.toIntOrNull() != null) {
+                val selectedIndex = question.options.indexOf(selectedValue)
+                if (selectedIndex >= 0) selectedIndex.toString() else selectedValue
+            } else {
+                selectedValue
+            }
+        }.mapKeys { it.key.toString() }
+    }
+
+    private fun inferCorrectCountFromScore(scoreRatio: Double, totalQuestions: Int): Int {
+        if (totalQuestions <= 0) return 0
+        return (scoreRatio * totalQuestions).toInt()
     }
 }

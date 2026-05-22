@@ -18,3 +18,13 @@ data class ClassroomQuizAttemptDto(
     val startedAt: String,
     val submittedAt: String?
 )
+
+data class QuizAttemptWithUserDto(
+    val id: Int,
+    val attemptNumber: Int,
+    val score: Double,
+    val answers: Map<String, String>,
+    val startedAt: String?,
+    val submittedAt: String?,
+    val user: ClassroomUserDto?
+)

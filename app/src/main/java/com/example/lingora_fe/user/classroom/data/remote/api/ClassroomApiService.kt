@@ -20,6 +20,7 @@ import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateClassroomRequ
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateFlashcardRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateLessonRequest
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateQuizQuestionRequest
+import com.example.lingora_fe.user.classroom.data.remote.dto.QuizAttemptWithUserDto
 import com.example.lingora_fe.user.classroom.data.remote.dto.UpdateQuizRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -152,6 +153,12 @@ interface ClassroomApiService {
         @Path("quizId") quizId: Int,
         @Body request: com.example.lingora_fe.user.classroom.data.remote.dto.SubmitQuizAttemptRequest
     ): ApiResponse<com.example.lingora_fe.user.classroom.data.remote.dto.SubmitQuizAttemptResponseDto>
+
+    @GET("classrooms/{id}/quizzes/{quizId}/attempts")
+    suspend fun getQuizAttempts(
+        @Path("id") classroomId: Int,
+        @Path("quizId") quizId: Int
+    ): ApiResponse<List<QuizAttemptWithUserDto>>
 
     @DELETE("classrooms/{id}/quizzes/{quizId}")
     suspend fun deleteQuiz(

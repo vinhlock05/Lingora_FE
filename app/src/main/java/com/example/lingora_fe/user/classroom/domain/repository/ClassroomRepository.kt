@@ -12,6 +12,7 @@ import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
+import com.example.lingora_fe.user.classroom.domain.model.QuizAttemptWithUser
 import com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult
 
 interface ClassroomRepository {
@@ -186,6 +187,11 @@ interface ClassroomRepository {
         quizId: Int,
         studySetId: Int
     ): Either<AppFailure, ClassroomQuizDetail>
+
+    suspend fun getQuizAttempts(
+        classroomId: Int,
+        quizId: Int
+    ): Either<AppFailure, List<QuizAttemptWithUser>>
 
     suspend fun submitQuizAttempt(
         classroomId: Int,

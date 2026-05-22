@@ -77,7 +77,7 @@ class QuizDetailViewModel @Inject constructor(
             editingQuestion = null,
             questionType = QuizType.MULTIPLE_CHOICE,
             questionText = "",
-            questionOptions = emptyList(),
+            questionOptions = listOf("", "", "", ""),
             correctAnswer = "",
             explanation = ""
         )
@@ -89,14 +89,26 @@ class QuizDetailViewModel @Inject constructor(
             editingQuestion = null,
             questionType = QuizType.MULTIPLE_CHOICE,
             questionText = "",
-            questionOptions = emptyList(),
+            questionOptions = listOf("", "", "", ""),
             correctAnswer = "",
             explanation = ""
         )
     }
 
     fun onQuestionTypeChange(type: QuizType) {
-        _state.value = _state.value.copy(questionType = type)
+        val updatedOptions = when (type) {
+            QuizType.TRUE_FALSE -> listOf("True", "False")
+            QuizType.MULTIPLE_CHOICE -> {
+                val current = _state.value.questionOptions.filter { it.isNotBlank() }
+                if (current.size >= 2) current else listOf("", "", "", "")
+            }
+            QuizType.SHORT_ANSWER -> emptyList()
+        }
+        _state.value = _state.value.copy(
+            questionType = type,
+            questionOptions = updatedOptions,
+            correctAnswer = if (type == QuizType.TRUE_FALSE) "True" else _state.value.correctAnswer
+        )
     }
 
     fun onQuestionTextChange(text: String) {
@@ -105,6 +117,28 @@ class QuizDetailViewModel @Inject constructor(
 
     fun onQuestionOptionsChange(options: List<String>) {
         _state.value = _state.value.copy(questionOptions = options)
+    }
+
+    fun onQuestionOptionItemChange(index: Int, value: String) {
+        val current = _state.value.questionOptions.toMutableList()
+        if (index in current.indices) {
+            current[index] = value
+            _state.value = _state.value.copy(questionOptions = current)
+        }
+    }
+
+    fun addQuestionOption() {
+        if (_state.value.questionType != QuizType.MULTIPLE_CHOICE) return
+        _state.value = _state.value.copy(questionOptions = _state.value.questionOptions + "")
+    }
+
+    fun removeQuestionOption(index: Int) {
+        if (_state.value.questionType != QuizType.MULTIPLE_CHOICE) return
+        val current = _state.value.questionOptions.toMutableList()
+        if (index in current.indices && current.size > 2) {
+            current.removeAt(index)
+            _state.value = _state.value.copy(questionOptions = current)
+        }
     }
 
     fun onCorrectAnswerChange(answer: String) {
@@ -118,6 +152,9 @@ class QuizDetailViewModel @Inject constructor(
     fun saveQuestion() {
         val current = _state.value
         if (current.questionText.isBlank()) {
+            return
+        }
+        if (current.questionType == QuizType.MULTIPLE_CHOICE && current.questionOptions.filter { it.isNotBlank() }.size < 2) {
             return
         }
 
@@ -141,8 +178,12 @@ class QuizDetailViewModel @Inject constructor(
             quizId = quizId,
             type = current.questionType.value,
             question = current.questionText.trim(),
-            options = current.questionOptions.takeIf { it.isNotEmpty() } ?: emptyList(),
-            correctAnswer = current.correctAnswer.trim().ifEmpty { "" },
+            options = buildOptionsForSubmit(current.questionType, current.questionOptions),
+            correctAnswer = buildCorrectAnswerForSubmit(
+                type = current.questionType,
+                current.correctAnswer,
+                current.questionOptions
+            ),
             explanation = current.explanation.trim().takeIf { it.isNotEmpty() }
         ).fold(
             ifLeft = { error ->
@@ -154,7 +195,7 @@ class QuizDetailViewModel @Inject constructor(
                     showAddQuestionDialog = false,
                     questionType = QuizType.MULTIPLE_CHOICE,
                     questionText = "",
-                    questionOptions = emptyList(),
+                    questionOptions = listOf("", "", "", ""),
                     correctAnswer = "",
                     explanation = ""
                 )
@@ -173,8 +214,12 @@ class QuizDetailViewModel @Inject constructor(
             questionId = question.id,
             type = current.questionType.value,
             question = current.questionText.trim(),
-            options = current.questionOptions.takeIf { it.isNotEmpty() } ?: emptyList(),
-            correctAnswer = current.correctAnswer.trim().ifEmpty { "" },
+            options = buildOptionsForSubmit(current.questionType, current.questionOptions),
+            correctAnswer = buildCorrectAnswerForSubmit(
+                type = current.questionType,
+                current.correctAnswer,
+                current.questionOptions
+            ),
             explanation = current.explanation.trim().takeIf { it.isNotEmpty() }
         ).fold(
             ifLeft = { error ->
@@ -187,7 +232,7 @@ class QuizDetailViewModel @Inject constructor(
                     editingQuestion = null,
                     questionType = QuizType.MULTIPLE_CHOICE,
                     questionText = "",
-                    questionOptions = emptyList(),
+                    questionOptions = listOf("", "", "", ""),
                     correctAnswer = "",
                     explanation = ""
                 )
@@ -216,15 +261,36 @@ class QuizDetailViewModel @Inject constructor(
     }
 
     fun editQuestion(question: ClassroomQuizQuestion) {
+        val normalizedOptions = when (question.type) {
+            QuizType.TRUE_FALSE -> if (question.options.isEmpty()) listOf("True", "False") else question.options
+            QuizType.MULTIPLE_CHOICE -> if (question.options.size < 2) question.options + listOf("", "") else question.options
+            QuizType.SHORT_ANSWER -> emptyList()
+        }
         _state.value = _state.value.copy(
             showAddQuestionDialog = true,
             editingQuestion = question,
             questionType = question.type,
             questionText = question.question,
-            questionOptions = question.options,
+            questionOptions = normalizedOptions,
             correctAnswer = question.correctAnswer ?: "",
             explanation = question.explanation ?: ""
         )
+    }
+
+    private fun buildOptionsForSubmit(type: QuizType, options: List<String>): List<String> {
+        return when (type) {
+            QuizType.TRUE_FALSE -> listOf("True", "False")
+            QuizType.MULTIPLE_CHOICE -> options.map { it.trim() }.filter { it.isNotEmpty() }
+            QuizType.SHORT_ANSWER -> emptyList()
+        }
+    }
+
+    private fun buildCorrectAnswerForSubmit(type: QuizType, answer: String, options: List<String>): String {
+        return when (type) {
+            QuizType.TRUE_FALSE -> if (answer.equals("false", ignoreCase = true)) "False" else "True"
+            QuizType.MULTIPLE_CHOICE -> answer.trim()
+            QuizType.SHORT_ANSWER -> answer.trim()
+        }
     }
 
     fun showImportStudySetDialog() {

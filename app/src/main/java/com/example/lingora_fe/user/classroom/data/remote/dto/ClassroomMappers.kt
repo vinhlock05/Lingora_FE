@@ -11,6 +11,7 @@ import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomUser
+import com.example.lingora_fe.user.classroom.domain.model.QuizAttemptWithUser
 import com.example.lingora_fe.user.classroom.util.ClassroomLessonType
 import com.example.lingora_fe.user.classroom.util.ClassroomMemberRole
 import com.example.lingora_fe.user.classroom.util.ClassroomMemberStatus
@@ -173,4 +174,14 @@ fun ClassroomQuizAttemptDto.toDomain(): com.example.lingora_fe.user.classroom.do
 fun SubmitQuizAttemptResponseDto.toDomain(): com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult = com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult(
     attempt = attempt.toDomain(),
     isPassing = isPassing
+)
+
+fun QuizAttemptWithUserDto.toDomain(): QuizAttemptWithUser = QuizAttemptWithUser(
+    id = id,
+    attemptNumber = attemptNumber,
+    score = score,
+    answers = answers,
+    startedAt = parseDate(startedAt),
+    submittedAt = parseDate(submittedAt),
+    user = user?.toDomain()
 )

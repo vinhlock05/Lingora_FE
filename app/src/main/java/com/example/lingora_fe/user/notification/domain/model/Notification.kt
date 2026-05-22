@@ -35,6 +35,7 @@ enum class NotificationType(val value: String) {
     ORDER("Order"),
     WARNING("Warning"),
     CONTENT_DELETED("Content deleted"),
+    CLASSROOM_APPROVED("Classroom approved"),
     // Withdrawal notifications
     WITHDRAWAL_PROCESSING("Withdrawal processing"),
     WITHDRAWAL_COMPLETED("Withdrawal completed"),

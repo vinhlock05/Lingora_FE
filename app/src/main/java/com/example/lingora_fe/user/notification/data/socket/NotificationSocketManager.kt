@@ -61,17 +61,24 @@ class NotificationSocketManager @Inject constructor(
     // ─── Notification ───────────────────────────────
 
     fun notificationFlow(): Flow<Notification> = callbackFlow {
-        val listener = io.socket.emitter.Emitter.Listener { args ->
+        val parseAndSend: (Array<out Any>) -> Unit = { args ->
             if (args.isNotEmpty()) {
                 try {
-                    val jsonObject = args[0] as? JSONObject ?: return@Listener
-                    val dto = gson.fromJson(jsonObject.toString(), NotificationDto::class.java)
-                    trySend(dto.toDomain())
+                    (args[0] as? JSONObject)?.let { jsonObject ->
+                        val dto = gson.fromJson(jsonObject.toString(), NotificationDto::class.java)
+                        trySend(dto.toDomain())
+                    }
                 } catch (_: Exception) { }
             }
         }
-        socket?.on("notification", listener)
-        awaitClose { socket?.off("notification", listener) }
+        val notificationListener = io.socket.emitter.Emitter.Listener { args -> parseAndSend(args) }
+        val approvalListener = io.socket.emitter.Emitter.Listener { args -> parseAndSend(args) }
+        socket?.on("notification", notificationListener)
+        socket?.on("classroom:approved", approvalListener)
+        awaitClose {
+            socket?.off("notification", notificationListener)
+            socket?.off("classroom:approved", approvalListener)
+        }
     }
 
     // ─── Classroom Chat ───────────────────────────────

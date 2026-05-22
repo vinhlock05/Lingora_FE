@@ -76,7 +76,7 @@ fun LeaderboardItem(
                 .clip(CircleShape)
                 .background(RankingColors.ChipOutline)
         ) {
-            if (!entry.avatar.isNullOrBlank()) {
+            if (!entry.avatar.isNullOrBlank() && entry.avatar != "N/A") {
                 AsyncImage(
                     model = entry.avatar,
                     contentDescription = entry.username,

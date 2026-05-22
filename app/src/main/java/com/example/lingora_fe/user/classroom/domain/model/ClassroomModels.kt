@@ -147,3 +147,13 @@ data class SubmitQuizAttemptResult(
     val attempt: ClassroomQuizAttempt,
     val isPassing: Boolean
 )
+
+data class QuizAttemptWithUser(
+    val id: Int,
+    val attemptNumber: Int,
+    val score: Double,
+    val answers: Map<String, String>,
+    val startedAt: Date?,
+    val submittedAt: Date?,
+    val user: ClassroomUser?
+)

@@ -1,34 +1,59 @@
 package com.example.lingora_fe.user.classroom.presentation
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SmartDisplay
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.lingora_fe.core.ui.theme.MainText
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomFlashcard
 import com.example.lingora_fe.user.classroom.presentation.components.ClassroomColors
+import com.example.lingora_fe.util.FileUploadHelper
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +64,10 @@ fun LessonDetailScreen(
     val uiState = viewModel.state.collectAsState()
     val state = uiState.value
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isUploadingImage by remember { mutableStateOf(false) }
+    var flashcardToDelete by remember { mutableStateOf<ClassroomFlashcard?>(null) }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
@@ -67,17 +96,6 @@ fun LessonDetailScreen(
                             contentDescription = "Quay lại",
                             tint = MainText
                         )
-                    }
-                },
-                actions = {
-                    if (state.isTeacher) {
-                        IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Import từ StudySet",
-                                tint = ClassroomColors.BrandPrimaryStrong
-                            )
-                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -146,7 +164,6 @@ fun LessonDetailScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // Lesson info section
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -157,12 +174,23 @@ fun LessonDetailScreen(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(
-                                text = lesson.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MainText
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = lessonTypeIcon(lesson.lessonType.value),
+                                    contentDescription = null,
+                                    tint = ClassroomColors.BrandPrimaryStrong,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = lesson.title,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MainText
+                                )
+                            }
 
                             if (!lesson.description.isNullOrEmpty()) {
                                 Text(
@@ -172,37 +200,13 @@ fun LessonDetailScreen(
                                 )
                             }
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                AssistChip(
-                                    onClick = {},
-                                    label = { Text(lesson.lessonType.displayName) },
-                                    colors = AssistChipDefaults.assistChipColors(
-                                        containerColor = ClassroomColors.BrandSoftSurface,
-                                        labelColor = ClassroomColors.BrandPrimaryStrong
-                                    ),
-                                    border = AssistChipDefaults.assistChipBorder(
-                                        enabled = true,
-                                        borderColor = ClassroomColors.BrandPrimary
-                                    )
+                            if (!lesson.isPublished) {
+                                Text(
+                                    text = "Bản nháp",
+                                    color = ClassroomColors.Danger,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Medium
                                 )
-
-                                if (lesson.isPublished) {
-                                    AssistChip(
-                                        onClick = {},
-                                        label = { Text("Công khai") },
-                                        colors = AssistChipDefaults.assistChipColors(
-                                            containerColor = ClassroomColors.PublicChipBackground,
-                                            labelColor = ClassroomColors.PublicChipText
-                                        ),
-                                        border = AssistChipDefaults.assistChipBorder(
-                                            enabled = true,
-                                            borderColor = ClassroomColors.BrandPrimary
-                                        )
-                                    )
-                                }
                             }
 
                             if (!lesson.content.isNullOrEmpty()) {
@@ -227,15 +231,24 @@ fun LessonDetailScreen(
                         }
                     }
 
-                    // Flashcards section
                     if (state.isTeacher) {
-                        Text(
-                            text = "Flashcards (${lesson.flashcards.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MainText,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Flashcards (${lesson.flashcards.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MainText
+                            )
+                            TextButton(onClick = { viewModel.showImportStudySetDialog() }) {
+                                Text("Nhập từ học liệu")
+                            }
+                        }
 
                         if (lesson.flashcards.isEmpty()) {
                             Box(
@@ -245,7 +258,7 @@ fun LessonDetailScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Chưa có flashcard nào. Nhấn + để thêm.",
+                                    text = "Chưa có flashcard nào. Nhấn nút + để thêm.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = ClassroomColors.TextMuted
                                 )
@@ -262,13 +275,12 @@ fun LessonDetailScreen(
                                     FlashcardItem(
                                         flashcard = flashcard,
                                         onEdit = { viewModel.editFlashcard(flashcard) },
-                                        onDelete = { viewModel.deleteFlashcard(flashcard.id) }
+                                        onDelete = { flashcardToDelete = flashcard }
                                     )
                                 }
                             }
                         }
                     } else {
-                        // Student Mode: Pager View
                         if (lesson.flashcards.isEmpty()) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
@@ -296,25 +308,58 @@ fun LessonDetailScreen(
         }
     }
 
-    // Flashcard dialog
     if (state.showAddFlashcardDialog) {
         AddFlashcardDialog(
             state = state,
+            isUploadingImage = isUploadingImage,
             onFrontChange = { viewModel.onFlashcardFrontChange(it) },
             onBackChange = { viewModel.onFlashcardBackChange(it) },
             onExampleChange = { viewModel.onFlashcardExampleChange(it) },
-            onSave = { viewModel.saveFlashcard() },
+            onSave = { localImageUri, removeExistingImage ->
+                scope.launch {
+                    if (localImageUri != null) {
+                        isUploadingImage = true
+                        FileUploadHelper.uploadImage(
+                            context = context,
+                            imageUri = localImageUri,
+                            folder = "lingora/classroom/flashcards"
+                        ).fold(
+                            ifLeft = {
+                                isUploadingImage = false
+                                snackbarHostState.showSnackbar("Tải ảnh lên thất bại")
+                            },
+                            ifRight = { uploadedUrl ->
+                                isUploadingImage = false
+                                viewModel.saveFlashcard(uploadedImageUrl = uploadedUrl)
+                            }
+                        )
+                    } else {
+                        viewModel.saveFlashcard(removeImage = removeExistingImage)
+                    }
+                }
+            },
             onDismiss = { viewModel.hideAddFlashcardDialog() }
         )
     }
 
-    // Import from StudySet dialog
     if (state.showImportStudySetDialog) {
         ImportStudySetDialog(
             state = state,
             onStudySetSelected = { viewModel.onStudySetSelected(it) },
             onImport = { viewModel.importFromStudySet() },
             onDismiss = { viewModel.hideImportStudySetDialog() }
+        )
+    }
+
+    flashcardToDelete?.let { flashcard ->
+        DeleteConfirmDialog(
+            title = "Xóa flashcard?",
+            message = "Bạn có chắc muốn xóa flashcard \"${flashcard.frontText}\"?\nHành động này không thể hoàn tác.",
+            onConfirm = {
+                viewModel.deleteFlashcard(flashcard.id)
+                flashcardToDelete = null
+            },
+            onDismiss = { flashcardToDelete = null }
         )
     }
 }
@@ -350,13 +395,8 @@ fun FlashcardItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    IconButton(
-                        onClick = onEdit,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Chỉnh sửa flashcard",
@@ -364,11 +404,7 @@ fun FlashcardItem(
                             tint = ClassroomColors.BrandPrimaryStrong
                         )
                     }
-
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                    IconButton(onClick = onDelete, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Xóa flashcard",
@@ -397,6 +433,18 @@ fun FlashcardItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+
+            if (!flashcard.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = flashcard.imageUrl,
+                    contentDescription = "Ảnh flashcard",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
     }
 }
@@ -404,10 +452,11 @@ fun FlashcardItem(
 @Composable
 fun AddFlashcardDialog(
     state: LessonDetailState,
+    isUploadingImage: Boolean,
     onFrontChange: (String) -> Unit,
     onBackChange: (String) -> Unit,
     onExampleChange: (String) -> Unit,
-    onSave: () -> Unit,
+    onSave: (Uri?, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     val brandFieldColors = OutlinedTextFieldDefaults.colors(
@@ -415,73 +464,213 @@ fun AddFlashcardDialog(
         focusedLabelColor = ClassroomColors.BrandPrimaryStrong,
         cursorColor = ClassroomColors.BrandPrimary
     )
+    var selectedImageUri by remember(state.showAddFlashcardDialog, state.editingFlashcard?.id) {
+        mutableStateOf<Uri?>(null)
+    }
+    var removeExistingImage by remember(state.showAddFlashcardDialog, state.editingFlashcard?.id) {
+        mutableStateOf(false)
+    }
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            selectedImageUri = uri
+            removeExistingImage = false
+        }
+    }
+    val previewImageModel: Any? = selectedImageUri
+        ?: if (!removeExistingImage && state.flashcardImageUrl.isNotBlank()) state.flashcardImageUrl else null
+
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = ClassroomColors.ScreenBackground,
+        icon = {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = ClassroomColors.BrandSoftSurface
+            ) {
+                Icon(
+                    imageVector = if (state.editingFlashcard != null) Icons.Default.Edit else Icons.Default.Add,
+                    contentDescription = null,
+                    tint = ClassroomColors.BrandPrimaryStrong,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(24.dp)
+                )
+            }
+        },
         title = {
             Text(
-                if (state.editingFlashcard != null) "Chỉnh sửa Flashcard"
-                else "Thêm Flashcard Mới",
-                fontWeight = FontWeight.SemiBold
+                text = if (state.editingFlashcard != null) "Chỉnh sửa Flashcard" else "Thêm Flashcard Mới",
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 500.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                OutlinedTextField(
-                    value = state.flashcardFront,
-                    onValueChange = onFrontChange,
-                    label = { Text("Mặt trước *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = brandFieldColors
-                )
+                // Content section
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "NỘI DUNG",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClassroomColors.TextMuted,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp
+                    )
+                    OutlinedTextField(
+                        value = state.flashcardFront,
+                        onValueChange = onFrontChange,
+                        label = { Text("Mặt trước *") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = brandFieldColors,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    OutlinedTextField(
+                        value = state.flashcardBack,
+                        onValueChange = onBackChange,
+                        label = { Text("Mặt sau *") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = brandFieldColors,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    OutlinedTextField(
+                        value = state.flashcardExample,
+                        onValueChange = onExampleChange,
+                        label = { Text("Ví dụ (tùy chọn)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = brandFieldColors,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
 
-                OutlinedTextField(
-                    value = state.flashcardBack,
-                    onValueChange = onBackChange,
-                    label = { Text("Mặt sau *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = brandFieldColors
-                )
-
-                OutlinedTextField(
-                    value = state.flashcardExample,
-                    onValueChange = onExampleChange,
-                    label = { Text("Ví dụ (tùy chọn)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = brandFieldColors
-                )
+                // Image section
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "ẢNH MINH HỌA",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClassroomColors.TextMuted,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp
+                    )
+                    if (previewImageModel != null) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            AsyncImage(
+                                model = previewImageModel,
+                                contentDescription = "Ảnh flashcard",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(160.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                FilledTonalIconButton(
+                                    onClick = { imagePickerLauncher.launch("image/*") },
+                                    modifier = Modifier.size(36.dp),
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = Color.White.copy(alpha = 0.9f),
+                                        contentColor = ClassroomColors.BrandPrimaryStrong
+                                    )
+                                ) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = "Đổi ảnh",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                FilledTonalIconButton(
+                                    onClick = {
+                                        selectedImageUri = null
+                                        removeExistingImage = true
+                                    },
+                                    modifier = Modifier.size(36.dp),
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = Color.White.copy(alpha = 0.9f),
+                                        contentColor = ClassroomColors.Danger
+                                    )
+                                ) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Xóa ảnh",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { imagePickerLauncher.launch("image/*") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(88.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.5.dp, ClassroomColors.NeutralBorder),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = ClassroomColors.BrandPrimaryStrong
+                            )
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.AddPhotoAlternate,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Text(
+                                    "Chọn ảnh",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = onSave,
+                onClick = { onSave(selectedImageUri, removeExistingImage) },
                 enabled = state.flashcardFront.isNotBlank() &&
-                         state.flashcardBack.isNotBlank() &&
-                         !state.isSavingFlashcard,
+                        state.flashcardBack.isNotBlank() &&
+                        !state.isSavingFlashcard &&
+                        !isUploadingImage,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ClassroomColors.BrandPrimary,
                     contentColor = Color.White
-                )
+                ),
+                shape = RoundedCornerShape(10.dp)
             ) {
-                if (state.isSavingFlashcard) {
+                if (state.isSavingFlashcard || isUploadingImage) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Lưu")
+                    Text("Lưu", fontWeight = FontWeight.SemiBold)
                 }
             }
         },
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                enabled = !state.isSavingFlashcard,
+                enabled = !state.isSavingFlashcard && !isUploadingImage,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = ClassroomColors.TextSecondary
                 )
@@ -499,72 +688,189 @@ fun ImportStudySetDialog(
     onImport: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var searchQuery by remember(state.showImportStudySetDialog, state.studySetOptions) {
+        mutableStateOf("")
+    }
+    val filteredStudySets = remember(searchQuery, state.studySetOptions) {
+        state.studySetOptions.filter { it.title.contains(searchQuery, ignoreCase = true) }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import từ StudySet", fontWeight = FontWeight.SemiBold) },
+        containerColor = ClassroomColors.ScreenBackground,
+        icon = {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = ClassroomColors.BrandSoftSurface
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = null,
+                    tint = ClassroomColors.BrandPrimaryStrong,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(24.dp)
+                )
+            }
+        },
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Nhập từ Học Liệu", fontWeight = FontWeight.Bold)
+                if (!state.isLoadingStudySets && state.studySetOptions.isNotEmpty()) {
+                    Text(
+                        text = "${state.studySetOptions.size} học liệu",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClassroomColors.TextMuted
+                    )
+                }
+            }
+        },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = { Text("Tìm học liệu...", color = ClassroomColors.TextPlaceholder) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            tint = ClassroomColors.TextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                        {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = "Xóa",
+                                    tint = ClassroomColors.TextMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    } else null,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ClassroomColors.BrandPrimary,
+                        unfocusedBorderColor = ClassroomColors.NeutralBorder,
+                        cursorColor = ClassroomColors.BrandPrimary
+                    )
+                )
+
                 when {
                     state.isLoadingStudySets -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(32.dp),
+                                .weight(1f),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
+                                Text(
+                                    "Đang tải học liệu...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = ClassroomColors.TextMuted
+                                )
+                            }
                         }
                     }
 
-                    state.studySetOptions.isEmpty() -> {
-                        Text(
-                            "Không có StudySet nào",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = ClassroomColors.TextMuted,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                    filteredStudySets.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MenuBook,
+                                    contentDescription = null,
+                                    tint = ClassroomColors.TextPlaceholder,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                                Text(
+                                    text = if (state.studySetOptions.isEmpty())
+                                        "Chưa có học liệu nào"
+                                    else
+                                        "Không tìm thấy kết quả",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ClassroomColors.TextMuted,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
 
                     else -> {
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = 300.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                .weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            items(state.studySetOptions.size) { index ->
-                                val option = state.studySetOptions[index]
-                                Row(
+                            items(filteredStudySets.size) { index ->
+                                val option = filteredStudySets[index]
+                                val isSelected = state.selectedStudySetId == option.id
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .selectable(
-                                            selected = state.selectedStudySetId == option.id,
+                                            selected = isSelected,
                                             onClick = { onStudySetSelected(option.id) },
                                             role = Role.RadioButton
-                                        )
-                                        .padding(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected)
+                                            ClassroomColors.BrandSoftSurface
+                                        else
+                                            ClassroomColors.CardSurface
+                                    ),
+                                    border = if (isSelected)
+                                        BorderStroke(1.5.dp, ClassroomColors.BrandPrimary)
+                                    else
+                                        BorderStroke(1.dp, ClassroomColors.NeutralBorder)
                                 ) {
-                                    RadioButton(
-                                        selected = state.selectedStudySetId == option.id,
-                                        onClick = { onStudySetSelected(option.id) },
-                                        colors = RadioButtonDefaults.colors(
-                                            selectedColor = ClassroomColors.BrandPrimary,
-                                            unselectedColor = ClassroomColors.TextMuted
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        RadioButton(
+                                            selected = isSelected,
+                                            onClick = { onStudySetSelected(option.id) },
+                                            colors = RadioButtonDefaults.colors(
+                                                selectedColor = ClassroomColors.BrandPrimary,
+                                                unselectedColor = ClassroomColors.TextMuted
+                                            )
                                         )
-                                    )
-                                    Text(
-                                        text = option.title,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MainText,
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                        Text(
+                                            text = option.title,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (isSelected) ClassroomColors.BrandPrimaryStrong else MainText,
+                                            modifier = Modifier.weight(1f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -576,12 +882,13 @@ fun ImportStudySetDialog(
             Button(
                 onClick = onImport,
                 enabled = state.selectedStudySetId != null &&
-                         !state.isImporting &&
-                         !state.isLoadingStudySets,
+                        !state.isImporting &&
+                        !state.isLoadingStudySets,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ClassroomColors.BrandPrimary,
                     contentColor = Color.White
-                )
+                ),
+                shape = RoundedCornerShape(10.dp)
             ) {
                 if (state.isImporting) {
                     CircularProgressIndicator(
@@ -590,7 +897,7 @@ fun ImportStudySetDialog(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Import")
+                    Text("Nhập flashcard", fontWeight = FontWeight.SemiBold)
                 }
             }
         },
@@ -608,10 +915,17 @@ fun ImportStudySetDialog(
     )
 }
 
+private fun lessonTypeIcon(typeValue: String) = when (typeValue) {
+    "VIDEO" -> Icons.Default.SmartDisplay
+    "STUDYSET" -> Icons.Default.MenuBook
+    "TEXT" -> Icons.Default.Description
+    else -> Icons.Default.AutoAwesome
+}
+
 @Composable
 fun LessonStudyPager(flashcards: List<ClassroomFlashcard>) {
     val pagerState = rememberPagerState(pageCount = { flashcards.size })
-    
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -627,7 +941,7 @@ fun LessonStudyPager(flashcards: List<ClassroomFlashcard>) {
         ) { page ->
             FlippableFlashcard(flashcard = flashcards[page])
         }
-        
+
         Text(
             text = "${pagerState.currentPage + 1} / ${flashcards.size}",
             style = MaterialTheme.typography.labelLarge,
@@ -659,24 +973,47 @@ fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
         contentAlignment = Alignment.Center
     ) {
         if (rotation <= 90f) {
-            // Front Side
             Card(
                 modifier = Modifier.fillMaxSize(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
             ) {
+                val hasImage = !flashcard.imageUrl.isNullOrBlank()
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = flashcard.frontText,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = ClassroomColors.BrandPrimaryStrong,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    if (hasImage) {
+                        AsyncImage(
+                            model = flashcard.imageUrl,
+                            contentDescription = "Ảnh flashcard",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .then(if (hasImage) Modifier.align(Alignment.BottomCenter) else Modifier)
+                            .fillMaxWidth()
+                            .then(
+                                if (hasImage) Modifier.background(
+                                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                    )
+                                ) else Modifier
+                            )
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = flashcard.frontText,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (hasImage) Color.White else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(8.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
                 }
             }
         } else {
-            // Back Side
             Card(
                 modifier = Modifier
                     .fillMaxSize()
@@ -715,4 +1052,68 @@ fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
             }
         }
     }
+}
+
+@Composable
+private fun DeleteConfirmDialog(
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        icon = {
+            Surface(
+                shape = CircleShape,
+                color = ClassroomColors.DangerSoft
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = ClassroomColors.Danger,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(28.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = ClassroomColors.TextSecondary,
+                textAlign = TextAlign.Center
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.Danger,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Xóa", fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, ClassroomColors.NeutralBorder)
+            ) {
+                Text("Hủy", color = ClassroomColors.TextSecondary)
+            }
+        }
+    )
 }

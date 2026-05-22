@@ -73,7 +73,8 @@ class LessonDetailViewModel @Inject constructor(
             editingFlashcard = null,
             flashcardFront = "",
             flashcardBack = "",
-            flashcardExample = ""
+            flashcardExample = "",
+            flashcardImageUrl = ""
         )
     }
 
@@ -83,7 +84,8 @@ class LessonDetailViewModel @Inject constructor(
             editingFlashcard = null,
             flashcardFront = "",
             flashcardBack = "",
-            flashcardExample = ""
+            flashcardExample = "",
+            flashcardImageUrl = ""
         )
     }
 
@@ -99,7 +101,11 @@ class LessonDetailViewModel @Inject constructor(
         _state.value = _state.value.copy(flashcardExample = text)
     }
 
-    fun saveFlashcard() {
+    fun onFlashcardImageUrlChange(text: String) {
+        _state.value = _state.value.copy(flashcardImageUrl = text)
+    }
+
+    fun saveFlashcard(uploadedImageUrl: String? = null, removeImage: Boolean = false) {
         val current = _state.value
         if (current.flashcardFront.isBlank() || current.flashcardBack.isBlank()) {
             return
@@ -111,21 +117,22 @@ class LessonDetailViewModel @Inject constructor(
             val isEditing = current.editingFlashcard != null
 
             if (isEditing) {
-                updateFlashcard()
+                updateFlashcard(uploadedImageUrl = uploadedImageUrl, removeImage = removeImage)
             } else {
-                createFlashcard()
+                createFlashcard(uploadedImageUrl = uploadedImageUrl)
             }
         }
     }
 
-    private suspend fun createFlashcard() {
+    private suspend fun createFlashcard(uploadedImageUrl: String? = null) {
         val current = _state.value
         repository.createFlashcard(
             classroomId = classroomId,
             lessonId = lessonId,
             frontText = current.flashcardFront.trim(),
             backText = current.flashcardBack.trim(),
-            example = current.flashcardExample.trim().takeIf { it.isNotEmpty() }
+            example = current.flashcardExample.trim().takeIf { it.isNotEmpty() },
+            imageUrl = uploadedImageUrl ?: current.flashcardImageUrl.trim().takeIf { it.isNotEmpty() }
         ).fold(
             ifLeft = { error ->
                 _state.value = _state.value.copy(isSavingFlashcard = false)
@@ -136,16 +143,22 @@ class LessonDetailViewModel @Inject constructor(
                     showAddFlashcardDialog = false,
                     flashcardFront = "",
                     flashcardBack = "",
-                    flashcardExample = ""
+                    flashcardExample = "",
+                    flashcardImageUrl = ""
                 )
                 loadLessonDetail()
             }
         )
     }
 
-    private suspend fun updateFlashcard() {
+    private suspend fun updateFlashcard(uploadedImageUrl: String? = null, removeImage: Boolean = false) {
         val current = _state.value
         val flashcard = current.editingFlashcard ?: return
+        val finalImageUrl = when {
+            uploadedImageUrl != null -> uploadedImageUrl
+            removeImage -> null
+            else -> current.flashcardImageUrl.trim().takeIf { it.isNotEmpty() }
+        }
 
         repository.updateFlashcard(
             classroomId = classroomId,
@@ -153,7 +166,8 @@ class LessonDetailViewModel @Inject constructor(
             flashcardId = flashcard.id,
             frontText = current.flashcardFront.trim(),
             backText = current.flashcardBack.trim(),
-            example = current.flashcardExample.trim().takeIf { it.isNotEmpty() }
+            example = current.flashcardExample.trim().takeIf { it.isNotEmpty() },
+            imageUrl = finalImageUrl
         ).fold(
             ifLeft = { error ->
                 _state.value = _state.value.copy(isSavingFlashcard = false)
@@ -165,7 +179,8 @@ class LessonDetailViewModel @Inject constructor(
                     editingFlashcard = null,
                     flashcardFront = "",
                     flashcardBack = "",
-                    flashcardExample = ""
+                    flashcardExample = "",
+                    flashcardImageUrl = ""
                 )
                 loadLessonDetail()
             }
@@ -197,7 +212,8 @@ class LessonDetailViewModel @Inject constructor(
             editingFlashcard = flashcard,
             flashcardFront = flashcard.frontText,
             flashcardBack = flashcard.backText,
-            flashcardExample = flashcard.example ?: ""
+            flashcardExample = flashcard.example ?: "",
+            flashcardImageUrl = flashcard.imageUrl ?: ""
         )
     }
 

@@ -60,7 +60,7 @@ enum class ClassroomMessageType(val value: String) {
 enum class QuizType(val value: String) {
     MULTIPLE_CHOICE("MULTIPLE_CHOICE"),
     TRUE_FALSE("TRUE_FALSE"),
-    FILL_IN("FILL_IN");
+    SHORT_ANSWER("SHORT_ANSWER");
 
     companion object {
         fun fromValue(value: String): QuizType =

@@ -543,6 +543,18 @@ fun UserNavigator(
                 )
             }
 
+            composable(
+                route = Route.QuizAttempts.route,
+                arguments = listOf(
+                    navArgument("classroomId") { type = NavType.StringType },
+                    navArgument("quizId") { type = NavType.StringType }
+                )
+            ) {
+                com.example.lingora_fe.user.classroom.presentation.QuizAttemptsScreen(
+                    navController = navController
+                )
+            }
+
             // Vocabulary Tab
             composable(Route.VocabularyTab.route) {
                 VocabularyCategoriesScreen(

@@ -29,6 +29,7 @@ import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizAttempt
+import com.example.lingora_fe.user.classroom.domain.model.QuizAttemptWithUser
 import com.example.lingora_fe.user.classroom.domain.model.SubmitQuizAttemptResult
 import com.example.lingora_fe.user.classroom.domain.repository.ClassroomRepository
 import com.example.lingora_fe.util.DateFormatHelper
@@ -460,6 +461,17 @@ class ClassroomRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
 
+    override suspend fun getQuizAttempts(
+        classroomId: Int,
+        quizId: Int
+    ): Either<AppFailure, List<QuizAttemptWithUser>> {
+        return Either.catch {
+            val response = apiService.getQuizAttempts(classroomId, quizId)
+            val dtos = response.metaData ?: throw Exception(response.message)
+            dtos.map { it.toDomain() }
+        }.mapLeft { it.toAppFailure() }
+    }
+
     override suspend fun submitQuizAttempt(
         classroomId: Int,
         quizId: Int,
@@ -475,6 +487,7 @@ class ClassroomRepositoryImpl @Inject constructor(
                         id = att.id,
                         attemptNumber = att.attemptNumber,
                         score = att.score,
+                        correctCount = att.correctCount,
                         answers = att.answers,
                         startedAt = DateFormatHelper.parseDate(att.startedAt),
                         submittedAt = att.submittedAt?.let { DateFormatHelper.parseDate(it) }

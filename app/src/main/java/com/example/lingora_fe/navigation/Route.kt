@@ -68,6 +68,7 @@ sealed class Route(
     object CreateLesson : Route("classroom/{classroomId}/lessons/create?lessonId={lessonId}")
     object QuizDetail : Route("classroom/{classroomId}/quizzes/{quizId}?isTeacher={isTeacher}")
     object QuizSession : Route("classroom/{classroomId}/quizzes/{quizId}/session")
+    object QuizAttempts : Route("classroom/{classroomId}/quizzes/{quizId}/attempts")
     object CreateQuiz : Route("classroom/{classroomId}/quizzes/create?quizId={quizId}")
 
     // StudySet Navigation
@@ -155,8 +156,10 @@ sealed class Route(
             "classroom/$classroomId/lessons/create" + (lessonId?.let { "?lessonId=$it" } ?: "")
         fun quizDetail(classroomId: String, quizId: String, isTeacher: Boolean = false) = 
             "classroom/$classroomId/quizzes/$quizId?isTeacher=$isTeacher"
-        fun quizSession(classroomId: String, quizId: String) = 
+        fun quizSession(classroomId: String, quizId: String) =
             "classroom/$classroomId/quizzes/$quizId/session"
+        fun quizAttempts(classroomId: String, quizId: String) =
+            "classroom/$classroomId/quizzes/$quizId/attempts"
         fun createQuiz(classroomId: String, quizId: Int? = null) = 
             "classroom/$classroomId/quizzes/create" + (quizId?.let { "?quizId=$it" } ?: "")
         

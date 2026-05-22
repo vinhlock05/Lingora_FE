@@ -167,7 +167,11 @@ class NotificationViewModel @Inject constructor(
                 }
             }
             NotificationType.CHANGE_PASSWORD -> Route.ProfileTab.route
-            NotificationType.CONTENT_DELETED -> null // TODO: handle content deleted navigation
+            NotificationType.CONTENT_DELETED -> null
+            NotificationType.CLASSROOM_APPROVED -> {
+                val classroomId = getInt("classroomId")
+                if (classroomId != null) Route.classroomDetail(classroomId.toString()) else null
+            }
             // Withdrawal notifications - navigate to withdrawal detail if ID available
             NotificationType.WITHDRAWAL_PROCESSING,
             NotificationType.WITHDRAWAL_COMPLETED,

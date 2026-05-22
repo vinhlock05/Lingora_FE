@@ -21,6 +21,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Reply
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.SmartDisplay
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -404,11 +408,28 @@ private fun LessonCard(
                 verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = lesson.title,
-                        fontWeight = FontWeight.Bold,
-                        color = if (!lesson.isPublished) ClassroomColors.TextMuted else MainText
-                    )
+                    val lessonTypeIcon = when (lesson.lessonType) {
+                        ClassroomLessonType.VIDEO -> Icons.Default.SmartDisplay
+                        ClassroomLessonType.STUDYSET -> Icons.Default.MenuBook
+                        ClassroomLessonType.TEXT -> Icons.Default.Description
+                        ClassroomLessonType.MIXED -> Icons.Default.AutoAwesome
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = lessonTypeIcon,
+                            contentDescription = null,
+                            tint = ClassroomColors.BrandPrimaryStrong,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = lesson.title,
+                            fontWeight = FontWeight.Bold,
+                            color = if (!lesson.isPublished) ClassroomColors.TextMuted else MainText
+                        )
+                    }
                     lesson.description?.let { desc ->
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -444,24 +465,7 @@ private fun LessonCard(
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Surface(
-                    color = ClassroomColors.BrandSoftSurface,
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Text(
-                        text = when (lesson.lessonType) {
-                            ClassroomLessonType.VIDEO -> "Video"
-                            ClassroomLessonType.STUDYSET -> "Bộ học"
-                            ClassroomLessonType.TEXT -> "Văn bản"
-                            ClassroomLessonType.MIXED -> "Tổng hợp"
-                        },
-                        style = MaterialTheme.typography.labelMedium,
-                        color = ClassroomColors.BrandPrimaryStrong,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 if (!lesson.isPublished) {
                     Text(
                         "Bản nháp",

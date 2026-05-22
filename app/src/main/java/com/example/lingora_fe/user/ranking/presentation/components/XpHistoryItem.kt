@@ -53,7 +53,7 @@ fun XpHistoryItem(
     val (icon, tint) = iconForAction(entry.actionType)
     val isPositive = entry.xpAmount >= 0
     val timeText = formatTime(entry.createdAt)
-    val title = entry.description?.takeIf { it.isNotBlank() } ?: entry.actionType.labelVi
+    val title = entry.actionType.labelVi
     val subtitle = entry.classroomName?.let { "Lớp: $it" }
 
     Row(

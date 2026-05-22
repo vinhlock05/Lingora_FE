@@ -45,11 +45,21 @@ fun ClassroomListScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val joinSuccessClassroomId by viewModel.joinSuccessEvent.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(joinSuccessClassroomId) {
         joinSuccessClassroomId?.let { id ->
             navController.navigate(Route.classroomDetail(id.toString()))
             viewModel.clearJoinSuccessEvent()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is ClassroomListEvent.ShowToast ->
+                    android.widget.Toast.makeText(context, event.message, android.widget.Toast.LENGTH_LONG).show()
+            }
         }
     }
 

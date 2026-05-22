@@ -217,13 +217,18 @@ class ClassroomListViewModel @Inject constructor(
                         joinError = error.message ?: "Không thể tham gia lớp học"
                     )
                 },
-                ifRight = {
+                ifRight = { classroom ->
                     _state.value = _state.value.copy(
                         isJoining = false,
                         showJoinDialog = false,
                         joinCode = "",
                         joinError = null
                     )
+                    if (classroom.isPublic) {
+                        _joinSuccessEvent.value = classroom.id
+                    } else {
+                        _events.emit(ClassroomListEvent.ShowToast("Yêu cầu tham gia đã được gửi, chờ giáo viên phê duyệt"))
+                    }
                     loadClassrooms(1)
                 }
             )

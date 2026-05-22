@@ -1,27 +1,36 @@
 package com.example.lingora_fe.user.classroom.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.lingora_fe.core.ui.theme.MainText
@@ -37,11 +46,11 @@ fun QuizDetailScreen(
 ) {
     val uiState = viewModel.state.collectAsState()
     val state = uiState.value
-    var expandedQuestionType by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var questionToDelete by remember { mutableStateOf<ClassroomQuizQuestion?>(null) }
 
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
-    
+
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
@@ -81,17 +90,6 @@ fun QuizDetailScreen(
                             contentDescription = "Quay lại",
                             tint = MainText
                         )
-                    }
-                },
-                actions = {
-                    if (state.isTeacher) {
-                        IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Import từ StudySet",
-                                tint = ClassroomColors.BrandPrimaryStrong
-                            )
-                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -160,7 +158,6 @@ fun QuizDetailScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // Quiz info section
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -231,15 +228,38 @@ fun QuizDetailScreen(
                         }
                     }
 
-                    // Questions section (Teacher only)
                     if (state.isTeacher) {
-                        Text(
-                            text = "Câu hỏi (${quiz.questions.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MainText,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Câu hỏi (${quiz.questions.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MainText
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextButton(
+                                    onClick = {
+                                        navController.navigate(
+                                            com.example.lingora_fe.navigation.Route.quizAttempts(
+                                                classroomId = state.classroomId,
+                                                quizId = quiz.id.toString()
+                                            )
+                                        )
+                                    }
+                                ) {
+                                    Text("Kết quả HS")
+                                }
+                                TextButton(onClick = { viewModel.showImportStudySetDialog() }) {
+                                    Text("Nhập từ học liệu")
+                                }
+                            }
+                        }
 
                         if (quiz.questions.isEmpty()) {
                             Box(
@@ -266,13 +286,12 @@ fun QuizDetailScreen(
                                     QuestionItem(
                                         question = question,
                                         onEdit = { viewModel.editQuestion(question) },
-                                        onDelete = { viewModel.deleteQuestion(question.id) }
+                                        onDelete = { questionToDelete = question }
                                     )
                                 }
                             }
                         }
                     } else {
-                        // Student Preview Mode
                         QuizOverviewContent(
                             quiz = quiz,
                             isTeacher = state.isTeacher,
@@ -302,14 +321,14 @@ fun QuizDetailScreen(
         }
     }
 
-    // Question dialog
     if (state.showAddQuestionDialog) {
         AddQuestionDialog(
             state = state,
-            expandedQuestionType = expandedQuestionType,
-            onExpandedQuestionTypeChange = { expandedQuestionType = it },
             onQuestionTypeChange = { viewModel.onQuestionTypeChange(it) },
             onQuestionTextChange = { viewModel.onQuestionTextChange(it) },
+            onQuestionOptionChange = { idx, value -> viewModel.onQuestionOptionItemChange(idx, value) },
+            onAddOption = { viewModel.addQuestionOption() },
+            onRemoveOption = { viewModel.removeQuestionOption(it) },
             onCorrectAnswerChange = { viewModel.onCorrectAnswerChange(it) },
             onExplanationChange = { viewModel.onExplanationChange(it) },
             onSave = { viewModel.saveQuestion() },
@@ -317,13 +336,24 @@ fun QuizDetailScreen(
         )
     }
 
-    // Import from StudySet dialog
     if (state.showImportStudySetDialog) {
         ImportStudySetDialog(
             state = state,
             onStudySetSelected = { viewModel.onStudySetSelected(it) },
             onImport = { viewModel.importFromStudySet() },
             onDismiss = { viewModel.hideImportStudySetDialog() }
+        )
+    }
+
+    questionToDelete?.let { question ->
+        DeleteConfirmDialog(
+            title = "Xóa câu hỏi?",
+            message = "Bạn có chắc muốn xóa câu hỏi này?\nHành động này không thể hoàn tác.",
+            onConfirm = {
+                viewModel.deleteQuestion(question.id)
+                questionToDelete = null
+            },
+            onDismiss = { questionToDelete = null }
         )
     }
 }
@@ -361,21 +391,22 @@ fun QuestionItem(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-
-                    Text(
-                        text = "Loại: ${question.type.value}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = ClassroomColors.TextMuted
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = ClassroomColors.BrandSoftSurface
+                    ) {
+                        Text(
+                            text = question.type.value,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ClassroomColors.BrandPrimaryStrong,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    IconButton(
-                        onClick = onEdit,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Chỉnh sửa câu hỏi",
@@ -383,11 +414,7 @@ fun QuestionItem(
                             tint = ClassroomColors.BrandPrimaryStrong
                         )
                     }
-
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                    IconButton(onClick = onDelete, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Xóa câu hỏi",
@@ -400,7 +427,7 @@ fun QuestionItem(
 
             if (question.options.isNotEmpty()) {
                 Text(
-                    text = "Tùy chọn: ${question.options.take(2).joinToString(", ")}...",
+                    text = "Lựa chọn: ${question.options.take(2).joinToString(", ")}${if (question.options.size > 2) "..." else ""}",
                     style = MaterialTheme.typography.bodySmall,
                     color = ClassroomColors.TextSecondary,
                     maxLines = 1,
@@ -408,12 +435,20 @@ fun QuestionItem(
                 )
             }
 
-            if (question.correctAnswer != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
-                    text = "Câu trả lời đúng: ${question.correctAnswer}",
+                    text = "Đáp án đúng:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ClassroomColors.TextMuted
+                )
+                Text(
+                    text = question.correctAnswer ?: "-",
                     style = MaterialTheme.typography.bodySmall,
                     color = ClassroomColors.BrandPrimaryStrong,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -422,13 +457,15 @@ fun QuestionItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddQuestionDialog(
     state: QuizDetailState,
-    expandedQuestionType: Boolean,
-    onExpandedQuestionTypeChange: (Boolean) -> Unit,
     onQuestionTypeChange: (QuizType) -> Unit,
     onQuestionTextChange: (String) -> Unit,
+    onQuestionOptionChange: (Int, String) -> Unit,
+    onAddOption: () -> Unit,
+    onRemoveOption: (Int) -> Unit,
     onCorrectAnswerChange: (String) -> Unit,
     onExplanationChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -442,80 +479,256 @@ fun AddQuestionDialog(
         disabledLabelColor = ClassroomColors.TextMuted,
         disabledTextColor = MainText
     )
+
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = ClassroomColors.ScreenBackground,
+        icon = {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = ClassroomColors.BrandSoftSurface
+            ) {
+                Icon(
+                    imageVector = if (state.editingQuestion != null) Icons.Default.Edit else Icons.Default.Add,
+                    contentDescription = null,
+                    tint = ClassroomColors.BrandPrimaryStrong,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(24.dp)
+                )
+            }
+        },
         title = {
             Text(
-                if (state.editingQuestion != null) "Chỉnh sửa Câu Hỏi"
-                else "Thêm Câu Hỏi Mới",
-                fontWeight = FontWeight.SemiBold
+                text = if (state.editingQuestion != null) "Chỉnh sửa Câu Hỏi" else "Thêm Câu Hỏi Mới",
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Question type dropdown
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = state.questionType.value,
-                        onValueChange = {},
-                        label = { Text("Loại câu hỏi") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .noRippleClickable { onExpandedQuestionTypeChange(true) },
-                        enabled = false,
-                        colors = brandFieldColors
+                // Question type section
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "LOẠI CÂU HỎI",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClassroomColors.TextMuted,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp
                     )
-
-                    DropdownMenu(
-                        expanded = expandedQuestionType,
-                        onDismissRequest = { onExpandedQuestionTypeChange(false) },
-                        modifier = Modifier.fillMaxWidth(0.8f)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         QuizType.entries.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.value) },
-                                onClick = {
-                                    onQuestionTypeChange(type)
-                                    onExpandedQuestionTypeChange(false)
-                                }
+                            val isSelected = state.questionType == type
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { onQuestionTypeChange(type) },
+                                label = {
+                                    Text(
+                                        text = type.value,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = ClassroomColors.BrandSoftSurface,
+                                    selectedLabelColor = ClassroomColors.BrandPrimaryStrong
+                                ),
+                                border = if (isSelected)
+                                    BorderStroke(1.5.dp, ClassroomColors.BrandPrimary)
+                                else
+                                    BorderStroke(1.dp, ClassroomColors.NeutralBorder)
                             )
                         }
                     }
                 }
 
                 // Question text
-                OutlinedTextField(
-                    value = state.questionText,
-                    onValueChange = onQuestionTextChange,
-                    label = { Text("Câu hỏi *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2,
-                    maxLines = 4,
-                    colors = brandFieldColors
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "NỘI DUNG CÂU HỎI",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClassroomColors.TextMuted,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp
+                    )
+                    OutlinedTextField(
+                        value = state.questionText,
+                        onValueChange = onQuestionTextChange,
+                        label = { Text("Câu hỏi *") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                        maxLines = 4,
+                        colors = brandFieldColors,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
 
-                // Correct answer
-                OutlinedTextField(
-                    value = state.correctAnswer,
-                    onValueChange = onCorrectAnswerChange,
-                    label = { Text("Câu trả lời đúng") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = brandFieldColors
-                )
+                // Options section for multiple choice
+                if (state.questionType == QuizType.MULTIPLE_CHOICE) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "CÁC LỰA CHỌN",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ClassroomColors.TextMuted,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.2.sp
+                        )
+                        state.questionOptions.forEachIndexed { index, option ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .background(
+                                            color = ClassroomColors.BrandSoftSurface,
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = ('A' + index).toString(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = ClassroomColors.BrandPrimaryStrong
+                                    )
+                                }
+                                OutlinedTextField(
+                                    value = option,
+                                    onValueChange = { onQuestionOptionChange(index, it) },
+                                    label = { Text("Lựa chọn ${index + 1}") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    colors = brandFieldColors,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                IconButton(
+                                    onClick = { onRemoveOption(index) },
+                                    enabled = state.questionOptions.size > 2,
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Remove,
+                                        contentDescription = "Xóa lựa chọn",
+                                        tint = if (state.questionOptions.size > 2)
+                                            ClassroomColors.Danger
+                                        else
+                                            ClassroomColors.TextPlaceholder,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                        TextButton(
+                            onClick = onAddOption,
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = ClassroomColors.BrandPrimaryStrong
+                            )
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Thêm lựa chọn", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+
+                // True/False selector
+                if (state.questionType == QuizType.TRUE_FALSE) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "ĐÁP ÁN ĐÚNG",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ClassroomColors.TextMuted,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.2.sp
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            listOf("True", "False").forEach { value ->
+                                val isSelected = state.correctAnswer.equals(value, ignoreCase = true)
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { onCorrectAnswerChange(value) },
+                                    label = { Text(value, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = ClassroomColors.BrandSoftSurface,
+                                        selectedLabelColor = ClassroomColors.BrandPrimaryStrong
+                                    ),
+                                    border = if (isSelected)
+                                        BorderStroke(1.5.dp, ClassroomColors.BrandPrimary)
+                                    else
+                                        BorderStroke(1.dp, ClassroomColors.NeutralBorder)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Correct answer field (for multiple choice and short answer)
+                if (state.questionType != QuizType.TRUE_FALSE) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = if (state.questionType == QuizType.SHORT_ANSWER) "ĐÁP ÁN MẪU" else "ĐÁP ÁN ĐÚNG",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ClassroomColors.TextMuted,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.2.sp
+                        )
+                        OutlinedTextField(
+                            value = state.correctAnswer,
+                            onValueChange = onCorrectAnswerChange,
+                            label = {
+                                Text(
+                                    if (state.questionType == QuizType.SHORT_ANSWER)
+                                        "Đáp án mẫu"
+                                    else
+                                        "Nhập chính xác một lựa chọn"
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = brandFieldColors,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    }
+                }
 
                 // Explanation
-                OutlinedTextField(
-                    value = state.explanation,
-                    onValueChange = onExplanationChange,
-                    label = { Text("Giải thích (tùy chọn)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2,
-                    maxLines = 3,
-                    colors = brandFieldColors
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "GIẢI THÍCH (TÙY CHỌN)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClassroomColors.TextMuted,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp
+                    )
+                    OutlinedTextField(
+                        value = state.explanation,
+                        onValueChange = onExplanationChange,
+                        label = { Text("Giải thích đáp án") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                        maxLines = 3,
+                        colors = brandFieldColors,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
             }
         },
         confirmButton = {
@@ -525,7 +738,8 @@ fun AddQuestionDialog(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ClassroomColors.BrandPrimary,
                     contentColor = Color.White
-                )
+                ),
+                shape = RoundedCornerShape(10.dp)
             ) {
                 if (state.isSavingQuestion) {
                     CircularProgressIndicator(
@@ -534,7 +748,7 @@ fun AddQuestionDialog(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Lưu")
+                    Text("Lưu", fontWeight = FontWeight.SemiBold)
                 }
             }
         },
@@ -559,72 +773,189 @@ fun ImportStudySetDialog(
     onImport: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var searchQuery by remember(state.showImportStudySetDialog, state.studySetOptions) {
+        mutableStateOf("")
+    }
+    val filteredStudySets = remember(searchQuery, state.studySetOptions) {
+        state.studySetOptions.filter { it.title.contains(searchQuery, ignoreCase = true) }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import từ StudySet", fontWeight = FontWeight.SemiBold) },
+        containerColor = ClassroomColors.ScreenBackground,
+        icon = {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = ClassroomColors.BrandSoftSurface
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = null,
+                    tint = ClassroomColors.BrandPrimaryStrong,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(24.dp)
+                )
+            }
+        },
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Nhập từ Học Liệu", fontWeight = FontWeight.Bold)
+                if (!state.isLoadingStudySets && state.studySetOptions.isNotEmpty()) {
+                    Text(
+                        text = "${state.studySetOptions.size} học liệu",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClassroomColors.TextMuted
+                    )
+                }
+            }
+        },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = { Text("Tìm học liệu...", color = ClassroomColors.TextPlaceholder) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            tint = ClassroomColors.TextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                        {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = "Xóa",
+                                    tint = ClassroomColors.TextMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    } else null,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ClassroomColors.BrandPrimary,
+                        unfocusedBorderColor = ClassroomColors.NeutralBorder,
+                        cursorColor = ClassroomColors.BrandPrimary
+                    )
+                )
+
                 when {
                     state.isLoadingStudySets -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(32.dp),
+                                .weight(1f),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(color = ClassroomColors.BrandPrimary)
+                                Text(
+                                    "Đang tải học liệu...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = ClassroomColors.TextMuted
+                                )
+                            }
                         }
                     }
 
-                    state.studySetOptions.isEmpty() -> {
-                        Text(
-                            "Không có StudySet nào",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = ClassroomColors.TextMuted,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                    filteredStudySets.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MenuBook,
+                                    contentDescription = null,
+                                    tint = ClassroomColors.TextPlaceholder,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                                Text(
+                                    text = if (state.studySetOptions.isEmpty())
+                                        "Chưa có học liệu nào"
+                                    else
+                                        "Không tìm thấy kết quả",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ClassroomColors.TextMuted,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
 
                     else -> {
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = 300.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                .weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            items(state.studySetOptions.size) { index ->
-                                val option = state.studySetOptions[index]
-                                Row(
+                            items(filteredStudySets.size) { index ->
+                                val option = filteredStudySets[index]
+                                val isSelected = state.selectedStudySetId == option.id
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .selectable(
-                                            selected = state.selectedStudySetId == option.id,
+                                            selected = isSelected,
                                             onClick = { onStudySetSelected(option.id) },
                                             role = Role.RadioButton
-                                        )
-                                        .padding(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected)
+                                            ClassroomColors.BrandSoftSurface
+                                        else
+                                            ClassroomColors.CardSurface
+                                    ),
+                                    border = if (isSelected)
+                                        BorderStroke(1.5.dp, ClassroomColors.BrandPrimary)
+                                    else
+                                        BorderStroke(1.dp, ClassroomColors.NeutralBorder)
                                 ) {
-                                    RadioButton(
-                                        selected = state.selectedStudySetId == option.id,
-                                        onClick = { onStudySetSelected(option.id) },
-                                        colors = RadioButtonDefaults.colors(
-                                            selectedColor = ClassroomColors.BrandPrimary,
-                                            unselectedColor = ClassroomColors.TextMuted
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        RadioButton(
+                                            selected = isSelected,
+                                            onClick = { onStudySetSelected(option.id) },
+                                            colors = RadioButtonDefaults.colors(
+                                                selectedColor = ClassroomColors.BrandPrimary,
+                                                unselectedColor = ClassroomColors.TextMuted
+                                            )
                                         )
-                                    )
-                                    Text(
-                                        text = option.title,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MainText,
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                        Text(
+                                            text = option.title,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (isSelected) ClassroomColors.BrandPrimaryStrong else MainText,
+                                            modifier = Modifier.weight(1f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -636,12 +967,13 @@ fun ImportStudySetDialog(
             Button(
                 onClick = onImport,
                 enabled = state.selectedStudySetId != null &&
-                         !state.isImporting &&
-                         !state.isLoadingStudySets,
+                        !state.isImporting &&
+                        !state.isLoadingStudySets,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ClassroomColors.BrandPrimary,
                     contentColor = Color.White
-                )
+                ),
+                shape = RoundedCornerShape(10.dp)
             ) {
                 if (state.isImporting) {
                     CircularProgressIndicator(
@@ -650,7 +982,7 @@ fun ImportStudySetDialog(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Import")
+                    Text("Nhập câu hỏi", fontWeight = FontWeight.SemiBold)
                 }
             }
         },
@@ -676,6 +1008,7 @@ fun QuizOverviewContent(
 ) {
     val userAttempts = quiz.userAttempts ?: 0
     val maxAttempts = quiz.maxAttempts
+    val hasNoQuestions = quiz.questions.isEmpty()
     val isLimitReached = !isTeacher && userAttempts >= maxAttempts
 
     Column(
@@ -686,7 +1019,7 @@ fun QuizOverviewContent(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         Surface(
             modifier = Modifier.size(100.dp),
             shape = CircleShape,
@@ -704,10 +1037,17 @@ fun QuizOverviewContent(
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = if (isLimitReached) "Hết lượt làm bài" else "Sẵn sàng bắt đầu?",
+                text = when {
+                    hasNoQuestions -> "Chưa có câu hỏi"
+                    isLimitReached -> "Hết lượt làm bài"
+                    else -> "Sẵn sàng bắt đầu?"
+                },
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isLimitReached) ClassroomColors.Danger else MainText
+                color = when {
+                    hasNoQuestions || isLimitReached -> ClassroomColors.Danger
+                    else -> MainText
+                }
             )
             Text(
                 text = "Bài kiểm tra này có ${quiz.questions.size} câu hỏi",
@@ -741,11 +1081,22 @@ fun QuizOverviewContent(
             )
         }
 
-        if (isLimitReached) {
+        if (hasNoQuestions) {
             Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = ClassroomColors.DangerSoft
-                ),
+                colors = CardDefaults.cardColors(containerColor = ClassroomColors.DangerSoft),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Bài kiểm tra này chưa có câu hỏi nào. Vui lòng chờ giáo viên thêm câu hỏi.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ClassroomColors.Danger,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        } else if (isLimitReached) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = ClassroomColors.DangerSoft),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
@@ -762,7 +1113,7 @@ fun QuizOverviewContent(
 
         Button(
             onClick = onStart,
-            enabled = !isLimitReached,
+            enabled = !isLimitReached && !hasNoQuestions,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -778,7 +1129,7 @@ fun QuizOverviewContent(
                 fontWeight = FontWeight.Bold
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
@@ -809,3 +1160,66 @@ fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+private fun DeleteConfirmDialog(
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        icon = {
+            Surface(
+                shape = CircleShape,
+                color = ClassroomColors.DangerSoft
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = ClassroomColors.Danger,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(28.dp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = ClassroomColors.TextSecondary,
+                textAlign = TextAlign.Center
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ClassroomColors.Danger,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Xóa", fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, ClassroomColors.NeutralBorder)
+            ) {
+                Text("Hủy", color = ClassroomColors.TextSecondary)
+            }
+        }
+    )
+}

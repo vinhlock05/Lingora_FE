@@ -9,6 +9,7 @@ import com.example.lingora_fe.user.classroom.domain.model.ClassroomMessage
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuiz
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizDetail
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomQuizQuestion
+import com.example.lingora_fe.user.classroom.domain.model.QuizAttemptWithUser
 import com.example.lingora_fe.user.classroom.util.ClassroomLessonType
 import com.example.lingora_fe.user.classroom.util.QuizType
 
@@ -99,6 +100,7 @@ data class LessonDetailState(
     val flashcardFront: String = "",
     val flashcardBack: String = "",
     val flashcardExample: String = "",
+    val flashcardImageUrl: String = "",
     val isSavingFlashcard: Boolean = false,
     // Import from StudySet
     val showImportStudySetDialog: Boolean = false,
@@ -159,4 +161,10 @@ data class QuizSessionState(
     val score: Int = 0,
     val totalQuestions: Int = 0,
     val isPassing: Boolean = false
+)
+
+data class QuizAttemptsState(
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val attempts: List<QuizAttemptWithUser> = emptyList()
 )

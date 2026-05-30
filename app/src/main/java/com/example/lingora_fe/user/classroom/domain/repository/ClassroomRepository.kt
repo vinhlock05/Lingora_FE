@@ -232,7 +232,8 @@ interface ClassroomRepository {
         fileSizeBytes: Long? = null,
         durationSeconds: Int? = null,
         title: String? = null,
-        sortOrder: Int? = null
+        sortOrder: Int? = null,
+        subtitlesJson: String? = null
     ): Either<AppFailure, com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment>
 
     suspend fun getAttachments(
@@ -240,9 +241,22 @@ interface ClassroomRepository {
         lessonId: Int
     ): Either<AppFailure, List<com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment>>
 
+    suspend fun updateSubtitles(
+        classroomId: Int,
+        lessonId: Int,
+        attachmentId: Int,
+        subtitlesJson: String?
+    ): Either<AppFailure, com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment>
+
     suspend fun deleteAttachment(
         classroomId: Int,
         lessonId: Int,
         attachmentId: Int
     ): Either<AppFailure, Unit>
+
+    suspend fun transcribeAttachment(
+        classroomId: Int,
+        lessonId: Int,
+        mediaUrl: String
+    ): Either<AppFailure, List<com.example.lingora_fe.user.classroom.presentation.components.SubtitleCue>>
 }

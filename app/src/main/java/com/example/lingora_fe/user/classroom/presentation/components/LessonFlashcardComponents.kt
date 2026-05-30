@@ -344,8 +344,10 @@ fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
 
     Box(
         modifier = Modifier
+            .widthIn(max = 380.dp)
             .fillMaxWidth()
-            .aspectRatio(0.8f)
+            .fillMaxHeight()
+            .padding(horizontal = 8.dp, vertical = 24.dp)
             .graphicsLayer {
                 rotationY = rotation
                 cameraDistance = 8 * density

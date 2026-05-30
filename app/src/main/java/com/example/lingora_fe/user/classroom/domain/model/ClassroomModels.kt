@@ -130,6 +130,7 @@ data class ClassroomLessonAttachment(
     val durationSeconds: Int?,
     val title: String?,
     val sortOrder: Int,
+    val subtitlesJson: String? = null,
     val createdAt: Date?
 )
 

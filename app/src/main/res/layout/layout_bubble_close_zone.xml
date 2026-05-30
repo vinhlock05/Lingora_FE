@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="80dp"
+    android:layout_height="80dp">
+
+    <View
+        android:id="@+id/close_zone_circle"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="@drawable/bg_close_zone" />
+
+    <TextView
+        android:id="@+id/close_zone_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="✕"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:includeFontPadding="false" />
+
+</FrameLayout>

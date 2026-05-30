@@ -159,6 +159,7 @@ fun ClassroomLessonAttachmentDto.toDomain(): ClassroomLessonAttachment = Classro
     durationSeconds = durationSeconds,
     title = title,
     sortOrder = sortOrder,
+    subtitlesJson = subtitlesJson,
     createdAt = parseDate(createdAt)
 )
 

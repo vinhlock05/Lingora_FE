@@ -231,6 +231,7 @@ data class ClassroomLessonAttachmentDto(
     @SerializedName("durationSeconds") val durationSeconds: Int? = null,
     @SerializedName("title") val title: String? = null,
     @SerializedName("sortOrder") val sortOrder: Int = 0,
+    @SerializedName("subtitlesJson") val subtitlesJson: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null
 )
 
@@ -243,7 +244,8 @@ data class AddAttachmentRequest(
     @SerializedName("fileSizeBytes") val fileSizeBytes: Long? = null,
     @SerializedName("durationSeconds") val durationSeconds: Int? = null,
     @SerializedName("title") val title: String? = null,
-    @SerializedName("sortOrder") val sortOrder: Int? = null
+    @SerializedName("sortOrder") val sortOrder: Int? = null,
+    @SerializedName("subtitlesJson") val subtitlesJson: String? = null
 )
 
 data class UpdateAttachmentRequest(
@@ -255,5 +257,6 @@ data class UpdateAttachmentRequest(
     @SerializedName("fileSizeBytes") val fileSizeBytes: Long? = null,
     @SerializedName("durationSeconds") val durationSeconds: Int? = null,
     @SerializedName("title") val title: String? = null,
-    @SerializedName("sortOrder") val sortOrder: Int? = null
+    @SerializedName("sortOrder") val sortOrder: Int? = null,
+    @SerializedName("subtitlesJson") val subtitlesJson: String? = null
 )

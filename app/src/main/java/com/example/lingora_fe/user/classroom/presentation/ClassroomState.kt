@@ -94,6 +94,7 @@ data class LessonDetailState(
     val isTeacher: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
+    val successMessage: String? = null,
     val lesson: ClassroomLessonDetail? = null,
     // Flashcard
     val showAddFlashcardDialog: Boolean = false,
@@ -122,7 +123,15 @@ data class LessonDetailState(
     val attachmentTitle: String = "",
     val attachmentMimeType: String = "",
     val attachmentFileSizeBytes: Long? = null,
-    val attachmentDurationSeconds: Int? = null
+    val attachmentDurationSeconds: Int? = null,
+    // Timed subtitle and Carousel player states
+    val currentInlineIndex: Int = 0,
+    val isTranscribing: Boolean = false,
+    val showSubtitleEditor: Boolean = false,
+    val editorSubtitlesJson: String? = null,
+    val transcribedAttachmentUrl: String? = null,
+    val editingAttachmentId: Int? = null,
+    val isSavingSubtitle: Boolean = false
 )
 
 data class StudySetOption(

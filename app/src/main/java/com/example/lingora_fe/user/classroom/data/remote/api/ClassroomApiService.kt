@@ -270,4 +270,19 @@ interface ClassroomApiService {
         @Path("lessonId") lessonId: Int,
         @Path("attachmentId") attachmentId: Int
     ): ApiResponse<Any>
+
+    @POST("classrooms/{id}/lessons/{lessonId}/attachments/transcribe")
+    suspend fun transcribeAttachment(
+        @Path("id") classroomId: Int,
+        @Path("lessonId") lessonId: Int,
+        @Body request: TranscribeAttachmentRequest
+    ): ApiResponse<TranscribeAttachmentResponse>
 }
+
+data class TranscribeAttachmentRequest(
+    @com.google.gson.annotations.SerializedName("mediaUrl") val mediaUrl: String
+)
+
+data class TranscribeAttachmentResponse(
+    @com.google.gson.annotations.SerializedName("subtitles") val subtitles: List<com.example.lingora_fe.user.classroom.presentation.components.SubtitleCue>
+)

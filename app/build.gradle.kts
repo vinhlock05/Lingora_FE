@@ -113,6 +113,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.coil.compose)
     implementation(libs.mpandroidchart)
+    implementation("androidx.cardview:cardview:1.0.0")
 
     // --- Functional & Realtime ---
     implementation(libs.arrow.core)

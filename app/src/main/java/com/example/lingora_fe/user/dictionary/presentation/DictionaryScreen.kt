@@ -126,12 +126,54 @@ fun DictionaryScreen(
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            GradientStart.copy(alpha = 0.06f),
-                            GradientEnd.copy(alpha = 0.02f)
+                            com.example.lingora_fe.core.ui.theme.GradientStart.copy(alpha = 0.06f),
+                            com.example.lingora_fe.core.ui.theme.GradientEnd.copy(alpha = 0.02f)
                         )
                     )
                 )
         ) {
+            // FLOATING BUBBLE SERVICE TOGGLE
+            // FloatingBubbleService.isRunning is a Compose mutableStateOf — reading it here
+            // means this composable automatically recomposes whenever the service starts or
+            // stops (including drag-to-dismiss), so the switch always reflects live state.
+            val isServiceRunning = FloatingBubbleService.isRunning
+
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Bong bóng dịch thuật chạy nền",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                )
+                androidx.compose.material3.Switch(
+                    checked = isServiceRunning,
+                    onCheckedChange = { checked ->
+                        if (checked) {
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && !android.provider.Settings.canDrawOverlays(context)) {
+                                val intent = android.content.Intent(
+                                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    android.net.Uri.parse("package:${context.packageName}")
+                                )
+                                context.startActivity(intent)
+                            } else {
+                                val intent = android.content.Intent(context, com.example.lingora_fe.user.dictionary.presentation.FloatingBubbleService::class.java)
+                                context.startService(intent)
+                                // isRunning will flip to true automatically via onDestroy/onCreate
+                            }
+                        } else {
+                            val intent = android.content.Intent(context, com.example.lingora_fe.user.dictionary.presentation.FloatingBubbleService::class.java)
+                            context.stopService(intent)
+                            // isRunning will flip to false automatically via onDestroy
+                        }
+                    }
+                )
+            }
 
             // MODE
             ModeToggleRow(

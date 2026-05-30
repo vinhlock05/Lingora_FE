@@ -30,16 +30,13 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SmartDisplay
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,12 +76,31 @@ fun LessonDetailScreen(
     var isUploadingImage by remember { mutableStateOf(false) }
     var flashcardToDelete by remember { mutableStateOf<ClassroomFlashcard?>(null) }
 
+    // SRT file picker — used in both "add new" and "edit existing" subtitle flows
+    val srtPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { viewModel.parseSrtFromUri(it) } }
+
+    LaunchedEffect(state.isSavingSubtitle) {
+        if (!state.isSavingSubtitle && state.successMessage != null) {
+            snackbarHostState.showSnackbar(state.successMessage)
+            viewModel.clearSuccess()
+        }
+    }
+
     LaunchedEffect(state.error) {
         state.error?.let { error ->
             if (state.lesson != null) {
                 snackbarHostState.showSnackbar(error)
                 viewModel.clearError()
             }
+        }
+    }
+
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let { success ->
+            snackbarHostState.showSnackbar(success)
+            viewModel.clearSuccess()
         }
     }
 
@@ -108,9 +124,6 @@ fun LessonDetailScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
                 actions = {
                     if (state.isTeacher) {
                         IconButton(onClick = { viewModel.showImportStudySetDialog() }) {
@@ -122,7 +135,9 @@ fun LessonDetailScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -191,240 +206,451 @@ fun LessonDetailScreen(
 
             state.lesson != null -> {
                 val lesson = state.lesson
+                val inlineAttachments = lesson.attachments.filter {
+                    it.role == com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.INLINE &&
+                    (it.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.VIDEO ||
+                     it.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.AUDIO ||
+                     it.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.IMAGE)
+                }
+                val inlineDocAttachments = lesson.attachments.filter {
+                    it.role == com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.INLINE &&
+                    it.fileType != com.example.lingora_fe.user.classroom.util.LessonAttachmentType.VIDEO &&
+                    it.fileType != com.example.lingora_fe.user.classroom.util.LessonAttachmentType.AUDIO &&
+                    it.fileType != com.example.lingora_fe.user.classroom.util.LessonAttachmentType.IMAGE
+                }
+                val downloadAttachments = lesson.attachments.filter {
+                    it.role == com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.DOWNLOAD
+                }
+                var selectedTabIndex by remember { mutableIntStateOf(0) }
+                val hasMedia = inlineAttachments.isNotEmpty()
+                val tabs = remember(hasMedia, lesson.flashcards.size) {
+                    mutableListOf<String>().apply {
+                        if (hasMedia) add("Bài giảng")
+                        add("Tài liệu")
+                        add("Từ vựng")
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // ── Lesson info card ──────────────────────────────────────
-                    Card(
+                    // Top-level TabRow
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = Color.White,
+                        contentColor = ClassroomColors.BrandPrimaryStrong,
+                        indicator = { tabPositions ->
+                            TabRowDefaults.Indicator(
+                                Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                                color = ClassroomColors.BrandPrimary,
+                                height = 3.dp
+                            )
+                        }
+                    ) {
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                text = {
+                                    Text(
+                                        title,
+                                        color = if (selectedTabIndex == index) ClassroomColors.BrandPrimaryStrong else ClassroomColors.TextMuted,
+                                        fontWeight = if (selectedTabIndex == index) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    // Render content based on selected tab
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
+                            .weight(1f)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = lessonTypeIcon(lesson.lessonType.value),
-                                    contentDescription = null,
-                                    tint = ClassroomColors.BrandPrimaryStrong,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = lesson.title,
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MainText
-                                )
-                            }
+                        val activeTabTitle = tabs.getOrNull(selectedTabIndex) ?: ""
+                        when (activeTabTitle) {
+                            "Bài giảng" -> {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    val activeIndex = state.currentInlineIndex.coerceIn(0, inlineAttachments.lastIndex)
+                                    val activeAttachment = inlineAttachments[activeIndex]
 
-                            if (!lesson.description.isNullOrEmpty()) {
-                                Text(
-                                    text = lesson.description ?: "",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = ClassroomColors.TextSecondary
-                                )
-                            }
+                                    InlineCarouselContainer(
+                                        inlineAttachments = inlineAttachments,
+                                        currentIndex = activeIndex,
+                                        onIndexChange = { index -> viewModel.onInlineIndexChange(index) }
+                                    ) { attachment ->
+                                        when (attachment.fileType) {
+                                            com.example.lingora_fe.user.classroom.util.LessonAttachmentType.VIDEO -> {
+                                                VideoPlayerView(
+                                                    videoUrl = attachment.fileUrl,
+                                                    exoPlayer = viewModel.exoPlayer,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .aspectRatio(16f / 9f)
+                                                )
+                                            }
+                                            com.example.lingora_fe.user.classroom.util.LessonAttachmentType.IMAGE -> {
+                                                AsyncImage(
+                                                    model = attachment.fileUrl,
+                                                    contentDescription = attachment.title ?: attachment.fileName,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .heightIn(max = 320.dp)
+                                                        .clip(RoundedCornerShape(12.dp)),
+                                                    contentScale = ContentScale.Fit
+                                                )
+                                            }
+                                            else -> {
+                                                PodcastPlayerView(
+                                                    audioUrl = attachment.fileUrl,
+                                                    exoPlayer = viewModel.exoPlayer,
+                                                    title = attachment.title ?: attachment.fileName,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(8.dp)
+                                                )
+                                            }
+                                        }
+                                    }
 
-                            if (!lesson.isPublished) {
-                                Text(
-                                    text = "Bản nháp",
-                                    color = ClassroomColors.Danger,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                if (lesson.isPublished) {
-                                    AssistChip(
-                                        onClick = {},
-                                        label = { Text("Công khai") },
-                                        colors = AssistChipDefaults.assistChipColors(
-                                            containerColor = ClassroomColors.PublicChipBackground,
-                                            labelColor = ClassroomColors.PublicChipText
-                                        ),
-                                        border = AssistChipDefaults.assistChipBorder(
-                                            enabled = true,
-                                            borderColor = ClassroomColors.BrandPrimary
-                                        )
-                                    )
+                                    // Teacher: action row
+                                    if (state.isTeacher) {
+                                        val isMediaType = activeAttachment.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.VIDEO ||
+                                            activeAttachment.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.AUDIO
+                                        val hasSubtitle = !activeAttachment.subtitlesJson.isNullOrBlank()
+                                        var showSubtitleMenu by remember { mutableStateOf(false) }
+                                        var showSubtitleOptionsMenu by remember { mutableStateOf(false) }
+
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(Color(0xFFF8F8F8))
+                                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            // Delete button (left)
+                                            IconButton(
+                                                onClick = { viewModel.confirmDeleteAttachment(activeAttachment) },
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = "Xóa",
+                                                    tint = ClassroomColors.Danger,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+
+                                            // Subtitle controls (right) — only for video/audio
+                                            if (isMediaType) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    if (state.isTranscribing) {
+                                                        CircularProgressIndicator(
+                                                            modifier = Modifier.size(14.dp),
+                                                            strokeWidth = 2.dp,
+                                                            color = ClassroomColors.BrandPrimary
+                                                        )
+                                                        Spacer(Modifier.width(4.dp))
+                                                        Text(
+                                                            "Đang tạo...",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = ClassroomColors.BrandPrimary
+                                                        )
+                                                    } else if (!hasSubtitle) {
+                                                        // ── No subtitle: one button → 2-option dropdown ──
+                                                        Box {
+                                                            TextButton(
+                                                                onClick = { showSubtitleMenu = true },
+                                                                enabled = !state.isSavingSubtitle
+                                                            ) {
+                                                                Icon(
+                                                                    Icons.Default.Subtitles,
+                                                                    null,
+                                                                    Modifier.size(16.dp),
+                                                                    tint = ClassroomColors.BrandPrimaryStrong
+                                                                )
+                                                                Spacer(Modifier.width(4.dp))
+                                                                Text(
+                                                                    "Thêm phụ đề",
+                                                                    style = MaterialTheme.typography.labelMedium,
+                                                                    color = ClassroomColors.BrandPrimaryStrong
+                                                                )
+                                                            }
+                                                            DropdownMenu(
+                                                                expanded = showSubtitleMenu,
+                                                                onDismissRequest = { showSubtitleMenu = false }
+                                                            ) {
+                                                                DropdownMenuItem(
+                                                                    text = { Text("Upload file SRT") },
+                                                                    leadingIcon = { Icon(Icons.Default.FileUpload, null, Modifier.size(18.dp)) },
+                                                                    onClick = {
+                                                                        showSubtitleMenu = false
+                                                                        viewModel.prepareSubtitleEdit(activeAttachment)
+                                                                        srtPicker.launch("*/*")
+                                                                    }
+                                                                )
+                                                                DropdownMenuItem(
+                                                                    text = { Text("Tạo tự động bằng AI") },
+                                                                    leadingIcon = { Icon(Icons.Default.AutoAwesome, null, Modifier.size(18.dp)) },
+                                                                    onClick = {
+                                                                        showSubtitleMenu = false
+                                                                        viewModel.transcribeExistingAttachment(activeAttachment)
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                    } else {
+                                                        // ── Has subtitle: edit button + small options ──
+                                                        TextButton(
+                                                            onClick = { viewModel.startEditSubtitle(activeAttachment) },
+                                                            enabled = !state.isSavingSubtitle
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.Subtitles,
+                                                                null,
+                                                                Modifier.size(16.dp),
+                                                                tint = ClassroomColors.BrandPrimaryStrong
+                                                            )
+                                                            Spacer(Modifier.width(4.dp))
+                                                            Text(
+                                                                "Chỉnh sửa phụ đề",
+                                                                style = MaterialTheme.typography.labelMedium,
+                                                                color = ClassroomColors.BrandPrimaryStrong
+                                                            )
+                                                        }
+                                                        Box {
+                                                            IconButton(
+                                                                onClick = { showSubtitleOptionsMenu = true },
+                                                                modifier = Modifier.size(32.dp),
+                                                                enabled = !state.isSavingSubtitle
+                                                            ) {
+                                                                Icon(
+                                                                    Icons.Default.MoreVert,
+                                                                    null,
+                                                                    Modifier.size(18.dp),
+                                                                    tint = ClassroomColors.TextSecondary
+                                                                )
+                                                            }
+                                                            DropdownMenu(
+                                                                expanded = showSubtitleOptionsMenu,
+                                                                onDismissRequest = { showSubtitleOptionsMenu = false }
+                                                            ) {
+                                                                DropdownMenuItem(
+                                                                    text = { Text("Upload file SRT mới") },
+                                                                    leadingIcon = { Icon(Icons.Default.FileUpload, null, Modifier.size(18.dp)) },
+                                                                    onClick = {
+                                                                        showSubtitleOptionsMenu = false
+                                                                        viewModel.prepareSubtitleEdit(activeAttachment)
+                                                                        srtPicker.launch("*/*")
+                                                                    }
+                                                                )
+                                                                DropdownMenuItem(
+                                                                    text = { Text("Tạo lại bằng AI") },
+                                                                    leadingIcon = { Icon(Icons.Default.AutoAwesome, null, Modifier.size(18.dp)) },
+                                                                    onClick = {
+                                                                        showSubtitleOptionsMenu = false
+                                                                        viewModel.transcribeExistingAttachment(activeAttachment)
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Interactive Subtitles — only for video/audio
+                                    val isMediaAttachment = activeAttachment.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.VIDEO ||
+                                        activeAttachment.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.AUDIO
+                                    if (isMediaAttachment) {
+                                        var currentPosition by remember { mutableStateOf(0L) }
+                                        LaunchedEffect(viewModel.exoPlayer) {
+                                            while (true) {
+                                                if (viewModel.exoPlayer.isPlaying) {
+                                                    currentPosition = viewModel.exoPlayer.currentPosition
+                                                }
+                                                kotlinx.coroutines.delay(250)
+                                            }
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1f)
+                                                .background(Color.White)
+                                        ) {
+                                            InteractiveScriptView(
+                                                subtitlesJson = activeAttachment.subtitlesJson,
+                                                currentPosition = currentPosition,
+                                                onSeekTo = { seekMs ->
+                                                    viewModel.exoPlayer.seekTo(seekMs)
+                                                    currentPosition = seekMs
+                                                },
+                                                exoPlayer = viewModel.exoPlayer,
+                                                wordRepository = viewModel.wordRepository
+                                            )
+                                        }
+                                    }
                                 }
                             }
 
-                            if (!lesson.content.isNullOrEmpty()) {
-                                Divider(
-                                    color = ClassroomColors.NeutralBorder,
-                                    modifier = Modifier.padding(vertical = 8.dp)
-                                )
-                                Text(
-                                    text = "Nội dung:",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = ClassroomColors.TextSecondary,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = lesson.content ?: "",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = ClassroomColors.TextSecondary,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-
-                    if (state.isTeacher) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Flashcards (${lesson.flashcards.size})",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MainText
-                            )
-                            TextButton(onClick = { viewModel.showImportStudySetDialog() }) {
-                                Text("Nhập từ học liệu")
-                            }
-                        }
-
-                    // ── Attachments section ───────────────────────────────────
-                    val inlineAttachments   = lesson.attachments.filter { it.role == LessonAttachmentRole.INLINE }
-                    val downloadAttachments = lesson.attachments.filter { it.role == LessonAttachmentRole.DOWNLOAD }
-
-                    if (lesson.attachments.isNotEmpty() || state.isTeacher) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Tài liệu đính kèm",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MainText
-                            )
-                            if (lesson.attachments.isNotEmpty()) {
-                                Surface(shape = CircleShape, color = ClassroomColors.BrandSoftSurface) {
-                                    Text(
-                                        text = "${lesson.attachments.size}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = ClassroomColors.BrandPrimaryStrong,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                    )
+                            "Tài liệu" -> {
+                                if (state.isTeacher) {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(bottom = 80.dp), // Extra padding for FAB
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        item {
+                                            LessonInfoCard(lesson = lesson)
+                                        }
+                                        if (inlineDocAttachments.isNotEmpty()) {
+                                            item {
+                                                AttachmentSectionHeader(
+                                                    icon = Icons.Default.Description,
+                                                    label = "Tài liệu học tập (Xem trong app)",
+                                                    count = inlineDocAttachments.size
+                                                )
+                                            }
+                                            items(inlineDocAttachments) { attachment ->
+                                                AttachmentItem(
+                                                    attachment = attachment,
+                                                    isTeacher = true,
+                                                    onDelete = { viewModel.confirmDeleteAttachment(attachment) }
+                                                )
+                                            }
+                                        }
+                                        if (downloadAttachments.isNotEmpty()) {
+                                            item {
+                                                AttachmentSectionHeader(
+                                                    icon = Icons.Default.Download,
+                                                    label = "Tài liệu tải về",
+                                                    count = downloadAttachments.size
+                                                )
+                                            }
+                                            items(downloadAttachments) { attachment ->
+                                                AttachmentItem(
+                                                    attachment = attachment,
+                                                    isTeacher = true,
+                                                    onDelete = { viewModel.confirmDeleteAttachment(attachment) }
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    val scrollState = rememberScrollState()
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(scrollState)
+                                    ) {
+                                        LessonInfoCard(lesson = lesson)
+                                        if (inlineDocAttachments.isNotEmpty()) {
+                                            AttachmentSectionHeader(
+                                                icon = Icons.Default.Description,
+                                                label = "Tài liệu học tập (Xem trong app)",
+                                                count = inlineDocAttachments.size
+                                            )
+                                            inlineDocAttachments.forEach { attachment ->
+                                                AttachmentItem(
+                                                    attachment = attachment,
+                                                    isTeacher = false,
+                                                    onDelete = {}
+                                                )
+                                            }
+                                        }
+                                        if (downloadAttachments.isNotEmpty()) {
+                                            AttachmentSectionHeader(
+                                                icon = Icons.Default.Download,
+                                                label = "Tài liệu tải về",
+                                                count = downloadAttachments.size
+                                            )
+                                            downloadAttachments.forEach { attachment ->
+                                                AttachmentItem(
+                                                    attachment = attachment,
+                                                    isTeacher = false,
+                                                    onDelete = {}
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                    }
                                 }
                             }
-                        }
 
-                        if (lesson.attachments.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (state.isTeacher) "Chưa có tài liệu. Nhấn 📎 để thêm."
-                                           else "Bài học này chưa có tài liệu đính kèm.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = ClassroomColors.TextMuted
-                                )
-                            }
-                        } else {
-                            if (inlineAttachments.isNotEmpty()) {
-                                AttachmentSectionHeader(
-                                    icon = Icons.Default.PlayArrow,
-                                    label = "Xem trong app",
-                                    count = inlineAttachments.size
-                                )
-                                inlineAttachments.forEach { attachment ->
-                                    AttachmentItem(
-                                        attachment = attachment,
-                                        isTeacher = state.isTeacher,
-                                        onDelete = { viewModel.confirmDeleteAttachment(attachment) }
-                                    )
-                                }
-                            }
-                            if (downloadAttachments.isNotEmpty()) {
-                                AttachmentSectionHeader(
-                                    icon = Icons.Default.Download,
-                                    label = "Tài liệu tải về",
-                                    count = downloadAttachments.size
-                                )
-                                downloadAttachments.forEach { attachment ->
-                                    AttachmentItem(
-                                        attachment = attachment,
-                                        isTeacher = state.isTeacher,
-                                        onDelete = { viewModel.confirmDeleteAttachment(attachment) }
-                                    )
-                                }
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                            "Từ vựng" -> {
+                                if (state.isTeacher) {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(bottom = 80.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        item {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "Flashcards (${lesson.flashcards.size})",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MainText
+                                                )
+                                            }
+                                        }
 
-                    // ── Flashcards section ────────────────────────────────────
-                    if (state.isTeacher) {
-                        Text(
-                            text = "Flashcards (${lesson.flashcards.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MainText,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                        if (lesson.flashcards.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "Chưa có flashcard nào. Nhấn nút + để thêm.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = ClassroomColors.TextMuted
-                                )
-                            }
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                items(lesson.flashcards) { flashcard ->
-                                    FlashcardItem(
-                                        flashcard = flashcard,
-                                        onEdit = { viewModel.editFlashcard(flashcard) },
-                                        onDelete = { flashcardToDelete = flashcard }
-                                    )
+                                        if (lesson.flashcards.isEmpty()) {
+                                            item {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(32.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = "Chưa có flashcard nào. Nhấn nút + để thêm.",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = ClassroomColors.TextMuted
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            items(lesson.flashcards) { flashcard ->
+                                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                                    FlashcardItem(
+                                                        flashcard = flashcard,
+                                                        onEdit = { viewModel.editFlashcard(flashcard) },
+                                                        onDelete = { flashcardToDelete = flashcard }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        if (lesson.flashcards.isEmpty()) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text("Bài học này chưa có nội dung học tập.")
+                                            }
+                                        } else {
+                                            LessonStudyPager(flashcards = lesson.flashcards)
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    } else {
-                        // Student mode: pager
-                        if (lesson.flashcards.isEmpty()) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("Bài học này chưa có nội dung học tập.")
-                            }
-                        } else {
-                            LessonStudyPager(flashcards = lesson.flashcards)
                         }
                     }
                 }
@@ -502,8 +728,22 @@ fun LessonDetailScreen(
             onPickFile          = { filePicker.launch("*/*") },
             onTitleChange       = { viewModel.onAttachmentTitleChange(it) },
             onRoleChange        = { viewModel.onAttachmentRoleChange(it) },
+            onTranscribe        = { viewModel.transcribeAttachment() },
+            onUploadSrt         = { srtPicker.launch("*/*") },
             onSave              = { viewModel.saveAttachment() },
             onDismiss           = { viewModel.hideAddAttachmentDialog() }
+        )
+    }
+
+    if (state.showSubtitleEditor && state.editorSubtitlesJson != null) {
+        SubtitleEditorDialog(
+            initialSubtitlesJson = state.editorSubtitlesJson,
+            onSave = { finalizedJson ->
+                viewModel.saveEditorSubtitles(finalizedJson)
+            },
+            onDismiss = {
+                viewModel.hideSubtitleEditor()
+            }
         )
     }
 
@@ -1139,8 +1379,10 @@ fun FlippableFlashcard(flashcard: ClassroomFlashcard) {
 
     Box(
         modifier = Modifier
+            .widthIn(max = 380.dp)
             .fillMaxWidth()
-            .aspectRatio(0.8f)
+            .fillMaxHeight()
+            .padding(horizontal = 8.dp, vertical = 24.dp)
             .graphicsLayer {
                 rotationY = rotation
                 cameraDistance = 8 * density
@@ -1292,4 +1534,87 @@ private fun DeleteConfirmDialog(
             }
         }
     )
+}
+
+@Composable
+fun LessonInfoCard(lesson: com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonDetail) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(containerColor = ClassroomColors.CardSurface)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = lessonTypeIcon(lesson.lessonType.value),
+                    contentDescription = null,
+                    tint = ClassroomColors.BrandPrimaryStrong,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = lesson.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MainText
+                )
+            }
+
+            if (!lesson.description.isNullOrEmpty()) {
+                Text(
+                    text = lesson.description ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ClassroomColors.TextSecondary
+                )
+            }
+
+            if (!lesson.isPublished) {
+                Text(
+                    text = "Bản nháp",
+                    color = ClassroomColors.Danger,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            } else {
+                AssistChip(
+                    onClick = {},
+                    label = { Text("Công khai") },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = ClassroomColors.PublicChipBackground,
+                        labelColor = ClassroomColors.PublicChipText
+                    ),
+                    border = AssistChipDefaults.assistChipBorder(
+                        enabled = true,
+                        borderColor = ClassroomColors.BrandPrimary
+                    )
+                )
+            }
+
+            if (!lesson.content.isNullOrEmpty()) {
+                Divider(
+                    color = ClassroomColors.NeutralBorder,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                Text(
+                    text = "Nội dung:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ClassroomColors.TextSecondary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = lesson.content ?: "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ClassroomColors.TextSecondary,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
 }

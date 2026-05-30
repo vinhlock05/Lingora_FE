@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ClosedCaption
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Image
@@ -119,7 +121,8 @@ fun AttachmentSectionHeader(icon: ImageVector, label: String, count: Int) {
 fun AttachmentItem(
     attachment: ClassroomLessonAttachment,
     isTeacher: Boolean,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEditSubtitle: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showImageDialog by remember { mutableStateOf(false) }
@@ -241,7 +244,7 @@ fun AttachmentItem(
                 }
             }
 
-            // Role indicator + delete button (teacher only)
+            // Role indicator + action buttons (teacher only)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                 val roleIcon = if (attachment.role == LessonAttachmentRole.INLINE)
                     Icons.Default.PlayArrow else Icons.Default.Download
@@ -251,7 +254,29 @@ fun AttachmentItem(
                     tint = ClassroomColors.BrandPrimaryStrong,
                     modifier = Modifier.size(18.dp)
                 )
+                // Subtitle indicator badge (video/audio with subtitles)
+                val isMedia = attachment.fileType == LessonAttachmentType.VIDEO ||
+                    attachment.fileType == LessonAttachmentType.AUDIO
+                if (isMedia && !attachment.subtitlesJson.isNullOrBlank()) {
+                    Icon(
+                        imageVector = Icons.Default.ClosedCaption,
+                        contentDescription = "Có phụ đề",
+                        tint = ClassroomColors.BrandPrimaryStrong,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
                 if (isTeacher) {
+                    // Edit subtitle button for video/audio
+                    if (isMedia && onEditSubtitle != null) {
+                        IconButton(onClick = onEditSubtitle, modifier = Modifier.size(36.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Subtitles,
+                                contentDescription = "Chỉnh sửa phụ đề",
+                                tint = ClassroomColors.BrandPrimaryStrong,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                     IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -284,7 +309,21 @@ fun AttachmentItem(
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    onState = { state ->
+                        when (state) {
+                            is coil.compose.AsyncImagePainter.State.Success -> {
+                                android.util.Log.d("CoilImageLoad", "Success loading URL: ${attachment.fileUrl}")
+                            }
+                            is coil.compose.AsyncImagePainter.State.Error -> {
+                                android.util.Log.e("CoilImageLoad", "Error loading URL: ${attachment.fileUrl}", state.result.throwable)
+                            }
+                            is coil.compose.AsyncImagePainter.State.Loading -> {
+                                android.util.Log.d("CoilImageLoad", "Loading URL: ${attachment.fileUrl}")
+                            }
+                            else -> {}
+                        }
+                    }
                 )
                 Text(
                     text = "Nhấn bất kỳ đâu để đóng",
@@ -443,6 +482,8 @@ fun AddAttachmentBottomSheet(
     onPickFile: () -> Unit,
     onTitleChange: (String) -> Unit,
     onRoleChange: (LessonAttachmentRole) -> Unit,
+    onTranscribe: () -> Unit,
+    onUploadSrt: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -792,6 +833,92 @@ fun AddAttachmentBottomSheet(
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                // ── SUBTITLE SECTION ─────────────────────────────────────────
+                if (state.attachmentFileType == LessonAttachmentType.VIDEO ||
+                    state.attachmentFileType == LessonAttachmentType.AUDIO) {
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Phụ đề bài giảng",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ClassroomColors.TextSecondary
+                            )
+                            // Upload SRT button (primary action)
+                            OutlinedButton(
+                                onClick = onUploadSrt,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = ClassroomColors.BrandPrimaryStrong
+                                ),
+                                border = BorderStroke(
+                                    1.5.dp,
+                                    if (state.editorSubtitlesJson != null)
+                                        ClassroomColors.BrandPrimary
+                                    else ClassroomColors.NeutralBorder
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Description,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    if (state.editorSubtitlesJson != null) "Thay thế file SRT"
+                                    else "Upload file SRT",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            // AI transcribe button (secondary — requires AI service)
+                            Button(
+                                onClick = onTranscribe,
+                                enabled = !state.isTranscribing,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ClassroomColors.BrandPrimaryStrong,
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                if (state.isTranscribing) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Đang xử lý phụ đề...")
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        if (state.editorSubtitlesJson != null) "Cập nhật phụ đề AI"
+                                        else "Tự động tạo phụ đề bằng AI"
+                                    )
+                                }
+                            }
+                            if (state.editorSubtitlesJson != null) {
+                                Text(
+                                    "✓ Đã sẵn sàng phụ đề timed-cues",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = ClassroomColors.BrandPrimaryStrong,
+                                    fontWeight = FontWeight.Medium
+                                )
                             }
                         }
                     }

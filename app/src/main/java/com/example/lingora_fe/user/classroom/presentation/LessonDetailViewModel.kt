@@ -8,13 +8,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.lingora_fe.core.network.UploadRepository
 import com.example.lingora_fe.user.classroom.domain.model.ClassroomFlashcard
 import com.example.lingora_fe.user.classroom.domain.repository.ClassroomRepository
+import com.example.lingora_fe.user.classroom.presentation.components.SubtitleCue
 import com.example.lingora_fe.user.classroom.util.LessonAttachmentType
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.media3.exoplayer.ExoPlayer
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,10 +25,13 @@ class LessonDetailViewModel @Inject constructor(
     private val repository: ClassroomRepository,
     private val uploadRepository: UploadRepository,
     private val studySetRepository: com.example.lingora_fe.user.studyset.domain.repository.StudySetRepository,
+    val wordRepository: com.example.lingora_fe.user.vocabulary.domain.repository.WordRepository,
     private val tokenManager: com.example.lingora_fe.core.network.TokenManager,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    val exoPlayer = ExoPlayer.Builder(context).build()
 
     private val classroomId: Int =
         requireNotNull(savedStateHandle.get<String>("classroomId")?.toIntOrNull()) {
@@ -48,6 +54,10 @@ class LessonDetailViewModel @Inject constructor(
 
     fun clearError() {
         _state.value = _state.value.copy(error = null)
+    }
+
+    fun clearSuccess() {
+        _state.value = _state.value.copy(successMessage = null)
     }
 
     fun refresh() {
@@ -151,7 +161,8 @@ class LessonDetailViewModel @Inject constructor(
                     flashcardFront = "",
                     flashcardBack = "",
                     flashcardExample = "",
-                    flashcardImageUrl = ""
+                    flashcardImageUrl = "",
+                    successMessage = "Thêm thẻ ghi nhớ thành công!"
                 )
                 loadLessonDetail()
             }
@@ -187,7 +198,8 @@ class LessonDetailViewModel @Inject constructor(
                     flashcardFront = "",
                     flashcardBack = "",
                     flashcardExample = "",
-                    flashcardImageUrl = ""
+                    flashcardImageUrl = "",
+                    successMessage = "Cập nhật thẻ ghi nhớ thành công!"
                 )
                 loadLessonDetail()
             }
@@ -207,6 +219,9 @@ class LessonDetailViewModel @Inject constructor(
                     )
                 },
                 ifRight = {
+                    _state.value = _state.value.copy(
+                        successMessage = "Xóa thẻ ghi nhớ thành công!"
+                    )
                     loadLessonDetail()
                 }
             )
@@ -302,7 +317,8 @@ class LessonDetailViewModel @Inject constructor(
                         isImporting = false,
                         showImportStudySetDialog = false,
                         selectedStudySetId = null,
-                        lesson = lesson
+                        lesson = lesson,
+                        successMessage = "Nhập danh sách từ vựng thành công!"
                     )
                 }
             )
@@ -321,7 +337,8 @@ class LessonDetailViewModel @Inject constructor(
             attachmentFileSizeBytes = null,
             attachmentDurationSeconds = null,
             attachmentFileType = com.example.lingora_fe.user.classroom.util.LessonAttachmentType.OTHER,
-            attachmentRole = com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.DOWNLOAD
+            attachmentRole = com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.DOWNLOAD,
+            editorSubtitlesJson = null
         )
     }
 
@@ -368,7 +385,8 @@ class LessonDetailViewModel @Inject constructor(
                         attachmentMimeType = result.mimeType,
                         attachmentFileSizeBytes = result.fileSizeBytes,
                         attachmentFileType = fileType,
-                        attachmentRole = role
+                        attachmentRole = role,
+                        successMessage = "Đã tải file lên máy chủ thành công!"
                     )
                 }
             )
@@ -419,7 +437,8 @@ class LessonDetailViewModel @Inject constructor(
                 mimeType = current.attachmentMimeType.trim().takeIf { it.isNotEmpty() },
                 fileSizeBytes = current.attachmentFileSizeBytes,
                 durationSeconds = current.attachmentDurationSeconds,
-                title = current.attachmentTitle.trim().takeIf { it.isNotEmpty() }
+                title = current.attachmentTitle.trim().takeIf { it.isNotEmpty() },
+                subtitlesJson = current.editorSubtitlesJson
             ).fold(
                 ifLeft = { error ->
                     _state.value = _state.value.copy(
@@ -430,7 +449,9 @@ class LessonDetailViewModel @Inject constructor(
                 ifRight = {
                     _state.value = _state.value.copy(
                         isUploadingAttachment = false,
-                        showAddAttachmentDialog = false
+                        showAddAttachmentDialog = false,
+                        editorSubtitlesJson = null,
+                        successMessage = "Lưu tài liệu đính kèm thành công!"
                     )
                     loadLessonDetail()
                 }
@@ -462,10 +483,204 @@ class LessonDetailViewModel @Inject constructor(
                     )
                 },
                 ifRight = {
-                    _state.value = _state.value.copy(isDeletingAttachment = false)
+                    _state.value = _state.value.copy(
+                        isDeletingAttachment = false,
+                        successMessage = "Xóa tài liệu đính kèm thành công!"
+                    )
                     loadLessonDetail()
                 }
             )
         }
+    }
+
+    fun onInlineIndexChange(index: Int) {
+        _state.value = _state.value.copy(currentInlineIndex = index)
+        exoPlayer.stop()
+        exoPlayer.clearMediaItems()
+    }
+
+    fun transcribeAttachment() {
+        val current = _state.value
+        val url = current.attachmentFileUrl
+        if (url.isBlank()) return
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isTranscribing = true, error = null)
+            repository.transcribeAttachment(classroomId, lessonId, url).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isTranscribing = false,
+                        error = error.message ?: "Tự động tạo phụ đề thất bại"
+                    )
+                },
+                ifRight = { cues ->
+                    val gson = com.google.gson.Gson()
+                    val jsonString = gson.toJson(cues)
+                    _state.value = _state.value.copy(
+                        isTranscribing = false,
+                        showSubtitleEditor = true,
+                        editorSubtitlesJson = jsonString
+                    )
+                }
+            )
+        }
+    }
+
+    fun saveEditorSubtitles(finalizedJson: String) {
+        val editingId = _state.value.editingAttachmentId
+        if (editingId != null) {
+            saveSubtitleForExisting(editingId, finalizedJson)
+        } else {
+            _state.value = _state.value.copy(
+                editorSubtitlesJson = finalizedJson,
+                showSubtitleEditor = false
+            )
+        }
+    }
+
+    fun hideSubtitleEditor() {
+        _state.value = _state.value.copy(
+            showSubtitleEditor = false,
+            editingAttachmentId = null
+        )
+    }
+
+    fun startEditSubtitle(attachment: com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment) {
+        _state.value = _state.value.copy(
+            editingAttachmentId = attachment.id,
+            editorSubtitlesJson = attachment.subtitlesJson,
+            showSubtitleEditor = true
+        )
+    }
+
+    fun prepareSubtitleEdit(attachment: com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment) {
+        _state.value = _state.value.copy(
+            editingAttachmentId = attachment.id,
+            editorSubtitlesJson = null
+        )
+    }
+
+    fun transcribeExistingAttachment(attachment: com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                editingAttachmentId = attachment.id,
+                isTranscribing = true,
+                error = null
+            )
+            repository.transcribeAttachment(classroomId, lessonId, attachment.fileUrl).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isTranscribing = false,
+                        editingAttachmentId = null,
+                        error = error.message ?: "Tự động tạo phụ đề thất bại"
+                    )
+                },
+                ifRight = { cues ->
+                    val jsonString = Gson().toJson(cues)
+                    _state.value = _state.value.copy(
+                        isTranscribing = false,
+                        showSubtitleEditor = true,
+                        editorSubtitlesJson = jsonString
+                    )
+                }
+            )
+        }
+    }
+
+    private fun saveSubtitleForExisting(attachmentId: Int, json: String) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSavingSubtitle = true, showSubtitleEditor = false)
+            repository.updateSubtitles(
+                classroomId = classroomId,
+                lessonId = lessonId,
+                attachmentId = attachmentId,
+                subtitlesJson = json
+            ).fold(
+                ifLeft = { error ->
+                    _state.value = _state.value.copy(
+                        isSavingSubtitle = false,
+                        editingAttachmentId = null,
+                        error = error.message ?: "Không thể lưu phụ đề"
+                    )
+                },
+                ifRight = {
+                    _state.value = _state.value.copy(
+                        isSavingSubtitle = false,
+                        editingAttachmentId = null,
+                        editorSubtitlesJson = null,
+                        successMessage = "Cập nhật phụ đề thành công!"
+                    )
+                    loadLessonDetail()
+                }
+            )
+        }
+    }
+
+    fun parseSrtFromUri(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val content = context.contentResolver.openInputStream(uri)
+                    ?.bufferedReader()?.readText()
+                if (content.isNullOrBlank()) {
+                    _state.value = _state.value.copy(error = "File SRT trống hoặc không đọc được")
+                    return@launch
+                }
+                val cues = parseSrt(content)
+                if (cues.isEmpty()) {
+                    _state.value = _state.value.copy(error = "File SRT không hợp lệ hoặc không có nội dung")
+                    return@launch
+                }
+                val jsonString = Gson().toJson(cues)
+                _state.value = _state.value.copy(
+                    editorSubtitlesJson = jsonString,
+                    showSubtitleEditor = true
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(error = "Lỗi đọc file SRT: ${e.message}")
+            }
+        }
+    }
+
+    private fun parseSrt(content: String): List<SubtitleCue> {
+        val blocks = content.trim().split(Regex("\n\\s*\n"))
+        return blocks.mapIndexedNotNull { idx, block ->
+            val lines = block.trim().lines().map { it.trim() }.filter { it.isNotEmpty() }
+            if (lines.size < 2) return@mapIndexedNotNull null
+
+            val timeLine = lines.firstOrNull { it.contains("-->") } ?: return@mapIndexedNotNull null
+            val parts = timeLine.split("-->")
+            if (parts.size != 2) return@mapIndexedNotNull null
+
+            val startMs = parseSrtTime(parts[0].trim()) ?: return@mapIndexedNotNull null
+            val endMs   = parseSrtTime(parts[1].trim()) ?: return@mapIndexedNotNull null
+
+            val timeIdx = lines.indexOf(timeLine)
+            val text = lines.drop(timeIdx + 1).joinToString(" ").trim()
+            if (text.isBlank()) return@mapIndexedNotNull null
+
+            SubtitleCue(index = idx, startTime = startMs, endTime = endMs, text = text)
+        }
+    }
+
+    private fun parseSrtTime(timeStr: String): Long? {
+        return try {
+            // supports both "," and "." as millisecond separator
+            val normalized = timeStr.trim().replace(",", ".")
+            val parts = normalized.split(":")
+            if (parts.size != 3) return null
+            val hours   = parts[0].toLong()
+            val minutes = parts[1].toLong()
+            val secPart = parts[2].toDouble()
+            val secs    = secPart.toLong()
+            val millis  = ((secPart - secs) * 1000).toLong()
+            hours * 3_600_000L + minutes * 60_000L + secs * 1_000L + millis
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        exoPlayer.release()
     }
 }

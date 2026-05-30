@@ -1,6 +1,6 @@
 package com.example.lingora_fe.util
 
 object Constant {
-    const val BASE_URL = "https://sharper-grimace-unmolded.ngrok-free.dev"
+    const val BASE_URL = "http://10.0.2.2:4000/"
     const val ENABLE_SOCKET_NOTIFICATIONS = true
 }

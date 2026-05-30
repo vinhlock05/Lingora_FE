@@ -559,7 +559,8 @@ class ClassroomRepositoryImpl @Inject constructor(
         fileSizeBytes: Long?,
         durationSeconds: Int?,
         title: String?,
-        sortOrder: Int?
+        sortOrder: Int?,
+        subtitlesJson: String?
     ): Either<AppFailure, com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment> {
         return Either.catch {
             val request = com.example.lingora_fe.user.classroom.data.remote.dto.AddAttachmentRequest(
@@ -571,7 +572,8 @@ class ClassroomRepositoryImpl @Inject constructor(
                 fileSizeBytes = fileSizeBytes,
                 durationSeconds = durationSeconds,
                 title = title,
-                sortOrder = sortOrder
+                sortOrder = sortOrder,
+                subtitlesJson = subtitlesJson
             )
             val response = apiService.addAttachment(classroomId, lessonId, request)
             val dto = response.metaData ?: throw Exception(response.message)
@@ -590,6 +592,22 @@ class ClassroomRepositoryImpl @Inject constructor(
         }.mapLeft { it.toAppFailure() }
     }
 
+    override suspend fun updateSubtitles(
+        classroomId: Int,
+        lessonId: Int,
+        attachmentId: Int,
+        subtitlesJson: String?
+    ): Either<AppFailure, com.example.lingora_fe.user.classroom.domain.model.ClassroomLessonAttachment> {
+        return Either.catch {
+            val request = com.example.lingora_fe.user.classroom.data.remote.dto.UpdateAttachmentRequest(
+                subtitlesJson = subtitlesJson
+            )
+            val response = apiService.updateAttachment(classroomId, lessonId, attachmentId, request)
+            val dto = response.metaData ?: throw Exception(response.message)
+            dto.toDomain()
+        }.mapLeft { it.toAppFailure() }
+    }
+
     override suspend fun deleteAttachment(
         classroomId: Int,
         lessonId: Int,
@@ -598,6 +616,19 @@ class ClassroomRepositoryImpl @Inject constructor(
         return Either.catch {
             apiService.deleteAttachment(classroomId, lessonId, attachmentId)
             Unit
+        }.mapLeft { it.toAppFailure() }
+    }
+
+    override suspend fun transcribeAttachment(
+        classroomId: Int,
+        lessonId: Int,
+        mediaUrl: String
+    ): Either<AppFailure, List<com.example.lingora_fe.user.classroom.presentation.components.SubtitleCue>> {
+        return Either.catch {
+            val request = com.example.lingora_fe.user.classroom.data.remote.api.TranscribeAttachmentRequest(mediaUrl = mediaUrl)
+            val response = apiService.transcribeAttachment(classroomId, lessonId, request)
+            val data = response.metaData ?: throw Exception(response.message)
+            data.subtitles
         }.mapLeft { it.toAppFailure() }
     }
 }

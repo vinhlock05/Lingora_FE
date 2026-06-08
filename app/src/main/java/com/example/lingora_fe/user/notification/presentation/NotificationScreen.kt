@@ -23,6 +23,9 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -199,7 +202,11 @@ private fun getNotificationIcon(type: NotificationType) = when (type) {
     NotificationType.ORDER -> Icons.Default.ShoppingCart
     NotificationType.WARNING -> Icons.Default.Warning
     NotificationType.CONTENT_DELETED -> Icons.Default.Delete
+    // Classroom notifications
     NotificationType.CLASSROOM_APPROVED -> Icons.Default.School
+    NotificationType.CLASSROOM_JOIN_REQUEST -> Icons.Default.PersonAdd
+    NotificationType.CLASSROOM_MEMBER_JOINED -> Icons.Default.Group
+    NotificationType.CLASSROOM_NEW_LESSON -> Icons.Default.MenuBook
     // Withdrawal notifications
     NotificationType.WITHDRAWAL_PROCESSING -> Icons.Default.AccountBalanceWallet
     NotificationType.WITHDRAWAL_COMPLETED -> Icons.Default.CheckCircle

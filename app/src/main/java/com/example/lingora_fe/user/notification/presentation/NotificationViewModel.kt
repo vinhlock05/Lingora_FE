@@ -172,6 +172,26 @@ class NotificationViewModel @Inject constructor(
                 val classroomId = getInt("classroomId")
                 if (classroomId != null) Route.classroomDetail(classroomId.toString()) else null
             }
+            NotificationType.CLASSROOM_JOIN_REQUEST -> {
+                // Giáo viên click → vào classroom xem tab Members để duyệt
+                val classroomId = getInt("classroomId")
+                if (classroomId != null) Route.classroomDetail(classroomId.toString()) else null
+            }
+            NotificationType.CLASSROOM_MEMBER_JOINED -> {
+                // Học sinh click → vào xem lớp vừa tham gia thành công
+                val classroomId = getInt("classroomId")
+                if (classroomId != null) Route.classroomDetail(classroomId.toString()) else null
+            }
+            NotificationType.CLASSROOM_NEW_LESSON -> {
+                // Học sinh click → vào bài học mới nếu có lessonId, không thì vào lớp
+                val classroomId = getInt("classroomId")
+                val lessonId = getInt("lessonId")
+                if (classroomId != null && lessonId != null) {
+                    Route.lessonDetail(classroomId.toString(), lessonId.toString())
+                } else if (classroomId != null) {
+                    Route.classroomDetail(classroomId.toString())
+                } else null
+            }
             // Withdrawal notifications - navigate to withdrawal detail if ID available
             NotificationType.WITHDRAWAL_PROCESSING,
             NotificationType.WITHDRAWAL_COMPLETED,

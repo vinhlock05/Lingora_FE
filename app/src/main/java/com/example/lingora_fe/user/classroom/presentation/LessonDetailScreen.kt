@@ -274,7 +274,9 @@ fun LessonDetailScreen(
                         when (activeTabTitle) {
                             "Bài giảng" -> {
                                 Column(modifier = Modifier.fillMaxSize()) {
-                                    val activeIndex = state.currentInlineIndex.coerceIn(0, inlineAttachments.lastIndex)
+                                    val activeIndex = if (inlineAttachments.isNotEmpty()) {
+                                        state.currentInlineIndex.coerceIn(0, inlineAttachments.lastIndex)
+                                    } else 0
                                     val activeAttachment = inlineAttachments[activeIndex]
 
                                     InlineCarouselContainer(
@@ -735,16 +737,31 @@ fun LessonDetailScreen(
         )
     }
 
-    if (state.showSubtitleEditor && state.editorSubtitlesJson != null) {
-        SubtitleEditorDialog(
-            initialSubtitlesJson = state.editorSubtitlesJson,
-            onSave = { finalizedJson ->
-                viewModel.saveEditorSubtitles(finalizedJson)
-            },
-            onDismiss = {
-                viewModel.hideSubtitleEditor()
-            }
-        )
+    if (state.showSubtitleEditor && state.editorSubtitlesJson != null && state.lesson != null) {
+        val inlineAttachments = state.lesson.attachments.filter {
+            it.role == com.example.lingora_fe.user.classroom.util.LessonAttachmentRole.INLINE &&
+            (it.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.VIDEO ||
+             it.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.AUDIO ||
+             it.fileType == com.example.lingora_fe.user.classroom.util.LessonAttachmentType.IMAGE)
+        }
+        val activeIndex = if (inlineAttachments.isNotEmpty()) {
+            state.currentInlineIndex.coerceIn(0, inlineAttachments.lastIndex)
+        } else 0
+        val activeAttachment = inlineAttachments.getOrNull(activeIndex)
+
+        if (activeAttachment != null) {
+            SubtitleEditorDialog(
+                initialSubtitlesJson = state.editorSubtitlesJson,
+                exoPlayer = viewModel.exoPlayer,
+                attachment = activeAttachment,
+                onSave = { finalizedJson ->
+                    viewModel.saveEditorSubtitles(finalizedJson)
+                },
+                onDismiss = {
+                    viewModel.hideSubtitleEditor()
+                }
+            )
+        }
     }
 
     state.attachmentToDelete?.let { attachment ->

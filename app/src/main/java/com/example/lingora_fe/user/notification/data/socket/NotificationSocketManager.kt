@@ -73,11 +73,22 @@ class NotificationSocketManager @Inject constructor(
         }
         val notificationListener = io.socket.emitter.Emitter.Listener { args -> parseAndSend(args) }
         val approvalListener = io.socket.emitter.Emitter.Listener { args -> parseAndSend(args) }
+        val joinRequestListener = io.socket.emitter.Emitter.Listener { args -> parseAndSend(args) }
+        val memberJoinedListener = io.socket.emitter.Emitter.Listener { args -> parseAndSend(args) }
+        val newLessonListener = io.socket.emitter.Emitter.Listener { args -> parseAndSend(args) }
+
         socket?.on("notification", notificationListener)
         socket?.on("classroom:approved", approvalListener)
+        socket?.on("classroom:join_request", joinRequestListener)
+        socket?.on("classroom:member_joined", memberJoinedListener)
+        socket?.on("classroom:new_lesson", newLessonListener)
+
         awaitClose {
             socket?.off("notification", notificationListener)
             socket?.off("classroom:approved", approvalListener)
+            socket?.off("classroom:join_request", joinRequestListener)
+            socket?.off("classroom:member_joined", memberJoinedListener)
+            socket?.off("classroom:new_lesson", newLessonListener)
         }
     }
 
